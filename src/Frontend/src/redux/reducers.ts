@@ -44,4 +44,4 @@ function resetReducer(state: RootState, action: AnyAction): RootState {
 }
 
 export default resetReducer as Reducer;
-export { RootState };
+export type { RootState };

@@ -6,10 +6,10 @@ import {
 	disableViewportAnLoki,
 	getCourseModules,
 	getModuleNavigationProps,
-	standardSlideProps,
 	ViewportChangeHandlerRedux
 } from "./stroies.data";
 import type { Story } from "@storybook/react";
+import { SlideType } from "../../../models/slide";
 
 export default {
 	title: "Navigation",
@@ -42,7 +42,7 @@ const args: Props = {
 		current: 50,
 		inProgress: 25,
 		max: 100,
-		statusesBySlides: {},
+		additionalInfoBySlide: {},
 	},
 	groupsAsStudent: [],
 
@@ -50,9 +50,24 @@ const args: Props = {
 	unitItems: getModuleNavigationProps(),
 	nextUnit: {
 		id: '2',
+		additionalContentInfo: { isAdditionalContent: false, publicationDate: null, },
 		title: 'Next module',
 		slides: [
-			{ ...standardSlideProps, slug: 'Ошибки', title: 'Ошибки', scoringGroup: null, apiUrl: '', hide: false, },
+			{
+				slug: 'Ошибки',
+				additionalContentInfo: { isAdditionalContent: false, publicationDate: null, },
+				id: 'id',
+				unitId: 'unitId',
+				containsVideo: false,
+				questionsCount: 0,
+				quizMaxTriesCount: 0,
+				maxScore: 0,
+				type: SlideType.Lesson,
+				title: 'Ошибки',
+				scoringGroup: null,
+				apiUrl: '',
+				hide: false,
+			},
 		],
 		additionalScores: [],
 	},

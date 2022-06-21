@@ -1,13 +1,15 @@
 import React, { createRef, RefObject, useEffect, useRef } from "react";
-import { useHistory } from 'react-router-dom';
 import classNames from "classnames";
+
 import translateCode from "src/codeTranslator/translateCode";
 import scrollToView from "src/utils/scrollToView";
-import { studentZipDownloadUrl } from "src/consts/routes";
+import { withNavigate } from "src/utils/router";
+
+import { studentZipDownloadUrl, WithNavigate } from "src/consts/routes";
 
 import styles from "./Text.less";
 
-interface Props {
+interface Props extends WithNavigate {
 	className?: string;
 	content?: string;
 	lines?: string[];
@@ -19,7 +21,7 @@ interface Props {
 function Text(props: Props): React.ReactElement {
 	const textContainer: RefObject<HTMLDivElement> = createRef();
 	const prevProps = usePreviousProps(props);
-	const history = useHistory();
+	const navigate = props.navigate;
 
 	useEffect(() => {
 		const { disableTranslatingTex, disableAnchorsScrollHandlers, content, children, } = props;
@@ -70,7 +72,7 @@ function Text(props: Props): React.ReactElement {
 			anchor.addEventListener('click', (e) => {
 				e.stopPropagation();
 				e.preventDefault();
-				history.push({
+				navigate({
 					pathname: anchor.pathname,
 					search: anchor.search
 				});
@@ -144,4 +146,4 @@ function Text(props: Props): React.ReactElement {
 }
 
 
-export default Text;
+export default withNavigate(Text);

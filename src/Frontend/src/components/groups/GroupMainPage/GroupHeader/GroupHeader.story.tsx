@@ -18,7 +18,7 @@ export const Default = (): React.ReactNode => (
 			isTempCourse: false,
 			nextUnitPublishTime: null,
 			tempCourseError: null,
-			scoring: { id: '1', name: '12', abbr: '123', description: '', groups: [], weight: 0 }
+			scoring: { groups: [{ id: '1', name: '12', abbr: '123', description: '', weight: 0 }] },
 		} }
 		onTabChange={ () => ({}) }
 		filter="hello"/>

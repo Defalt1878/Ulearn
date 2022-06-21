@@ -1,5 +1,5 @@
 import React from "react";
-import { Link, RouteComponentProps } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import cn from "classnames";
 
 import NotificationsMenu from "./NotificationsMenu";
@@ -20,15 +20,16 @@ import {
 } from "src/consts/routes";
 
 import styles from '../Header.less';
-import { MatchParams } from "../../../models/router";
 
 
-interface Props extends RouteComponentProps<MatchParams> {
+interface Props  {
 	account: AccountState;
 	deviceType: DeviceType;
 }
 
-function Menu({ account, location, history, deviceType, match, }: Props): React.ReactElement {
+function Menu({ account, deviceType, }: Props): React.ReactElement {
+	const location = useLocation();
+
 	let returnUrl: string | null = (location.pathname + location.search).toLowerCase();
 
 	if(returnUrl.startsWith("/" + login.toLowerCase())
@@ -41,7 +42,7 @@ function Menu({ account, location, history, deviceType, match, }: Props): React.
 	if(account.isAuthenticated) {
 		return (
 			<div className={ styles.accountWrapper }>
-				<NotificationsMenu location={ location } match={ match } deviceType={ deviceType } history={ history }/>
+				<NotificationsMenu deviceType={ deviceType }/>
 				<ProfileLink
 					className={ cn(styles.headerElement, styles.button, styles.profileLink) }
 					deviceType={ deviceType }

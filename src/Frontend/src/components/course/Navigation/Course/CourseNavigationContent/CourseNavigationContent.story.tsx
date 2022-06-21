@@ -11,7 +11,7 @@ export default {
 
 const Template: Story<CourseMenuItem[]> = (items) => (
 	<DesktopWrapper>
-		<CourseNavigationContent items={ items } getRefToActive={ React.createRef() }/>
+		<CourseNavigationContent courseId={'courseId'} items={ items } getRefToActive={ React.createRef() }/>
 	</DesktopWrapper>
 );
 

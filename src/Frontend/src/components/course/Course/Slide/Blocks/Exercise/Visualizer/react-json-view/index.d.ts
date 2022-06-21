@@ -6,7 +6,7 @@ export interface ReactJsonViewProps {
    *
    * Required.
    */
-  src: object;
+  src: Record<string, unknown>;
   /**
    * Contains the name of your root node. Use null or false for no name.
    *
@@ -147,7 +147,7 @@ export interface OnCopyProps {
   /**
    * The JSON tree source object
    */
-  src: object;
+  src: Record<string, unknown>;
   /**
    * List of keys.
    */
@@ -166,7 +166,7 @@ export interface CollapsedFieldProps {
   /**
    * The corresponding JSON subtree.
    */
-  src: object;
+  src: Record<string, unknown>;
   /**
    * The type of src. Can only be "array" or "object".
    */
@@ -181,11 +181,11 @@ export interface InteractionProps {
   /**
    * The updated subtree of the JSON tree.
    */
-  updated_src: object;
+  updated_src: Record<string, unknown>;
   /**
    * The existing subtree of the JSON tree.
    */
-  existing_src: object;
+  existing_src: Record<string, unknown>;
   /**
    * The key of the entry that is interacted with.
    */
@@ -197,11 +197,11 @@ export interface InteractionProps {
   /**
    * The original value of the entry that is interacted with.
    */
-  existing_value: object | string | number | boolean | null;
+  existing_value: Record<string, unknown> | string | number | boolean | null;
   /**
    * The updated value of the entry that is interacted with.
    */
-  new_value?: object | string | number | boolean | null;
+  new_value?: Record<string, unknown> | string | number | boolean | null;
 }
 
 export interface OnSelectProps {
@@ -212,7 +212,7 @@ export interface OnSelectProps {
   /**
    * The value of the currently selected entry.
    */
-  value: object | string | number | boolean | null;
+  value: Record<string, unknown> | string | number | boolean | null;
   /**
    * The type of the value. For "number" type, it will be replaced with the more
    * accurate types: "float", "integer", or "nan".
@@ -225,7 +225,7 @@ export interface OnSelectProps {
 
 }
 
-export type TypeDefaultValue = string | number | boolean | object;
+export type TypeDefaultValue = string | number | boolean | Record<string, unknown>;
 
 export interface ThemeObject {
   base00: string;

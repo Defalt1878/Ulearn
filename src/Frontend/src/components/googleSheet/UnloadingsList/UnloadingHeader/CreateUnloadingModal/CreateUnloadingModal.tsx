@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import moment from "moment";
+import moment from "moment-timezone";
 
 import { Button, Gapped, Modal, Token, TokenInput, TokenProps } from 'ui';
 import { GoogleSheetApiInObject } from "../../UnloadingList";

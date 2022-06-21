@@ -1,4 +1,7 @@
-import React, { ReactElement } from "react";
+import React from "react";
+import { connect } from "react-redux";
+
+import { darkFlat } from "src/uiTheme";
 
 import { ThemeContext } from "ui";
 import SubmitButton from "./SubmitButton";
@@ -7,23 +10,23 @@ import OutputButton from "./OutputButton";
 import ResetButton from "./ResetButton";
 import StatisticsHint from "./StatisticsHint";
 import AcceptedSolutionsButton from "./AcceptedSolutionsButton";
-import defaultTheme, { darkFlat } from "src/uiTheme";
+import VisualizerButton from "./VisualizerButton";
+import { HasReactChild } from "src/consts/common";
+
 import { DeviceType } from "src/consts/deviceType";
+import { RootState } from "src/models/reduxState";
 
 import ShowControlsTextContext from "./ShowControlsTextContext";
 
 import styles from './Controls.less';
-import { RootState } from "src/models/reduxState";
-import { connect } from "react-redux";
-import VisualizerButton from "./VisualizerButton";
 
 interface Props {
-	children: React.ReactNode[] | React.ReactNode,
-	deviceType: DeviceType,
+	children?: React.ReactNode[];
+	deviceType: DeviceType;
 }
 
 interface State {
-	showControlsText: boolean,
+	showControlsText: boolean;
 }
 
 const isControlsTextSuits = (deviceType: DeviceType): boolean => deviceType !== DeviceType.mobile && deviceType !== DeviceType.tablet;
@@ -36,6 +39,10 @@ class Controls extends React.Component<Props, State> {
 	public static StatisticsHint = StatisticsHint;
 	public static AcceptedSolutionsButton = AcceptedSolutionsButton;
 	public static VisualizerButton = VisualizerButton;
+	public static ButtonsContainer = (props: HasReactChild) => (
+		props.children && <span className={ styles.exerciseControlsButtonsContainer }>
+			{ props.children }
+		</span>);
 
 	constructor(props: Props) {
 		super(props);
@@ -57,78 +64,24 @@ class Controls extends React.Component<Props, State> {
 
 	render = (): React.ReactNode => {
 		const { showControlsText, } = this.state;
-		const [submit, hint, reset, output, statistics, acceptedSolutions, visualizer,] = this.parseChildren();
+
+		// submit
+		// hint
+		// reset
+		// output
+		// accepteSol
+		// visualizer
+		// statistics
 
 		return (
 			<div className={ styles.exerciseControlsContainer }>
 				<ShowControlsTextContext.Provider value={ showControlsText }>
 					<ThemeContext.Provider value={ darkFlat }>
-						{ submit }
-						<span className={ styles.exerciseControlsButtonsContainer }>
-							<ThemeContext.Provider value={ defaultTheme }>
-								{ hint }
-							</ThemeContext.Provider>
-							{ reset }
-							{ output }
-							<ThemeContext.Provider value={ defaultTheme }>
-								{ acceptedSolutions }
-								{ visualizer }
-							</ThemeContext.Provider>
-						</span>
-						{ statistics }
+						{ this.props.children }
 					</ThemeContext.Provider>
 				</ShowControlsTextContext.Provider>
 			</div>
 		);
-	};
-
-	parseChildren = ()
-		: [typeof SubmitButton?,
-		typeof ShowHintButton?,
-		typeof ResetButton?,
-		typeof OutputButton?,
-		typeof StatisticsHint?,
-		typeof AcceptedSolutionsButton?,
-		typeof VisualizerButton?,
-	] => {
-		const childArray = Array.isArray(this.props.children) ? this.props.children : [this.props.children];
-		let submit: typeof SubmitButton | undefined = undefined;
-		let hint: typeof ShowHintButton | undefined = undefined;
-		let reset: typeof ResetButton | undefined = undefined;
-		let output: typeof OutputButton | undefined = undefined;
-		let stat: typeof StatisticsHint | undefined = undefined;
-		let solutions: typeof AcceptedSolutionsButton | undefined = undefined;
-		let visualizer: typeof VisualizerButton | undefined = undefined;
-
-		for (const child of childArray) {
-			const reactElement = child as ReactElement;
-			if(reactElement) {
-				switch (reactElement.type) {
-					case SubmitButton:
-						submit = child as typeof SubmitButton;
-						break;
-					case ShowHintButton:
-						hint = child as typeof ShowHintButton;
-						break;
-					case ResetButton:
-						reset = child as typeof ResetButton;
-						break;
-					case OutputButton:
-						output = child as typeof OutputButton;
-						break;
-					case StatisticsHint:
-						stat = child as typeof StatisticsHint;
-						break;
-					case AcceptedSolutionsButton:
-						solutions = child as typeof AcceptedSolutionsButton;
-						break;
-					case VisualizerButton:
-						visualizer = child as typeof VisualizerButton;
-						break;
-				}
-			}
-		}
-		return [submit, hint, reset, output, stat, solutions, visualizer,];
 	};
 }
 
@@ -139,4 +92,4 @@ const mapStateToProps = (state: RootState) => {
 	);
 };
 
-export default connect(mapStateToProps, ({}))(Controls);
+export default connect(mapStateToProps)(Controls);

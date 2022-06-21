@@ -1,8 +1,8 @@
 import React from "react";
+import { Navigate } from "react-router-dom";
 
-import { Button, FLAT_THEME, Hint, Select, Tabs, ThemeContext, Toast, Toggle, Tooltip } from "ui";
+import { Button, FLAT_THEME_8PX_OLD, Hint, Select, Tabs, ThemeContext, Toast, Toggle, Tooltip } from "ui";
 import { UnControlled, } from "react-codemirror2";
-import { Redirect } from "react-router-dom";
 import { UrlError } from "../../../../common/Error/NotFoundErrorBoundary";
 
 import Review from "../Blocks/Exercise/Review";
@@ -221,7 +221,7 @@ class InstructorReview extends React.Component<Props, State> {
 			this.loadData();
 			this.hideAddCommentForm();
 			this.setState({
-				showDiff : toggleInCache === undefined ? showDiff : toggleInCache,
+				showDiff: toggleInCache === undefined ? showDiff : toggleInCache,
 				currentSubmission: undefined,
 				selectedReviewId: -1,
 			});
@@ -449,7 +449,7 @@ class InstructorReview extends React.Component<Props, State> {
 		} = this.state;
 
 		if(!user?.isAuthenticated) {
-			return <Redirect to={ constructLinkWithReturnUrl(login) }/>;
+			return <Navigate replace to={ constructLinkWithReturnUrl(login) }/>;
 		}
 
 		if(!isInstructor(user)) {
@@ -460,7 +460,8 @@ class InstructorReview extends React.Component<Props, State> {
 		}
 		const submissionsOrderedByTimeAsc = studentSubmissions
 			.map(s => s)
-			.filter(s=>!s.automaticChecking || s.automaticChecking?.result === AutomaticExerciseCheckingResult.RightAnswer)
+			.filter(
+				s => !s.automaticChecking || s.automaticChecking?.result === AutomaticExerciseCheckingResult.RightAnswer)
 			.sort((s1, s2) => {
 				return momentFromServerToLocal(s1.timestamp).diff(momentFromServerToLocal(s2.timestamp));
 			});
@@ -479,7 +480,8 @@ class InstructorReview extends React.Component<Props, State> {
 							{
 								deadLine.current &&
 								<span className={ styles.solvedAfterDeadLineWrapper }>
-									<Hint text={ texts.getDeadLineViolationInfo(submissionsOrderedByTimeAsc[0], deadLine.current) }>
+									<Hint text={ texts.getDeadLineViolationInfo(submissionsOrderedByTimeAsc[0],
+										deadLine.current) }>
 										<span className={ styles.solvedAfterDeadLineToken }>После дедлайна</span>
 									</Hint>
 								</span>
@@ -586,42 +588,42 @@ class InstructorReview extends React.Component<Props, State> {
 					/>
 				}
 				{ (isEditable || submissionPercent !== null) &&
-				<ScoreControls
-					setNextSubmissionButtonDisabled={ setNextSubmissionButtonDisabled }
-					canChangeScore={ isEditable }
-					date={ !isLastCheckedSubmission ? currentSubmission.timestamp : undefined }
-					score={ submissionPercent }
-					prevReviewScore={ prevSubmissionPercent }
-					exerciseTitle={ slideContext.title }
-					onSubmit={ this.onScoreButtonPressed }
-					onToggleChange={ this.prohibitFurtherReview }
-					toggleChecked={ !prohibitFurtherManualChecking }
-				/> }
+					<ScoreControls
+						setNextSubmissionButtonDisabled={ setNextSubmissionButtonDisabled }
+						canChangeScore={ isEditable }
+						date={ !isLastCheckedSubmission ? currentSubmission.timestamp : undefined }
+						score={ submissionPercent }
+						prevReviewScore={ prevSubmissionPercent }
+						exerciseTitle={ slideContext.title }
+						onSubmit={ this.onScoreButtonPressed }
+						onToggleChange={ this.prohibitFurtherReview }
+						toggleChecked={ !prohibitFurtherManualChecking }
+					/> }
 				{ (!currentSubmission.automaticChecking
-					|| currentSubmission.automaticChecking.result === AutomaticExerciseCheckingResult.RightAnswer)
-				&& currentSubmission.manualChecking === null
-				&& currentSubmission.id === studentSubmissions[0].id
-				&& <>
-					<p> { texts.submissionAfterDisablingManualChecking } </p>
-					<Button
-						use={ 'primary' }
-						onClick={ this.enableManualChecking }>
-						{ texts.enableManualChecking }
-					</Button>
-				</> }
+						|| currentSubmission.automaticChecking.result === AutomaticExerciseCheckingResult.RightAnswer)
+					&& currentSubmission.manualChecking === null
+					&& currentSubmission.id === studentSubmissions[0].id
+					&& <>
+						<p> { texts.submissionAfterDisablingManualChecking } </p>
+						<Button
+							use={ 'primary' }
+							onClick={ this.enableManualChecking }>
+							{ texts.enableManualChecking }
+						</Button>
+					</> }
 			</BlocksWrapper>
 		);
 	}
 
 	enableManualChecking = (): void => {
 		const { currentSubmission } = this.state;
-		const { enableManualChecking, slideContext: { slideInfo: { query, } }, student, history, } = this.props;
+		const { enableManualChecking, slideContext: { slideInfo: { query, } }, student, navigate, } = this.props;
 
 		if(!currentSubmission || !student) {
 			return;
 		}
 
-		history.replace(
+		navigate(
 			location.pathname + buildQuery({
 				submissionId: currentSubmission.id,
 				checkQueueItemId: currentSubmission.id,
@@ -719,7 +721,7 @@ class InstructorReview extends React.Component<Props, State> {
 
 	catchNewestSubmission = (err: any): void => {
 		const {
-			history,
+			navigate,
 			slideContext,
 		} = this.props;
 		if(err.response) {
@@ -735,7 +737,7 @@ class InstructorReview extends React.Component<Props, State> {
 						Toast.push('Появилось новое решение', {
 							label: "Загрузить и перейти",
 							handler: () => {
-								history.push(constructPathToSlide(slideContext.courseId, slideContext.slideId)
+								navigate(constructPathToSlide(slideContext.courseId, slideContext.slideId)
 									+ buildQuery({
 										queueSlideId: slideContext.slideInfo.query.queueSlideId || undefined,
 										userId: slideContext.slideInfo.query.userId,
@@ -782,22 +784,22 @@ class InstructorReview extends React.Component<Props, State> {
 			<div className={ styles.topControlsWrapper }>
 				{ this.renderSubmissionsSelect() }
 				{ diffInfo &&
-				<Tooltip render={ this.renderShowDiffTooltip }>
-					<Toggle
-						onValueChange={ this.onDiffToggleValueChanged }
-						checked={ showDiff }>
-						{ texts.getDiffText(
-							diffInfo.addedLinesCount,
-							styles.diffAddedLinesTextColor,
-							diffInfo.removedLinesCount,
-							styles.diffRemovedLinesTextColor,
-							!diffInfo.prevReviewedSubmission)
-						}
-					</Toggle>
-				</Tooltip>
+					<Tooltip render={ this.renderShowDiffTooltip }>
+						<Toggle
+							onValueChange={ this.onDiffToggleValueChanged }
+							checked={ showDiff }>
+							{ texts.getDiffText(
+								diffInfo.addedLinesCount,
+								styles.diffAddedLinesTextColor,
+								diffInfo.removedLinesCount,
+								styles.diffRemovedLinesTextColor,
+								!diffInfo.prevReviewedSubmission)
+							}
+						</Toggle>
+					</Tooltip>
 				}
 				{ commentsEnabled &&
-				<span className={ styles.leaveCommentGuideText }>{ texts.leaveCommentGuideText }</span> }
+					<span className={ styles.leaveCommentGuideText }>{ texts.leaveCommentGuideText }</span> }
 			</div>
 		);
 	}
@@ -904,20 +906,20 @@ class InstructorReview extends React.Component<Props, State> {
 					/>
 				</div>
 				{ isEditable && addCommentFormCoords !== undefined &&
-				<AddCommentForm
-					ref={ this.addCommentFormRef }
-					user={ this.props.user }
-					value={ addCommentValue }
-					valueCanBeAddedToFavourite={ this.isCommentCanBeAddedToFavourite() }
-					onValueChange={ this.onCommentFormValueChange }
-					addComment={ this.onFormAddComment }
-					favouriteReviews={ favouriteReviews }
-					lastUsedReviews={ lastUsedReviews || [] }
-					addFavouriteReview={ this.addFavouriteReview }
-					deleteFavouriteReview={ this.deleteFavouriteReview }
-					coordinates={ addCommentFormCoords }
-					onClose={ this.onFormClose }
-				/> }
+					<AddCommentForm
+						ref={ this.addCommentFormRef }
+						user={ this.props.user }
+						value={ addCommentValue }
+						valueCanBeAddedToFavourite={ this.isCommentCanBeAddedToFavourite() }
+						onValueChange={ this.onCommentFormValueChange }
+						addComment={ this.onFormAddComment }
+						favouriteReviews={ favouriteReviews }
+						lastUsedReviews={ lastUsedReviews || [] }
+						addFavouriteReview={ this.addFavouriteReview }
+						deleteFavouriteReview={ this.deleteFavouriteReview }
+						coordinates={ addCommentFormCoords }
+						onClose={ this.onFormClose }
+					/> }
 			</div>
 		);
 	};
@@ -1071,7 +1073,7 @@ class InstructorReview extends React.Component<Props, State> {
 
 		return (
 			<div className={ styles.submissionsSelect }>
-				<ThemeContext.Provider value={ FLAT_THEME }>
+				<ThemeContext.Provider value={ FLAT_THEME_8PX_OLD }>
 					<Select
 						width={ '100%' }
 						items={ items }

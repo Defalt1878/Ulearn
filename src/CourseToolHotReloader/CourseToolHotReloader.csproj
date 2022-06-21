@@ -3,6 +3,7 @@
         <OutputType>Exe</OutputType>
         <TargetFramework>net5.0</TargetFramework>
         <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+        <Authors>SKB Kontur Ulearn Team</Authors>
     </PropertyGroup>
     <ItemGroup>
       <PackageReference Include="Autofac" Version="6.1.0" />

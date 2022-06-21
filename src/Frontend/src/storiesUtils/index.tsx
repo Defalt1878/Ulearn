@@ -1,7 +1,7 @@
 import React from "react";
 import { CourseAccessType, CourseRoleType, SystemAccessType } from "../consts/accessType";
 import { UserInfo } from "../utils/courseRoles";
-import configureStore from "../configureStore";
+import setupStore from "../setupStore";
 import { ShortUserInfo } from "../models/users";
 import { GroupInfo } from "../models/groups";
 import { ShortGroupInfo } from "../models/comments";
@@ -20,7 +20,7 @@ interface State<T> {
 	args: T;
 }
 
-export const reduxStore = configureStore();
+export const reduxStore = setupStore();
 
 export function renderMd(text: string): string {
 	const regexBold = /\*\*(\S(.*?\S)?)\*\*/gm;

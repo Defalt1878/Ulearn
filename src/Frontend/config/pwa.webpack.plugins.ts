@@ -1,8 +1,10 @@
-const paths = require('./paths');
-const WebpackPwaManifest = require('webpack-pwa-manifest');
-const { GenerateSW } = require('workbox-webpack-plugin');
+import paths from "./paths";
+import WebpackPwaManifest from "webpack-pwa-manifest";
+import { GenerateSW } from "workbox-webpack-plugin";
+import { WebpackPluginInstance  } from "webpack";
 
-module.exports = [
+const plugins: WebpackPluginInstance [] = [
+	// as conversion allows to escape type bug
 	new WebpackPwaManifest({
 		filename: "manifest.json",
 		inject: true,
@@ -37,11 +39,11 @@ module.exports = [
 				ios: 'startup',
 			}
 		],
-	}),
+	}) as WebpackPluginInstance,
 	// Generate a service worker script that will precache, and keep up to date,
 	// the HTML & assets that are part of the Webpack build.
 	new GenerateSW({
-		mode: 'production',
+		mode: process.env.NODE_ENV,
 		swDest: 'sw',
 		exclude: [/\.map$/, /asset-manifest\.json$/, /\.(?:png|jpg|jpeg|svg)/],
 		navigateFallbackAllowlist: [/^(?!\/__).*/],
@@ -66,3 +68,5 @@ module.exports = [
 		}],
 	})
 ];
+
+export default plugins;

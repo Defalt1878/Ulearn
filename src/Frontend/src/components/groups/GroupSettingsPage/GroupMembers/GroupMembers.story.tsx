@@ -1,5 +1,5 @@
 import React from "react";
-import GroupMembers from "./GroupMembers.js";
+import GroupMembers from "./GroupMembers";
 
 import "./groupMembers.less";
 import { ViewportWrapper } from "../../../course/Navigation/stroies.data";

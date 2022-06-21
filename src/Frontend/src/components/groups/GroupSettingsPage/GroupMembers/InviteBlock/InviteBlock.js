@@ -1,6 +1,5 @@
 import React, { Component } from "react";
 import PropTypes from "prop-types";
-import { CopyToClipboard } from 'react-copy-to-clipboard';
 import api from "src/api";
 import { Toggle, Button, Toast, Link, Input } from "ui";
 
@@ -18,38 +17,38 @@ class InviteBlock extends Component {
 		const isInviteLinkEnabled = this.state.isInviteLinkEnabled;
 
 		return (
-			<div className={styles["toggle-invite"]}>
+			<div className={ styles["toggle-invite"] }>
 				<label>
 					<Toggle
-						checked={isInviteLinkEnabled}
-						onChange={this.onToggle}>
+						checked={ isInviteLinkEnabled }
+						onChange={ this.onToggle }>
 					</Toggle>
-					<span className={styles["toggle-invite-text"]}>
-						Ссылка для вступления в группу {isInviteLinkEnabled ? ' включена' : ' выключена'}
+					<span className={ styles["toggle-invite-text"] }>
+						Ссылка для вступления в группу { isInviteLinkEnabled ? ' включена' : ' выключена' }
 					</span>
 				</label>
-				{isInviteLinkEnabled && this.renderInvite()}
+				{ isInviteLinkEnabled && this.renderInvite() }
 			</div>
 		)
 	}
 
 	renderInvite() {
-		const {group} = this.props;
+		const { group } = this.props;
 
 		return (
-			<div className={styles["invite-link"]}>
-				<div className={styles["invite-link-text"]}>
-					<CopyToClipboard
-						text={`${window.location.origin}/Account/JoinGroup?hash=${group.inviteHash}`}>
-						<Button use="link" icon={<Link />} onClick={() => Toast.push('Ссылка скопирована')}>
-							Скопировать ссылку
-						</Button>
-					</CopyToClipboard>
+			<div className={ styles["invite-link"] }>
+				<div className={ styles["invite-link-text"] }>
+					<Button use="link" icon={ <Link/> } onClick={ () => {
+						navigator.clipboard.writeText(`${ window.location.origin }/Account/JoinGroup?hash=${ group.inviteHash }`)
+						Toast.push('Ссылка скопирована')
+					} }>
+						Скопировать ссылку
+					</Button>
 				</div>
-				<div className={styles["invite-link-input"]}>
+				<div className={ styles["invite-link-input"] }>
 					<Input
 						type="text"
-						value={`${window.location.origin}/Account/JoinGroup?hash=${group.inviteHash}`}
+						value={ `${ window.location.origin }/Account/JoinGroup?hash=${ group.inviteHash }` }
 						readOnly
 						selectAllOnFocus
 						width="65%"
@@ -60,7 +59,7 @@ class InviteBlock extends Component {
 	}
 
 	onToggle = () => {
-		const {group} = this.props;
+		const { group } = this.props;
 		const isInviteLinkEnabled = this.state.isInviteLinkEnabled;
 
 		const update = () => {
@@ -77,11 +76,11 @@ class InviteBlock extends Component {
 		};
 		update();
 
-		api.groups.saveGroupSettings(group.id, {'isInviteLinkEnabled': !isInviteLinkEnabled})
-		.catch((error) => {
-			error.showToast();
-			revert();
-		});
+		api.groups.saveGroupSettings(group.id, { 'isInviteLinkEnabled': !isInviteLinkEnabled })
+			.catch((error) => {
+				error.showToast();
+				revert();
+			});
 	};
 }
 

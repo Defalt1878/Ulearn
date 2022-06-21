@@ -1,29 +1,31 @@
-import React, { Component } from "react";
+import React, { useEffect } from "react";
 import ym, { YMInitializer } from "react-yandex-metrika";
-import { RouteComponentProps, withRouter } from "react-router-dom";
+import { withLocation } from "src/utils/router";
+import { WithLocation } from "src/models/router";
 
-class YandexMetrika extends Component<RouteComponentProps> {
-	componentDidMount() {
-		window.legacy.ym = ym; //using in legacy cshtml scripts (register etc)
-	}
+const ACCOUNT_ID = 25997251;
 
-	componentDidUpdate() {
-		const { location, } = this.props;
+function YandexMetrika({ location }: WithLocation) {
+	useEffect(() => {
+		window.legacy.ym = ym;
+	}, []);
+
+	useEffect(() => {
 		ym('hit', location.pathname + location.search);
-	}
+	});
 
-	render() {
-		return (
-			<div>
-				<YMInitializer accounts={ [25997251] } options={ {
+	return (
+		<div>
+			<YMInitializer
+				accounts={ [ACCOUNT_ID] }
+				options={ {
 					clickmap: true,
 					trackLinks: true,
 					accurateTrackBounce: true,
 					webvisor: true,
 				} }/>
-			</div>
-		);
-	}
+		</div>
+	);
 }
 
-export default withRouter(YandexMetrika);
+export default withLocation(YandexMetrika);

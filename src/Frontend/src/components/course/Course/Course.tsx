@@ -645,7 +645,7 @@ class Course extends Component<CourseProps, State> {
 	}
 
 	unitClickHandle = (id: string): void => {
-		const { units, history, courseId, slideInfo: { slideId, }, courseInfo, } = this.props;
+		const { units, navigate, courseId, slideInfo: { slideId, }, courseInfo, } = this.props;
 		const { courseStatistics, } = this.state;
 
 		if(units) {
@@ -662,9 +662,9 @@ class Course extends Component<CourseProps, State> {
 
 			const unitStatistics = courseStatistics.byUnits[newOpenedUnit.id];
 			if(unitStatistics && unitStatistics.startupSlide) {
-				history.push(constructPathToSlide(courseId, unitStatistics.startupSlide.id));
+				navigate(constructPathToSlide(courseId, unitStatistics.startupSlide.id));
 			} else {
-				history.push(constructPathToSlide(courseId, newOpenedUnit.slides[0].id));
+				navigate(constructPathToSlide(courseId, newOpenedUnit.slides[0].id));
 			}
 		}
 	};

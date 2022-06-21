@@ -3,11 +3,11 @@ import { SlideType } from "src/models/slide";
 import Meta from "src/consts/Meta";
 import { CourseInfo, UnitInfo, UnitsInfo } from "src/models/course";
 import { CourseStatistics, FlashcardsStatistics } from "../Navigation/types";
-import { RouteComponentProps } from "react-router-dom";
 import { SlideInfo } from "./CourseUtils";
 import { AccountState } from "src/redux/account";
 import { SlideUserProgress } from "src/models/userProgress";
 import { DeadLineInfo } from "src/models/deadLines";
+import { WithRouter } from "src/models/router";
 
 export interface State {
 	Page: React.ComponentType | React.ElementType;
@@ -23,7 +23,7 @@ export interface State {
 	courseStatistics: CourseStatistics;
 }
 
-export interface CourseProps extends RouteComponentProps {
+export interface CourseProps extends WithRouter {
 	courseId: string;
 	slideInfo: SlideInfo;
 

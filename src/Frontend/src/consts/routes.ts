@@ -1,5 +1,6 @@
 import { buildQuery } from "src/utils";
 import { SlideInfo } from "../components/course/Course/CourseUtils";
+import { NavigateFunction } from "react-router/lib/hooks";
 
 export const coursePath = "course";
 export const adminCheckingQueuePath = "/admin/checkingQueue";
@@ -97,3 +98,9 @@ export function constructPathToGroup(courseId: string, groupId: number): string 
 export function constructPathToGroupsPage(courseId: string,): string {
 	return `/${ courseId }/${ groups }`;
 }
+
+export interface WithNavigate {
+	navigate: NavigateFunction;
+}
+
+export type WithNavigateProvided<P> = Omit<P, keyof WithNavigate>;

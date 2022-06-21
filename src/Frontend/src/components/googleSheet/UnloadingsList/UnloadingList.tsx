@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import moment from "moment";
-import { RouteComponentProps, withRouter } from "react-router-dom";
+import moment from "moment-timezone";
+import { connect } from "react-redux";
 
 import { Loader, Toast } from "ui";
 import UnloadingHeader from "./UnloadingHeader";
@@ -15,15 +15,18 @@ import {
 	GoogleSheetsExportTaskUpdateParams,
 } from "src/models/googleSheet";
 import { GroupInfo } from "src/models/groups";
-import { MatchParams } from "src/models/router";
+import { WithParams } from "src/models/router";
+
 import { Api, texts as toastTexts } from '../utils';
+import { withParams } from "src/utils/router";
+
 import { RootState } from "src/redux/reducers";
-import { connect } from "react-redux";
+
 import styles from "./unloadingList.less";
 import texts from "./UnloadingList.texts";
 
 export interface GoogleSheetApiInObject {
-	api: GoogleSheetApi;
+	api?: GoogleSheetApi;
 }
 
 export interface GoogleSheetApi {
@@ -39,7 +42,7 @@ export interface GoogleSheetApi {
 	getTaskById: (taskId: number) => Promise<GoogleSheetsExportTaskResponse>;
 }
 
-interface Props extends GoogleSheetApiInObject, RouteComponentProps<MatchParams> {
+interface Props extends GoogleSheetApiInObject, WithParams {
 	userId?: string | null;
 	courseTitle: string;
 }
@@ -53,11 +56,11 @@ interface State {
 
 function UnloadingList({
 	userId,
-	match,
+	params,
 	api = Api,
 	courseTitle,
 }: Props): React.ReactElement {
-	const { courseId, } = match.params;
+	const { courseId, } = params;
 	const [{ loading, tasks, error, ...state }, setState] = useState<State>({ courseId });
 	const courseTitleInMeta = `Выгрузки в курсе ${ courseTitle }`;
 	const apiToProvide: GoogleSheetApi = {
@@ -218,8 +221,8 @@ function UnloadingList({
 	}
 }
 
-const mapStateToProps = (state: RootState, params: RouteComponentProps<MatchParams>) => ({
-	courseTitle: state.courses?.courseById[params.match.params.courseId]?.title?.toLowerCase() ?? '',
+const mapStateToProps = (state: RootState, { params }: WithParams) => ({
+	courseTitle: state.courses?.courseById[params.courseId]?.title?.toLowerCase() ?? '',
 });
 
-export default withRouter(connect(mapStateToProps)(UnloadingList));
+export default withParams(connect(mapStateToProps)(UnloadingList));

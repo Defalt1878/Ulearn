@@ -1,7 +1,6 @@
 import React from 'react';
-import queryString from "query-string";
 
-import YouTube, { Options } from 'react-youtube';
+import YouTube from 'react-youtube';
 import { Link, } from "ui";
 import { BlocksWrapper, Text, } from "src/components/course/Course/Slide/Blocks";
 import { ArrowChevronDown, ArrowChevronUp, } from "icons";
@@ -48,7 +47,9 @@ class Video extends React.Component<Props, State> {
 		super(props);
 
 		const { renderContext, } = props;
-		const { autoplay } = queryString.parse(window.location.search);
+		//const { autoplay } = queryString.parse(window.location.search);
+		const params = new URLSearchParams(window.location.search);
+		const autoplay = params.get('autoplay');
 
 		this.state = {
 			autoplay: renderContext.previous === undefined ? !!autoplay : false,
@@ -86,7 +87,7 @@ class Video extends React.Component<Props, State> {
 		const containerClassNames = classNames(styles.videoContainer, { [containerClassName]: containerClassName });
 		const frameClassNames = classNames(styles.frame, { [className]: className });
 
-		const opts: Options = {
+		const opts = {
 			playerVars: {
 				autoplay: autoplay ? 1 : 0,
 				/* Disable related videos */
@@ -97,8 +98,8 @@ class Video extends React.Component<Props, State> {
 		return (
 			<React.Fragment>
 				<YouTube
-					containerClassName={ containerClassNames }
-					className={ frameClassNames }
+					//iframeClassName={ containerClassNames }
+					//className={ frameClassNames }
 					videoId={ videoId }
 					opts={ opts }
 					onReady={ this.onReady }
@@ -175,30 +176,30 @@ class Video extends React.Component<Props, State> {
 					</span>
 				</h3>
 				{ showedAnnotation &&
-				<React.Fragment>
-					<p>{ annotation.text }</p>
-					{ annotation.fragments.map(({ text, offset }) => {
-						const [hours, minutes, seconds] = offset.split(':');
-						const [hoursAsInt, minutesAsInt, secondsAsInt] = [hours, minutes, seconds].map(
-							t => Number.parseInt(t));
-						const timeInSeconds = hoursAsInt * 60 * 60 + minutesAsInt * 60 + secondsAsInt;
-						return (
-							<p key={ offset }>
-								<Link onClick={ () => this.setVideoTime(timeInSeconds) }>
-									{ hoursAsInt > 0 && `${ hours }:` }
-									{ `${ minutes }:` }
-									{ seconds }
-								</Link>
-								{ ` — ${ text }` }
-							</p>
-						);
-					})
-					}
-					<p>
-						Ошибка в содержании? <Link target="_blank" href={ googleDocLink }>Предложите
-						исправление!</Link>
-					</p>
-				</React.Fragment>
+					<React.Fragment>
+						<p>{ annotation.text }</p>
+						{ annotation.fragments.map(({ text, offset }) => {
+							const [hours, minutes, seconds] = offset.split(':');
+							const [hoursAsInt, minutesAsInt, secondsAsInt] = [hours, minutes, seconds].map(
+								t => Number.parseInt(t));
+							const timeInSeconds = hoursAsInt * 60 * 60 + minutesAsInt * 60 + secondsAsInt;
+							return (
+								<p key={ offset }>
+									<Link onClick={ () => this.setVideoTime(timeInSeconds) }>
+										{ hoursAsInt > 0 && `${ hours }:` }
+										{ `${ minutes }:` }
+										{ seconds }
+									</Link>
+									{ ` — ${ text }` }
+								</p>
+							);
+						})
+						}
+						<p>
+							Ошибка в содержании? <Link target="_blank" href={ googleDocLink }>Предложите
+							исправление!</Link>
+						</p>
+					</React.Fragment>
 				}
 			</React.Fragment>
 		);

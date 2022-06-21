@@ -7,15 +7,16 @@ import ProgressBar from "../ProgressBar";
 import ProgressBarCircle from "../ProgressBar/ProgressBarCircle";
 
 import { buildQuery } from "src/utils";
+import { withNavigate } from "src/utils/router";
 
 import { Progress, UnitProgress } from '../types';
 import { GroupAsStudentInfo } from "src/models/groups";
 import { DeviceType } from "src/consts/deviceType";
-import { courseStatistics } from "src/consts/routes";
+import { courseStatistics, WithNavigate } from "src/consts/routes";
 
 import styles from './NavigationHeader.less';
 
-export interface Props {
+export interface Props extends WithNavigate {
 	className?: string;
 	title: string;
 	courseProgress: Progress;
@@ -44,6 +45,7 @@ function NavigationHeader({
 	createRef,
 	isInsideCourse,
 	deviceType,
+	navigate,
 }: Props): React.ReactElement {
 	return (
 		<header ref={ createRef }
@@ -95,6 +97,7 @@ function NavigationHeader({
 			groupsLinks.push(
 				<Link
 					key={ id }
+					onClick={ preventReload }
 					href={ courseStatistics + buildQuery({ courseId: courseIdInLowerCase, group: id }) }>
 					{ name }
 				</Link>
@@ -108,6 +111,13 @@ function NavigationHeader({
 		return <p className={ cn(
 			styles.linkToGroupsStatementsWrapper,
 			{ [styles.insideModule]: !isInsideCourse }) }>Ведомость { groupsLinks }</p>;
+	}
+
+	function preventReload(e: React.MouseEvent<HTMLAnchorElement>) {
+		e.preventDefault();
+		e.stopPropagation();
+		const anchor = e.currentTarget;
+		navigate(anchor.pathname + anchor.search);
 	}
 
 	function renderUnitSection(unitProgress?: UnitProgress) {
@@ -136,4 +146,4 @@ function NavigationHeader({
 	}
 }
 
-export default NavigationHeader;
+export default withNavigate(NavigationHeader);

@@ -4,7 +4,7 @@ import { Toast } from "ui";
 $();
 
 //special function running legacy scripts, capturing it, and sending to sentry
-export default function runLegacy(code: (() => void) | string | (() => void)[]) {
+export default function runLegacy(code: (() => void) | string | (() => void)[]): void {
 	if(Array.isArray(code)) {
 		code.forEach(c => runLegacy(c));
 	}

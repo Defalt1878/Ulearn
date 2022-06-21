@@ -13,12 +13,11 @@ import { ApiFromRedux, PropsFromRedux } from "./InstructorReview.types";
 import { AutomaticExerciseCheckingResult, SubmissionInfo } from "src/models/exercise";
 import { SlideContext } from "../Slide.types";
 import { getSubmissionsWithReviews } from "../../CourseUtils";
-import { RouteComponentProps, withRouter } from "react-router-dom";
-import { MatchParams } from "src/models/router";
 import { setNextSubmissionButtonDisabled } from "src/actions/submissions";
 import { DeadLineInfo } from "src/models/deadLines";
+import { withNavigate } from "src/utils/router";
 
-interface Props extends RouteComponentProps<MatchParams> {
+interface Props {
 	slideContext: SlideContext;
 }
 
@@ -165,4 +164,4 @@ const mapDispatchToProps = (dispatch: Dispatch): ApiFromRedux => {
 };
 
 const Connected = connect(mapStateToProps, mapDispatchToProps)(InstructorReview);
-export default withRouter(Connected);
+export default withNavigate(Connected);

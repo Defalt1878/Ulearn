@@ -1,4 +1,5 @@
 import { ShortUserInfo } from "./users";
+import { AbstractScoringGroupInfo } from "./course";
 
 export interface GroupAsStudentInfo {
 	id: number;
@@ -41,7 +42,7 @@ export interface GroupScoringGroupsResponse {
 	scores: GroupScoringGroupInfo[];
 }
 
-export interface GroupScoringGroupInfo {
+export interface GroupScoringGroupInfo extends AbstractScoringGroupInfo {
 	areAdditionalScoresEnabledForAllGroups: boolean;
 	canInstructorSetAdditionalScoreInSomeUnit: boolean;
 	areAdditionalScoresEnabledInThisGroup?: boolean;

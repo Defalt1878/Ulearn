@@ -1,9 +1,9 @@
-import React, { Component } from 'react';
-import { Redirect, Route, Switch } from 'react-router-dom';
+import React from 'react';
+import { Route, Routes, Navigate } from 'react-router-dom';
 
 import AnyPage from "src/pages/AnyPage";
 import GroupListPage from "src/pages/course/groups/GroupListPage";
-import GroupPage from "src/pages/course/groups/GroupPage.js";
+import GroupPage from "src/pages/course/groups/GroupPage";
 import Course from 'src/components/course/Course/Course.redux';
 
 import { getQueryStringParameter } from "src/utils";
@@ -15,51 +15,61 @@ interface Props {
 	account: AccountState;
 }
 
-
 function Router({ account }: Props): React.ReactElement {
 	let routes = [
-		<Route key={ 'groups' } path="/Admin/Groups" component={ redirectLegacyPage("/:courseId/groups") }/>,
-		<Route key={ 'course' } path="/course/:courseId/:slideSlugOrAction" component={ Course }/>,
+		<Route key={ 'groups' }
+			   path="/Admin/Groups"
+			   element={ <RedirectLegacyPage to={ "/:courseId/groups" }/> }
+		/>,
+		<Route key={ 'course' }
+			   path="/course/:courseId/:slideSlugOrAction/*"
+			   element={ <Course/> }
+		/>,
 	];
 
 	if(account.accountLoaded) {
 		if(account.isAuthenticated) {
 			routes = [
 				...routes,
-				<Route key={ 'groupsList' } path="/:courseId/groups/" component={ GroupListPage } exact/>,
-				<Route key={ 'groupPage' } path="/:courseId/groups/:groupId/" component={ GroupPage } exact/>,
-				<Route key={ 'googleSheetList' } path="/:courseId/google-sheet-tasks/" component={ UnloadingList }
-					   exact/>,
-				<Route key={ 'googleSheetPage' } path="/:courseId/google-sheet-tasks/:taskId"
-					   component={ UnloadingSettings } exact/>,
-				<Route key={ 'groupPageSettings' } path="/:courseId/groups/:groupId/:groupPage" component={ GroupPage }
-					   exact/>,
+				<Route key={ 'groupsList' }
+					   path={ "/:courseId/groups/" }
+					   element={ <GroupListPage/> }
+				/>,
+				<Route key={ 'groupPage' }
+					   path={ "/:courseId/groups/:groupId/" }
+					   element={ <GroupPage/> }
+				/>,
+				<Route key={ 'groupPageSettings' }
+					   path={ "/:courseId/groups/:groupId/:groupPage" }
+					   element={ <GroupPage/> }
+				/>,
+				<Route key={ 'googleSheetList' }
+					   path={ "/:courseId/google-sheet-tasks/" }
+					   element={ <UnloadingList/> }
+				/>,
+				<Route key={ 'googleSheetPage' }
+					   path={ "/:courseId/google-sheet-tasks/:taskId" }
+					   element={ <UnloadingSettings/> }
+				/>,
 			];
 		}
-		routes.push(<Route key={ 'anyPage' } component={ AnyPage }/>);
+		routes.push(<Route key={ 'anyPage' } path={ "*" } element={ <AnyPage/> }/>);
 	}
 
 	return (
-		<Switch>
+		<Routes>
 			{ routes }
-		</Switch>
+		</Routes>
 	);
 }
 
-function redirectLegacyPage(to: string) {
-	return class extends Component {
-		constructor(props: Record<string, unknown> | Readonly<Record<string, unknown>>) {
-			super(props);
-			const courseId = getQueryStringParameter("courseId");
-			if(courseId) {
-				to = to.replace(":courseId", courseId);
-			}
-		}
+const RedirectLegacyPage = ({ to }: { to: string }) => {
+	const courseId = getQueryStringParameter("courseId");
+	if(courseId) {
+		to = to.replace(":courseId", courseId);
+	}
 
-		render() {
-			return <Redirect to={ to }/>;
-		}
-	};
-}
+	return <Navigate to={ to }/>;
+};
 
 export default Router;

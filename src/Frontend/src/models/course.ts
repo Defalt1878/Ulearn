@@ -46,7 +46,7 @@ interface InfoByUnit {
 	flashcardsSlideSlug: string;
 }
 
-interface AbstractScoringGroupInfo {
+export interface AbstractScoringGroupInfo {
 	id: string;
 	name: string;
 	abbreviation: string;

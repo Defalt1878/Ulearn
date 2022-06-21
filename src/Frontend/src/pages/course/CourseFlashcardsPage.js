@@ -1,13 +1,13 @@
 import { connect } from "react-redux";
-import { withRouter } from "react-router-dom";
 
 import CourseFlashcardsPage from "src/components/flashcards/CourseFlashcardsPage/CourseFlashcardsPage";
 
 import { sendFlashcardResult, loadFlashcards } from 'src/actions/flashcards';
 import getFlashcardsWithTheorySlides from "./getFlashcardsWithTheorySlides";
+import { withParams } from "../../utils/router";
 
-const mapStateToProps = (state, { match }) => {
-	let { courseId } = match.params;
+const mapStateToProps = (state, { params }) => {
+	let { courseId } = params;
 	courseId = courseId.toLowerCase();
 
 	const data = state.courses;
@@ -41,5 +41,5 @@ const mapDispatchToProps = (dispatch) => ({
 });
 
 const connected = connect(mapStateToProps, mapDispatchToProps)(CourseFlashcardsPage);
-export default withRouter(connected);
+export default withParams(connected);
 

@@ -20,8 +20,8 @@ describe('convertSnakeCaseToLowerCamelCase should', () => {
 		expect(result).toEqual("argumentInSnakeCase");
 	});
 
-	test.each(snakeAndCamelPairs)
-	('for %s argument to be %s', (snake, camel) => {
+	test.each(snakeAndCamelPairs)(
+		'for %s argument to be %s', (snake, camel) => {
 		const result = convertSnakeCaseToLowerCamelCase(snake);
 
 		expect(result).toEqual(camel);
@@ -56,8 +56,8 @@ describe('convertCamelCaseToSnakeCase should', () => {
 		expect(result).toEqual("argument_in_camel_case");
 	});
 
-	test.each(snakeAndCamelPairs)
-	('result %s given from %s argument', (snake, camel) => {
+	test.each(snakeAndCamelPairs)(
+		'result %s given from %s argument', (snake, camel) => {
 		const result = convertCamelCaseToSnakeCase(camel);
 
 		expect(result).toEqual(snake);
@@ -68,8 +68,8 @@ describe('convertCamelCaseToSnakeCase should', () => {
 		[null, null],
 		[undefined, null],
 		['AAAA', 'a_a_a_a']
-	])
-	('for %s argument to be %s', (argument, expectedResult) => {
+	])(
+		'for %s argument to be %s', (argument, expectedResult) => {
 		const result = convertCamelCaseToSnakeCase(argument);
 
 		expect(result).toEqual(expectedResult);

@@ -1,7 +1,7 @@
-import { connect } from "react-redux";
+import { connect, } from "react-redux";
 import { Dispatch } from "redux";
-import { RouteComponentProps, withRouter } from "react-router-dom";
 import { getDataIfLoaded } from "src/redux";
+import { withOldRouter } from "src/utils/router";
 import { Course, } from 'src/components/course/Course/Course';
 
 import { changeCurrentCourseAction, loadCourse, loadCourseErrors } from "src/actions/course";
@@ -9,18 +9,19 @@ import { loadUserProgress, userProgressUpdate } from "src/actions/userProgress";
 import { loadFlashcards } from "src/actions/flashcards";
 
 import { RootState } from "src/redux/reducers";
-import { MatchParams } from "src/models/router";
 import { CourseInfo, UnitInfo } from "src/models/course";
 import { FlashcardsStatistics } from "src/components/course/Navigation/types";
 import getSlideInfo from "src/components/course/Course/CourseUtils";
 import api from "src/api";
 import { CourseRoleType } from "src/consts/accessType";
+import { WithRouter } from "src/models/router";
 
-const mapStateToProps = (state: RootState, route: RouteComponentProps<MatchParams>) => {
-	const courseId = route.match.params.courseId.toLowerCase();
+const mapStateToProps = (state: RootState, { location, params }: WithRouter) => {
+	const courseId = params.courseId.toLowerCase();
 	const courseInfo = state.courses.fullCoursesInfo[courseId];
 	const deadLines = getDataIfLoaded(state.deadLines.deadLines[courseId]);
-	const slideInfo = getSlideInfo(route, courseInfo, deadLines, state.account.isSystemAdministrator || state.account.roleByCourse[courseId] && state.account.roleByCourse[courseId] !== CourseRoleType.student);
+	const slideInfo = getSlideInfo(params, location, courseInfo, deadLines,
+		state.account.isSystemAdministrator || state.account.roleByCourse[courseId] && state.account.roleByCourse[courseId] !== CourseRoleType.student);
 
 	const flashcardsByUnit = state.courses.flashcardsInfoByCourseByUnits[courseId];
 	const flashcardsStatisticsByUnits: { [unitId: string]: FlashcardsStatistics } | undefined = flashcardsByUnit ? {} : undefined;
@@ -58,6 +59,7 @@ const mapStateToProps = (state: RootState, route: RouteComponentProps<MatchParam
 		deadLines,
 	};
 };
+
 const mapDispatchToProps = (dispatch: Dispatch) => ({
 	enterToCourse: (courseId: string) => dispatch(changeCurrentCourseAction(courseId)),
 	loadCourse: (courseId: string) => loadCourse(courseId)(dispatch),
@@ -68,9 +70,8 @@ const mapDispatchToProps = (dispatch: Dispatch) => ({
 	loadDeadLines: (courseId: string) => api.deadLines.redux.getDeadLinesForCurrentUserRedux(courseId)(dispatch),
 });
 
-
 const connected = connect(mapStateToProps, mapDispatchToProps)(Course);
-export default withRouter(connected);
+export default withOldRouter(connected);
 
 
 function mapCourseInfoToUnits(courseInfo: CourseInfo) {

@@ -1,14 +1,14 @@
 import { connect } from "react-redux";
-import { withRouter } from "react-router-dom";
 
 import UnitFlashcards from "src/components/flashcards/UnitPage/UnitPage";
 
 import { sendFlashcardResult, loadFlashcards } from 'src/actions/flashcards';
 import getFlashcardsWithTheorySlides from "./getFlashcardsWithTheorySlides";
 import { findUnitIdBySlideId } from "src/components/course/Course/CourseUtils";
+import { withParams } from "src/utils/router";
 
-const mapStateToProps = (state, { match }) => {
-	let { courseId, slideSlugOrAction } = match.params;
+const mapStateToProps = (state, { params }) => {
+	let { courseId, slideSlugOrAction } = params;
 	courseId = courseId.toLowerCase();
 	const slideId = slideSlugOrAction.split('_').pop();
 	const data = state.courses;
@@ -49,5 +49,5 @@ const mapDispatchToProps = (dispatch) => ({
 
 
 const connected = connect(mapStateToProps, mapDispatchToProps)(UnitFlashcards);
-export default withRouter(connected);
+export default withParams(connected);
 

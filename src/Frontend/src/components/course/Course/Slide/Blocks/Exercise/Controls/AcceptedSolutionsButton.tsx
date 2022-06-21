@@ -1,6 +1,7 @@
-import React, { createRef, RefObject } from "react";
+import React, { useRef } from "react";
 
-import { Button, Tooltip, TooltipTrigger } from "ui";
+import { Button, Tooltip, TooltipTrigger, ThemeContext, } from "ui";
+
 import { EyeOpened } from "icons";
 import IControlWithText from "./IControlWithText";
 
@@ -9,17 +10,76 @@ import ShowControlsTextContext from "./ShowControlsTextContext";
 import styles from './Controls.less';
 
 import texts from "../Exercise.texts";
+import defaultTheme from "src/uiTheme";
 
-
-interface State {
-	showAcceptedSolutions: boolean;
-}
 
 export interface Props extends IControlWithText {
 	isShowAcceptedSolutionsAvailable: boolean;
 	tooltipTrigger?: TooltipTrigger;
 
 	onVisitAcceptedSolutions: () => void;
+}
+
+export default function AcceptedSolutionsButtonFC({
+	isShowAcceptedSolutionsAvailable,
+	tooltipTrigger,
+	onVisitAcceptedSolutions,
+	showControlsText,
+}: Props): React.ReactElement {
+	const tooltip = useRef<Tooltip>(null);
+
+	return (
+		<ThemeContext.Provider value={ defaultTheme }>
+				<span className={ styles.exerciseControls } onClick={ showAcceptedSolutionsWarning }>
+					<Tooltip
+						ref={ tooltip }
+						pos={ "bottom left" }
+						trigger={ tooltipTrigger }
+						render={ renderAcceptedSolutionsHint }>
+						<span className={ styles.exerciseControlsIcon }>
+							<EyeOpened/>
+						</span>
+						<ShowControlsTextContext.Consumer>
+							{
+								(showControlsTextContext) => (showControlsText || showControlsTextContext) && texts.controls.acceptedSolutions.text
+							}
+						</ShowControlsTextContext.Consumer>
+					</Tooltip>
+				</span>
+		</ThemeContext.Provider>
+	);
+
+	function showAcceptedSolutionsWarning(): void {
+		if(isShowAcceptedSolutionsAvailable) {
+			showAcceptedSolutions();
+		}
+	}
+
+	function renderAcceptedSolutionsHint(): React.ReactNode {
+		return (
+			<span>
+				{ texts.controls.acceptedSolutions.buildWarning() }
+				<Button use={ "danger" } onClick={ showAcceptedSolutions }>
+					{ texts.controls.acceptedSolutions.continue }
+				</Button>
+			</span>);
+	}
+
+	function showAcceptedSolutions(e?: React.MouseEvent<HTMLButtonElement, MouseEvent>): void {
+		onVisitAcceptedSolutions();
+
+		if(e) {
+			e.stopPropagation();
+		}
+
+		tooltip.current?.hide();
+	}
+}
+
+/*
+
+interface State {
+	showAcceptedSolutions: boolean;
 }
 
 export default class AcceptedSolutionsButton
@@ -80,3 +140,4 @@ export default class AcceptedSolutionsButton
 		this.tooltip.current?.hide();
 	};
 }
+*/

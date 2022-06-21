@@ -1,7 +1,7 @@
 import React, { createRef, RefObject } from 'react';
 
 import { Controlled, } from "react-codemirror2";
-import { Checkbox, FLAT_THEME, Select, ThemeContext, Toast, Tooltip, } from "ui";
+import { Checkbox, FLAT_THEME_8PX_OLD, Select, ThemeContext, Toast, Tooltip, } from "ui";
 import Review from "./Review";
 import { CongratsModal } from "./CongratsModal/CongratsModal";
 import { ExerciseOutput, HasOutput } from "./ExerciseOutput/ExerciseOutput";
@@ -15,7 +15,7 @@ import { Info } from 'icons';
 import { darkFlat } from "src/uiTheme";
 
 import classNames from 'classnames';
-import moment from "moment";
+import moment from "moment-timezone";
 
 import * as acceptedSolutionsApi from "src/api/acceptedSolutions";
 import { exerciseSolutions, loadFromCache, saveToCache, } from "src/utils/localStorageManager";
@@ -502,20 +502,20 @@ class Exercise extends React.Component<Props, State> {
 						value={ value }
 					/>
 					{ exerciseCodeDoc && isReview &&
-					<Review
-						user={ user }
-						addReviewComment={ this.addReviewComment }
-						deleteReviewOrComment={ this.deleteReviewOrComment }
-						selectedReviewId={ selectedReviewId }
-						onReviewClick={ this.selectComment }
-						editReviewOrComment={ this.editReviewOrComment }
-						reviews={ getReviewsWithoutDeleted(currentReviews)
-							.map(r => ({
-								...r,
-								markers: undefined,
-								anchor: getReviewAnchorTop(r, editor,),
-							})) }
-					/>
+						<Review
+							user={ user }
+							addReviewComment={ this.addReviewComment }
+							deleteReviewOrComment={ this.deleteReviewOrComment }
+							selectedReviewId={ selectedReviewId }
+							onReviewClick={ this.selectComment }
+							editReviewOrComment={ this.editReviewOrComment }
+							reviews={ getReviewsWithoutDeleted(currentReviews)
+								.map(r => ({
+									...r,
+									markers: undefined,
+									anchor: getReviewAnchorTop(r, editor,),
+								})) }
+						/>
 					}
 				</div>
 				{/* TODO not included in current release !isEditable && currentSubmission && this.renderOverview(currentSubmission)*/ }
@@ -525,38 +525,43 @@ class Exercise extends React.Component<Props, State> {
 						onClick={ isEditable ? this.sendExercise : this.loadNewTry }
 						text={ isEditable ? texts.controls.submitCode.text : texts.controls.submitCode.redactor }
 					/>
-					{ renderedHints.length !== 0 &&
-					<Controls.ShowHintButton
-						onAllHintsShowed={ this.onAllHintsShowed }
-						renderedHints={ renderedHints }
-					/> }
-					{ isEditable && <Controls.ResetButton onResetButtonClicked={ this.resetCodeAndCache }/> }
-					{ (!isEditable && hasOutput) && <Controls.OutputButton
-						showOutput={ showOutput }
-						onShowOutputButtonClicked={ this.toggleOutput }
-					/> }
+					<Controls.ButtonsContainer>
+						{ renderedHints.length !== 0 &&
+							<Controls.ShowHintButton
+								onAllHintsShowed={ this.onAllHintsShowed }
+								renderedHints={ renderedHints }
+							/> }
+
+						{ isEditable && <Controls.ResetButton onResetButtonClicked={ this.resetCodeAndCache }/> }
+
+						{ (!isEditable && hasOutput) && <Controls.OutputButton
+							showOutput={ showOutput }
+							onShowOutputButtonClicked={ this.toggleOutput }
+						/> }
+
+						{ (!hideSolutions && (isAllHintsShowed || isSafeShowAcceptedSolutions)
+								&& attemptsStatistics && attemptsStatistics.usersWithRightAnswerCount > 0)
+							&& <Controls.AcceptedSolutionsButton
+								onVisitAcceptedSolutions={ this.openAcceptedSolutionsModal }
+								isShowAcceptedSolutionsAvailable={ isSafeShowAcceptedSolutions }
+							/> }
+						{ this.isVisualizerEnabled() &&
+							<Controls.VisualizerButton
+								code={ value }
+								onModalClose={ this.copyCodeFromVisualizer }/>
+						}
+					</Controls.ButtonsContainer>
 					{ attemptsStatistics && <Controls.StatisticsHint attemptsStatistics={ attemptsStatistics }/> }
-					{ (!hideSolutions && (isAllHintsShowed || isSafeShowAcceptedSolutions)
-						&& attemptsStatistics && attemptsStatistics.usersWithRightAnswerCount > 0)
-					&& <Controls.AcceptedSolutionsButton
-						onVisitAcceptedSolutions={ this.openAcceptedSolutionsModal }
-						isShowAcceptedSolutionsAvailable={ isSafeShowAcceptedSolutions }
-					/> }
-					{ this.isVisualizerEnabled() &&
-					<Controls.VisualizerButton
-						code={ value }
-						onModalClose={ this.copyCodeFromVisualizer }/>
-					}
 				</Controls>
 				}
 				{ showOutput && HasOutput(outputMessage, automaticChecking, expectedOutput) &&
-				<ExerciseOutput
-					solutionRunStatus={ visibleCheckingResponse?.solutionRunStatus ?? SolutionRunStatus.Success }
-					message={ outputMessage }
-					expectedOutput={ expectedOutput }
-					automaticChecking={ automaticChecking }
-					submissionColor={ submissionColor }
-				/>
+					<ExerciseOutput
+						solutionRunStatus={ visibleCheckingResponse?.solutionRunStatus ?? SolutionRunStatus.Success }
+						message={ outputMessage }
+						expectedOutput={ expectedOutput }
+						automaticChecking={ automaticChecking }
+						submissionColor={ submissionColor }
+					/>
 				}
 			</React.Fragment>
 		);
@@ -624,7 +629,7 @@ class Exercise extends React.Component<Props, State> {
 
 		return (
 			<div className={ styles.select }>
-				<ThemeContext.Provider value={ FLAT_THEME }>
+				<ThemeContext.Provider value={ FLAT_THEME_8PX_OLD }>
 					<Select
 						width={ '100%' }
 						items={ items }
@@ -657,7 +662,7 @@ class Exercise extends React.Component<Props, State> {
 		});
 		return (
 			<div className={ styles.select }>
-				<ThemeContext.Provider value={ FLAT_THEME }>
+				<ThemeContext.Provider value={ FLAT_THEME_8PX_OLD }>
 					<Select
 						disabled={ !isEditable }
 						width={ '100%' }

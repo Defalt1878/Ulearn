@@ -1,7 +1,8 @@
 import React, { Component } from "react";
 import Error404 from "./Error404";
-
-import { RouteComponentProps, withRouter } from "react-router-dom";
+import { WithLocation } from "src/models/router";
+import { HasReactChild } from "src/consts/common";
+import { withLocation } from "../../../utils/router";
 
 export class UrlError extends Error {
 	private response?: string;
@@ -16,12 +17,12 @@ interface State {
 	error: Error | null,
 }
 
-class NotFoundErrorBoundary extends Component<RouteComponentProps, State> {
+class NotFoundErrorBoundary extends Component<HasReactChild & WithLocation, State> {
 	state: State = {
 		error: null,
 	};
 
-	componentDidUpdate(prevProps: RouteComponentProps) {
+	componentDidUpdate(prevProps: WithLocation) {
 		const { error, } = this.state;
 		const { location, } = this.props;
 
@@ -50,4 +51,4 @@ class NotFoundErrorBoundary extends Component<RouteComponentProps, State> {
 	}
 }
 
-export default withRouter(NotFoundErrorBoundary);
+export default withLocation(NotFoundErrorBoundary);

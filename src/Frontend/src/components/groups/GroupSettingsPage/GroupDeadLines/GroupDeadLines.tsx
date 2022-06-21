@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import moment from "moment/moment";
+import moment from "moment-timezone";
 
 import {
 	Button,
@@ -19,7 +19,7 @@ import {
 import { ValidationContainer, ValidationWrapper } from "@skbkontur/react-ui-validations";
 import { ArrowChevronDown, Copy, Delete, Undo, Warning } from "icons";
 import Avatar from "src/components/common/Avatar/Avatar";
-import { Profile } from 'src/components/groups/GroupSettingsPage/GroupMembers/Profile.js';
+import { Profile } from 'src/components/groups/GroupSettingsPage/GroupMembers/Profile';
 
 import { clone } from "src/utils/jsonExtensions";
 import getPluralForm from "src/utils/getPluralForm";

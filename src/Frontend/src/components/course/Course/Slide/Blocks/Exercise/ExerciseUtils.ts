@@ -8,6 +8,20 @@ import { Language } from "src/consts/languages";
 import CodeMirror, { Doc, MarkerRange, TextMarker } from "codemirror";
 import { ReduxData } from "src/redux";
 import { ReviewCompare } from "../../InstructorReview/InstructorReview.types";
+import 'codemirror/mode/clike/clike.js';
+import 'codemirror/mode/python/python.js';
+import 'codemirror/mode/python/python.js';
+import 'codemirror/mode/clike/clike.js';
+import 'codemirror/mode/javascript/javascript.js';
+import 'codemirror/mode/xml/xml.js';
+import 'codemirror/mode/javascript/javascript.js';
+import 'codemirror/mode/css/css.js';
+import 'codemirror/mode/haskell/haskell.js';
+import 'codemirror/mode/clike/clike.js';
+import 'codemirror/mode/clike/clike.js';
+import 'codemirror/mode/sql/sql.js';
+import 'codemirror/mode/jsx/jsx.js';
+import 'codemirror/mode/xml/xml.js';
 
 enum SubmissionColor {
 	MaxResult = "MaxResult", // Студенту больше ничего не может сделать, ни сийчам ни в будущем
@@ -16,7 +30,7 @@ enum SubmissionColor {
 	Message = "Message", // Сообщение, ни на что не влияющее, например, старая версия
 }
 
-interface ReviewInfoWithMarker extends ReviewInfo {
+type ReviewInfoWithMarker = ReviewInfo & {
 	markers: TextMarker[];
 }
 
@@ -264,44 +278,31 @@ const getReviewSelectionLength = (review: ReviewInfo, exerciseCodeDoc: Doc): num
 	exerciseCodeDoc.indexFromPos({ line: review.finishLine, ch: review.finishPosition })
 	- exerciseCodeDoc.indexFromPos({ line: review.startLine, ch: review.startPosition });
 
-
 const loadLanguageStyles = (language: Language): string => {
 	switch (language.toLowerCase()) {
 		case Language.cSharp:
-			require('codemirror/mode/clike/clike');
 			return 'text/x-csharp';
 		case Language.python2:
-			require('codemirror/mode/python/python');
 			return 'text/x-python';
 		case Language.python3:
-			require('codemirror/mode/python/python');
 			return 'text/x-python';
 		case Language.java:
-			require('codemirror/mode/clike/clike');
 			return 'text/x-java';
 		case Language.javaScript:
-			require('codemirror/mode/javascript/javascript');
 			return 'text/javascript';
 		case Language.html:
-			require('codemirror/mode/xml/xml');
 			return 'text/html';
 		case Language.typeScript:
-			require('codemirror/mode/javascript/javascript');
 			return 'text/typescript';
 		case Language.css:
-			require('codemirror/mode/css/css');
 			return 'text/css';
 		case Language.haskell:
-			require('codemirror/mode/haskell/haskell');
 			return 'text/x-haskell';
 		case Language.cpp:
-			require('codemirror/mode/clike/clike');
 			return 'text/x-c++src';
 		case Language.c:
-			require('codemirror/mode/clike/clike');
 			return 'text/x-c';
 		case Language.pgsql:
-			require('codemirror/mode/sql/sql');
 			return 'text/x-pgsql';
 		case Language.mikrokosmos:
 			return 'text/plain';
@@ -310,11 +311,9 @@ const loadLanguageStyles = (language: Language): string => {
 			return 'text/plain';
 
 		case Language.jsx:
-			require('codemirror/mode/jsx/jsx');
 			return 'text/jsx';
 
 		default:
-			require('codemirror/mode/xml/xml');
 			return 'text/html';
 	}
 };

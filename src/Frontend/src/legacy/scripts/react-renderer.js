@@ -10,8 +10,7 @@
  * 	Child components are not supported now.
  */
 
-import React from "react";
-import ReactDOM from "react-dom";
+import { createRoot } from 'react-dom/client';
 
 /* Import all components you want to insert into legacy (cshtml+jquery) layout */
 
@@ -52,6 +51,9 @@ function renderReactComponent(componentType, element, props) {
 
 	let Component = components[componentType];
 
-	ReactDOM.render(<Component { ...props } />, element);
+	if(element) {
+		const root = createRoot(element);
+		root.render(<Component { ...props } />);
+	}
 }
 

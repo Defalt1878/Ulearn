@@ -2,7 +2,6 @@ import React, { Component, PureComponent } from 'react';
 import { Helmet } from "react-helmet";
 import { saveAs } from "file-saver";
 import { connect } from "react-redux";
-import { withRouter } from "react-router-dom";
 import * as PropTypes from "prop-types";
 
 import api from "src/api";
@@ -15,9 +14,8 @@ import { exerciseSolutions, removeFromCache, setBlockCache, } from "src/utils/lo
 import documentReadyFunctions from "src/legacy/legacy";
 import runLegacy from "src/legacy/legacyRunner";
 
-
 import { changeCurrentCourseAction } from "src/actions/course";
-
+import { withNavigate } from "src/utils/router";
 
 function getUrlParts(url) {
 	let a = document.createElement('a');
@@ -132,7 +130,7 @@ class DownloadedHtmlContent extends Component {
 						setBlockCache(true);
 						window.location.href = newUrl.pathname + newUrl.search;
 					} else {
-						this.props.history.replace(newUrl.pathname + newUrl.search);
+						this.props.navigate(newUrl.pathname + newUrl.search, { replace: true });
 						return Promise.resolve(undefined);
 					}
 				}
@@ -189,12 +187,12 @@ class DownloadedHtmlContent extends Component {
 			body: body.innerHTML,
 			bodyClassName: body.className,
 			links: links
-		});
+		}, () => runLegacy(documentReadyFunctions));
 
 		DownloadedHtmlContent.removeStickyHeaderAndColumn();
 
 		/* Run scripts */
-		runLegacy(documentReadyFunctions);
+		// runLegacy(documentReadyFunctions);
 
 		window.meta = undefined;
 		let allScriptTags = Array.from(body.getElementsByTagName('script'));
@@ -216,7 +214,7 @@ class DownloadedHtmlContent extends Component {
 			return s;
 		});
 
-		this.lastRenderedUrl = url;
+		//this.lastRenderedUrl = url;
 		DownloadedHtmlContent.removeBootstrapModalBackdrop();
 	}
 
@@ -240,7 +238,7 @@ class DownloadedHtmlContent extends Component {
 
 	downloadFile(blob, filename) {
 		saveAs(blob, filename, false);
-		this.props.history.goBack();
+		this.props.navigate(-1);
 	}
 
 	render() {
@@ -359,11 +357,7 @@ class DownloadedHtmlContent extends Component {
 	}
 
 	static propTypes = {
-		history: PropTypes.shape({
-			push: PropTypes.func.isRequired,
-			replace: PropTypes.func.isRequired,
-			createHref: PropTypes.func.isRequired
-		}).isRequired,
+		navigate: PropTypes.func.isRequired,
 		injectInWrapperAfterContentReady: PropTypes.func,
 	}
 }
@@ -392,7 +386,7 @@ class Meta extends Component {
 				<title>{ meta.title }</title>
 				<meta name="title" content={ meta.title }/>
 				<meta property="og:title" content={ meta.title }/>
-				<meta property="og:image" content={'/favicon.ico' }/>
+				<meta property="og:image" content={ '/favicon.ico' }/>
 				<meta property="og:image:alt" content={ meta.description }/>
 				<meta property="og:description" content={ meta.description }/>
 				<meta property="og:locale" content="ru_RU"/>
@@ -407,4 +401,4 @@ class Meta extends Component {
 	}
 }
 
-export default connect(DownloadedHtmlContent.mapStateToProps, DownloadedHtmlContent.mapDispatchToProps)(withRouter(DownloadedHtmlContent));
+export default connect(DownloadedHtmlContent.mapStateToProps, DownloadedHtmlContent.mapDispatchToProps)(withNavigate(DownloadedHtmlContent));

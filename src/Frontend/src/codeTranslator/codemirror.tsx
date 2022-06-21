@@ -1,10 +1,11 @@
 import React from "react";
-import ReactDOM from "react-dom";
+import { createRoot } from "react-dom/client";
 import { EditorConfiguration } from "codemirror";
 
 import StaticCode, { Props } from "src/components/course/Course/Slide/Blocks/Exercise/StaticCode";
 
 import { Language } from "src/consts/languages";
+
 
 export default function translateTextareaToCode(
 	textarea: HTMLTextAreaElement,
@@ -17,14 +18,14 @@ export default function translateTextareaToCode(
 
 	const nodeElement = document.createElement('div');
 	textarea.parentNode?.replaceChild(nodeElement, textarea);
-	ReactDOM.render((
-			<StaticCode
-				language={ language }
-				code={ code }
-				codeMirrorOptions={ additionalSettings?.config }
-				disableStyles={ additionalSettings?.settings.disableStyles }
-			/>),
-		nodeElement);
+
+	const root = createRoot(nodeElement);
+	root.render(<StaticCode
+		language={ language }
+		code={ code }
+		codeMirrorOptions={ additionalSettings?.config }
+		disableStyles={ additionalSettings?.settings.disableStyles }
+	/>);
 }
 
 export const settingsForFlashcards = {

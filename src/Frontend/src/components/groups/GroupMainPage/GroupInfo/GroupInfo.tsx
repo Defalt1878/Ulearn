@@ -34,10 +34,10 @@ function GroupInfo({ group, courseId, deleteGroup, toggleArchived, page, }: Prop
 		<div className={ styles.wrapper }>
 			<div className={ styles["content-wrapper"] }>
 				<Link className={ styles["link-to-group-page"] }
-					  to={ `/${ courseId }/groups/${ group.id }/` + page ?? '' }/>
+					  to={ `/${ courseId }/groups/${ group.id }/` + (page || '') }/>
 				<div className={ styles["content-block"] }>
 					<header className={ styles.content }>
-						<Link to={ `/${ courseId }/groups/${ group.id }/` + page ?? '' }
+						<Link to={ `/${ courseId }/groups/${ group.id }/` + (page || '') }
 							  className={ styles.groupLink }>
 							<h3 className={ styles["group-name"] }>{ group.name }</h3>
 						</Link>
@@ -69,10 +69,10 @@ function GroupInfo({ group, courseId, deleteGroup, toggleArchived, page, }: Prop
 			<div>
 				{ `${ pluralFormOfTeachers }: ${ teachers.join(', ') } ` }
 				{ teachersExcess > 0 &&
-				<Link className={ styles["link-to-group-members"] }
-					  to={ `/${ courseId }/groups/${ group.id }/members` }>
-					и ещё { teachersExcess }
-				</Link>
+					<Link className={ styles["link-to-group-members"] }
+						  to={ `/${ courseId }/groups/${ group.id }/members` }>
+						и ещё { teachersExcess }
+					</Link>
 				}
 			</div>
 		);

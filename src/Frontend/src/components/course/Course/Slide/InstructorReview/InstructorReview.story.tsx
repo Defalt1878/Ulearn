@@ -73,10 +73,10 @@ import { FavouriteReviewRedux } from "src/redux/instructor";
 import { groupLoadFailAction, groupLoadStartAction, groupLoadSuccessAction } from "src/actions/groups";
 import { assignBotReview, } from "src/api/submissions";
 import { Button } from "ui";
-import { RouteComponentProps, withRouter } from "react-router-dom";
-import { MatchParams } from "../../../../../models/router";
+import { MatchParams, WithRouter } from "src/models/router";
 import { skipLoki } from "../../../Navigation/stroies.data";
 import { mapStateToProps } from "./InstructorReview.redux";
+import { withOldRouter } from "../../../../../utils/router";
 
 
 const user: UserInfo = getMockedUser({
@@ -435,6 +435,7 @@ const loadingTimes = {
 	submissions: 100,
 	prohibitFurtherReview: 100,
 	enableManualChecking: 100,
+	loadDeadLines: 100,
 };
 
 const getNextAPStatus = () => {
@@ -462,6 +463,9 @@ const getNextAPStatus = () => {
 
 const mapDispatchToProps = (dispatch: Dispatch): ApiFromRedux => {
 	return {
+		loadDeadLines: (courseId: string, studentId: string) => {
+			return returnPromiseAfterDelay(loadingTimes.loadDeadLines, { deadLines: [] });
+		},
 		addReview: (
 			submissionId: number,
 			text: string,
@@ -707,9 +711,9 @@ const mapDispatchToProps = (dispatch: Dispatch): ApiFromRedux => {
 	};
 };
 
-const Connected = connect(mapStateToProps, mapDispatchToProps)(withRouter(InstructorReview));
+const Connected = connect(mapStateToProps, mapDispatchToProps)(withOldRouter(InstructorReview));
 
-const Template: Story<PropsFromSlide & RouteComponentProps<MatchParams>> = (args: PropsFromSlide & RouteComponentProps<MatchParams>) => {
+const Template: Story<PropsFromSlide & WithRouter> = (args: PropsFromSlide & WithRouter) => {
 	if(!reduxStore.getState().account.isAuthenticated) {
 		loadUserToRedux(user, courseId);
 	}
@@ -741,10 +745,14 @@ const courseId = 'basic';
 const slideId = 'slide';
 const args: PropsFromSlide = {
 	slideContext: {
-		slideId, courseId, title: 'Angry Birds',
+		slideId,
+		courseId,
+		title: 'Angry Birds',
+		unitId:"unit",
 		slideInfo: {
 			slideId,
 			courseId,
+			deadLineInfo: null,
 			slideType: SlideType.Exercise,
 			isLti: false,
 			isReview: true,

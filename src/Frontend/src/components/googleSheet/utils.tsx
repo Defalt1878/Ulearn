@@ -1,7 +1,7 @@
 import api from "../../api";
 import { Checkbox, DatePicker, Gapped, Input, Switcher } from "ui";
 import React from "react";
-import moment from "moment";
+import moment from "moment-timezone";
 import styles from "./utils.less";
 import { getDateDDMMYY, serverFormat } from "../../utils/momentUtils";
 import { GoogleSheetsExportTaskResponse } from "../../models/googleSheet";

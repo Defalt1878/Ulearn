@@ -9,7 +9,7 @@ export default {
 };
 const mock = () => ({});
 
-export const Default = (): React.ReactNode => <GroupInfo deleteGroup={ mock } toggleArchived={ mock } courseId={ '1' }
+export const Default = (): React.ReactNode => <GroupInfo page={'somePage'} deleteGroup={ mock } toggleArchived={ mock } courseId={ '1' }
 														 group={ getGroup() }/>;
 
 Default.storyName = "default";

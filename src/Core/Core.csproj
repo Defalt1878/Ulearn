@@ -5,6 +5,8 @@
 		<TargetFrameworks>net48;net5.0</TargetFrameworks>
 		<NoWarn>NU1701;CS0168</NoWarn>
 		<SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+		<Authors>SKB Kontur Ulearn Team</Authors>
+		<Copyright>Copyright 2014–2022 SKB Kontur</Copyright>
 	</PropertyGroup>
 	<ItemGroup>
 		<PackageReference Include="AngleSharp" Version="0.14.0" />

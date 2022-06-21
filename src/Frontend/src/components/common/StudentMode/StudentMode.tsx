@@ -1,8 +1,8 @@
 import React, { RefObject } from "react";
 import { Dispatch } from "redux";
 import { connect } from "react-redux";
-import { useRouteMatch } from "react-router-dom";
 import cn from "classnames";
+import { useParams } from "react-router-dom";
 
 import { Toggle, } from "ui";
 
@@ -26,10 +26,10 @@ interface Props {
 function StudentMode({ isStudentMode, setStudentMode, deviceType, containerClass, }: Props) {
 	const refButton: RefObject<HTMLButtonElement> = React.createRef();
 	const refSpan: RefObject<HTMLSpanElement> = React.createRef();
-	const match = useRouteMatch<MatchParams>("/course/:courseId/:slideSlugOrAction");
+	const params = useParams<keyof MatchParams>();
 	const queryParams = parseKnownQueryParams(location.search);
 
-	if(!match?.params.slideSlugOrAction || queryParams.isLti || queryParams.submissionId) {
+	if(!params.slideSlugOrAction || queryParams.isLti || queryParams.submissionId) {
 		return null;
 	}
 

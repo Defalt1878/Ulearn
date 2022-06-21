@@ -5,7 +5,7 @@ import cn from "classnames";
 import { ThemeContext, Tooltip, TooltipTrigger } from "ui";
 import { Lightbulb } from "icons";
 import IControlWithText from "./IControlWithText";
-import { darkFlat } from "src/uiTheme";
+import defaultTheme, { darkFlat, } from "src/uiTheme";
 
 import ShowControlsTextContext from "./ShowControlsTextContext";
 
@@ -34,28 +34,30 @@ function ShowHintButton({
 	const hintPosition = "bottom left";
 
 	return (
-		<span className={ styles.exerciseControls } onClick={ showTooltip }>
-				<ShowControlsTextContext.Consumer>
-				{
-					(showControlsTextContext) =>
-						<>
-						<span className={ styles.exerciseControlsIcon }>
-							<Tooltip
-								disableAnimations={ !showControlsTextContext && !showControlsText }
-								onCloseRequest={ closeTooltip }
-								allowedPositions={ [hintPosition] }
-								pos={ hintPosition }
-								trigger={ mainTooltipTrigger || (isTooltipOpened ? "opened" : "closed") }
-								render={ renderHints }
-							>
-								<Lightbulb/>
-							</Tooltip>
-						</span>
-							{ (showControlsTextContext || showControlsText) && texts.controls.hints.text }
-						</>
-				}
-			</ShowControlsTextContext.Consumer>
-		</span>
+		<ThemeContext.Provider value={ defaultTheme }>
+			<span className={ styles.exerciseControls } onClick={ showTooltip }>
+					<ShowControlsTextContext.Consumer>
+					{
+						(showControlsTextContext) =>
+							<>
+							<span className={ styles.exerciseControlsIcon }>
+								<Tooltip
+									disableAnimations={ !showControlsTextContext && !showControlsText }
+									onCloseRequest={ closeTooltip }
+									allowedPositions={ [hintPosition] }
+									pos={ hintPosition }
+									trigger={ mainTooltipTrigger || (isTooltipOpened ? "opened" : "closed") }
+									render={ renderHints }
+								>
+									<Lightbulb/>
+								</Tooltip>
+							</span>
+								{ (showControlsTextContext || showControlsText) && texts.controls.hints.text }
+							</>
+					}
+				</ShowControlsTextContext.Consumer>
+			</span>
+		</ThemeContext.Provider>
 	);
 
 	function showTooltip() {

@@ -3,18 +3,18 @@ import React from 'react';
 import classnames from 'classnames';
 import { connect, } from "react-redux";
 import { Dispatch } from "redux";
-import { Link, RouteComponentProps, withRouter } from 'react-router-dom';
-
-import { getQueryStringParameter } from "src/utils";
+import { Link, } from 'react-router-dom';
 
 import { Tabs } from 'ui';
 import OpenedFlashcard from "../Flashcards/OpenedFlashcard/OpenedFlashcard.js";
 
+import { getQueryStringParameter } from "src/utils";
+import { withParams } from "src/utils/router";
 
 import { RootState } from "src/models/reduxState";
 import { ShortSlideInfo } from "src/models/slide";
 import { Flashcard } from "src/models/flashcards";
-import { MatchParams } from "src/models/router";
+import { WithParams } from "src/models/router";
 import { constructPathToSlide } from "src/consts/routes";
 
 import { loadFlashcards, } from "src/actions/flashcards";
@@ -160,8 +160,8 @@ class PreviewUnitPageFromAllCourse extends React.Component<Props, State> {
 	mockFunction = () => ({});
 }
 
-const mapStateToProps = (state: RootState, { match }: RouteComponentProps<MatchParams>) => {
-	const { courseId, } = match.params;
+const mapStateToProps = (state: RootState, { params }: WithParams) => {
+	const { courseId, } = params;
 	const unitId = getQueryStringParameter('unitId');
 	const courseIdInLowerCase = courseId.toLowerCase();
 	const data = state.courses;
@@ -205,4 +205,4 @@ const mapDispatchToProps = (dispatch: Dispatch) => ({
 });
 
 const connected = connect(mapStateToProps, mapDispatchToProps)(PreviewUnitPageFromAllCourse);
-export default withRouter(connected);
+export default withParams(connected);

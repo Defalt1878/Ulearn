@@ -12,9 +12,8 @@ import { DiffInfo } from "./utils";
 import CodeMirror, { Editor } from "codemirror";
 import { FavouriteReviewRedux, LastUsedReview, } from "src/redux/instructor";
 import { SlideContext } from "../Slide.types";
-import { RouteComponentProps } from "react-router-dom";
-import { MatchParams } from "src/models/router";
 import { DeadLineInfo, DeadLinesResponse } from "src/models/deadLines";
+import { WithNavigate } from "src/models/router";
 
 export interface PropsFromRedux {
 	user?: UserInfo;
@@ -84,7 +83,7 @@ export interface PropsFromSlide {
 	expectedOutput?: string | null;
 }
 
-export type Props = PropsFromRedux & ApiFromRedux & PropsFromSlide & RouteComponentProps<MatchParams>;
+export type Props = PropsFromRedux & ApiFromRedux & PropsFromSlide & WithNavigate;
 
 export interface InstructorExtraFields {
 	outdated?: boolean;

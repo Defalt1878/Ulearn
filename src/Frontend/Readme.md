@@ -61,7 +61,7 @@ window.config={
 в app.tsx мы также добавляем отловку ошибок в ErrorBoundary (сюда же можно отнести и 404 страницу :)).
 
 Компоненты находятся в папках src/pages и src/components.
-в pages обычно помещаются не сами компоненты, а их версия с подключением к redux (connect) или react-router-dom (withRouter).
+в pages обычно помещаются не сами компоненты, а их версия с подключением к redux (connect) или react-router-dom.
 
 #### Redux и api
 

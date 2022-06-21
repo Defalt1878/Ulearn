@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { RouteComponentProps } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import cn from "classnames";
 
 import { notificationResetAction } from "src/actions/notifications";
@@ -8,10 +8,9 @@ import { DropdownContainer } from "@skbkontur/react-ui/internal/DropdownContaine
 import NotificationsIcon from "./NotificationsIcon";
 import Notifications from "./Notifications";
 
-import { findDOMNode } from "react-dom";
 import { connect } from "react-redux";
 
-import { feed, notificationsFeed } from "src/consts/routes";
+import { feed, notificationsFeed, WithNavigate, WithNavigateProvided } from "src/consts/routes";
 import { DeviceType } from "src/consts/deviceType";
 
 import { Dispatch } from "redux";
@@ -20,7 +19,7 @@ import { RootState } from "src/models/reduxState";
 import styles from '../Header.less';
 
 
-interface Props extends RouteComponentProps {
+interface Props extends WithNavigate {
 	notifications: { count: number };
 	resetNotificationsCount: () => void;
 	deviceType: DeviceType;
@@ -91,15 +90,16 @@ class NotificationsMenu extends Component<Props, State> {
 		}
 	};
 
-	loadNotifications() {
-		return fetch('/' + notificationsFeed).then(r => r.text());
+	async loadNotifications() {
+		const r = await fetch('/' + notificationsFeed);
+		return await r.text();
 	}
 
 	onClick = () => {
-		const { history, resetNotificationsCount, deviceType, } = this.props;
+		const { resetNotificationsCount, deviceType, navigate, } = this.props;
 		const { isOpened, } = this.state;
 		if(deviceType == DeviceType.mobile) {
-			history.push('/' + feed);
+			navigate('/' + feed);
 		} else {
 			if(!isOpened) {
 				this.setState({
@@ -151,7 +151,7 @@ class NotificationsMenu extends Component<Props, State> {
 	}
 
 	getParent = () => {
-		return findDOMNode(this);
+		return this.ref.current;
 	};
 }
 
@@ -165,4 +165,10 @@ const mapDispatchToProps = (dispatch: Dispatch) => ({
 	}
 );
 
-export default connect(mapStateToProps, mapDispatchToProps)(NotificationsMenu);
+function NotificationsMenuWithNavigate(props: WithNavigateProvided<Props>) {
+	const navigate = useNavigate();
+
+	return <NotificationsMenu { ...props } navigate={ navigate }/>;
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(NotificationsMenuWithNavigate);

@@ -1,7 +1,7 @@
 import React, { Component, } from "react";
-import { RouteComponentProps, withRouter } from "react-router-dom";
-import { Helmet } from "react-helmet";
 import { connect } from "react-redux";
+import { Dispatch } from "redux";
+import { withOldRouter } from "src/utils/router";
 
 import api from "src/api";
 
@@ -13,13 +13,12 @@ import GroupHeader from "src/components/groups/GroupMainPage/GroupHeader/GroupHe
 import Error404 from "src/components/common/Error/Error404";
 import { Toast } from "ui";
 
-import { MatchParams } from "src/models/router";
 import { GroupInfo } from "src/models/groups";
 import { CourseState } from "src/redux/course";
 import { RootState } from "src/redux/reducers";
-import { Dispatch } from "redux";
+import { WithRouter } from "src/models/router";
 
-interface Props extends RouteComponentProps<MatchParams> {
+interface Props extends WithRouter {
 	userId?: string | null;
 	courses: CourseState;
 
@@ -57,9 +56,9 @@ class GroupListPage extends Component<Props, State> {
 	}
 
 	get courseId() {
-		const { match, } = this.props;
+		const { params, } = this.props;
 
-		return match.params.courseId.toLowerCase();
+		return params.courseId.toLowerCase();
 	}
 
 	componentDidMount() {
@@ -185,7 +184,7 @@ class GroupListPage extends Component<Props, State> {
 	};
 
 	addGroup = async (groupId: number) => {
-		const { history, } = this.props;
+		const { navigate, } = this.props;
 
 		const groups = this.filteredGroups;
 		const newGroup = await api.groups.getGroup(groupId);
@@ -194,7 +193,7 @@ class GroupListPage extends Component<Props, State> {
 			groups: [newGroup, ...groups],
 		});
 
-		history.push(`/${ this.courseId }/groups/${ groupId }`);
+		navigate(`/${ this.courseId }/groups/${ groupId }`);
 	};
 
 	get filteredGroups() {
@@ -281,4 +280,4 @@ class GroupListPage extends Component<Props, State> {
 
 const connected = connect(GroupListPage.mapStateToProps, GroupListPage.mapDispatchToProps)(GroupListPage);
 
-export default withRouter(connected);
+export default withOldRouter(connected);

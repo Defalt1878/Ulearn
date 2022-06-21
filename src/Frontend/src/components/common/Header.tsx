@@ -1,7 +1,7 @@
 import React, { Component, } from 'react';
 import { connect } from "react-redux";
 import { Dispatch } from "redux";
-import { Link, RouteComponentProps, withRouter } from "react-router-dom";
+import { Link, } from "react-router-dom";
 import cn from "classnames";
 
 import { toggleNavigationAction } from "src/actions/navigation";
@@ -24,12 +24,11 @@ import { AccountState } from "src/redux/account";
 import { CourseState } from "src/redux/course";
 import { RootState } from "src/models/reduxState";
 import { DeviceType } from "src/consts/deviceType";
-import { MatchParams } from "../../models/router";
 
 import styles from './Header.less';
 
 
-interface Props extends RouteComponentProps<MatchParams> {
+interface Props {
 	account: AccountState;
 	courses: CourseState;
 	initializing: boolean;
@@ -119,7 +118,7 @@ class Header extends Component<Props, State> {
 	}
 
 	render() {
-		const { initializing, account, deviceType, courses, match, location, history, } = this.props;
+		const { initializing, account, deviceType, courses, } = this.props;
 		const { isSystemAdministrator, courseRole, } = this.state;
 
 		return (
@@ -131,16 +130,13 @@ class Header extends Component<Props, State> {
 						<Hijack name={ account.visibleName }/>
 						{ !initializing && this.renderUserRoleMenu() }
 						{ isInstructor({ isSystemAdministrator, courseRole })
-						&& <StudentMode
-							deviceType={ deviceType }
-							containerClass={ cn(styles.headerElement, styles.button) }
-						/> }
+							&& <StudentMode
+								deviceType={ deviceType }
+								containerClass={ cn(styles.headerElement, styles.button) }
+							/> }
 					</div>
 					<HeaderComponentErrorBoundary className={ styles.headerElement }>
 						<Menu
-							match={ match }
-							location={ location }
-							history={ history }
 							deviceType={ deviceType }
 							account={ account }
 						/>
@@ -199,27 +195,27 @@ class Header extends Component<Props, State> {
 		return (
 			<>
 				{ isSystemAdministrator &&
-				<SysAdminMenu
-					courses={ courses }
-					deviceType={ deviceType }
-					controllableCourseIds={ controllableCourseIds }
-				/> }
+					<SysAdminMenu
+						courses={ courses }
+						deviceType={ deviceType }
+						controllableCourseIds={ controllableCourseIds }
+					/> }
 				{ !isSystemAdministrator
-				&& (controllableCourseIds.length > 0
-					|| Object.values(courses.courseById).some(c => c.timestamp !== null)) &&
-				<MyCoursesMenu
-					courses={ courses }
-					deviceType={ deviceType }
-					controllableCourseIds={ controllableCourseIds }
-				/> }
+					&& (controllableCourseIds.length > 0
+						|| Object.values(courses.courseById).some(c => c.timestamp !== null)) &&
+					<MyCoursesMenu
+						courses={ courses }
+						deviceType={ deviceType }
+						controllableCourseIds={ controllableCourseIds }
+					/> }
 				{ isCourseMenuVisible && currentCourseId &&
-				<CourseMenu
-					courses={ courses }
-					deviceType={ deviceType }
-					courseId={ currentCourseId }
-					role={ courseRole }
-					accesses={ courseAccesses }
-				/> }
+					<CourseMenu
+						courses={ courses }
+						deviceType={ deviceType }
+						courseId={ currentCourseId }
+						role={ courseRole }
+						accesses={ courseAccesses }
+					/> }
 			</>
 		);
 	}
@@ -263,4 +259,4 @@ const mapDispatchToHeaderProps = (dispatch: Dispatch) => {
 	};
 };
 
-export default connect(mapStateToHeaderProps, mapDispatchToHeaderProps)(withRouter(Header));
+export default connect(mapStateToHeaderProps, mapDispatchToHeaderProps)(Header);

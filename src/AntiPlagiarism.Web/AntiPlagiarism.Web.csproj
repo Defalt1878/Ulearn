@@ -3,6 +3,8 @@
 		<TargetFramework>net5.0</TargetFramework>
 		<SatelliteResourceLanguages>en</SatelliteResourceLanguages>
 		<ErrorOnDuplicatePublishOutputFiles>false</ErrorOnDuplicatePublishOutputFiles>
+		<Authors>SKB Kontur Ulearn Team</Authors>
+		<Copyright>Copyright 2014–2022 SKB Kontur</Copyright>
 	</PropertyGroup>
 	<ItemGroup>
 		<PackageReference Include="Accord.Statistics" Version="3.8.0" />

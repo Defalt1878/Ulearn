@@ -3,9 +3,8 @@ import { Dispatch } from "redux";
 import { BrowserRouter } from 'react-router-dom';
 
 import api from "src/api";
-import configureStore from "src/configureStore";
-import queryString from "query-string";
-import { connect, Provider, } from "react-redux";
+import setupStore from "src/setupStore";
+import { Provider, connect, } from "react-redux";
 
 import { ThemeContext, Toast } from "ui";
 import ErrorBoundary from "src/components/common/ErrorBoundary";
@@ -23,7 +22,8 @@ import { RootState } from "src/models/reduxState";
 import { deviceChangeAction } from "src/actions/device";
 import { DeviceType } from "src/consts/deviceType";
 import { getDeviceType } from "./utils/getDeviceType";
-const store = configureStore();
+
+const store = setupStore();
 
 // Update notifications count each minute
 setInterval(() => {
@@ -49,6 +49,7 @@ interface Props {
 	getCurrentUser: () => void;
 	getCourses: () => void;
 	setDeviceType: (deviceType: DeviceType) => void;
+	children?: React.ReactNode;
 }
 
 interface State {
@@ -115,8 +116,10 @@ class InternalUlearnApp extends Component<Props, State> {
 		const { account } = this.props;
 
 		const pathname = window.location.pathname.toLowerCase();
-		const params = queryString.parse(window.location.search);
-		const isLti = pathname.endsWith('/ltislide') || (params.isLti?.toString().toLowerCase() === 'true'); //TODO remove this flag,that hiding header and nav menu
+		const params = new URLSearchParams(window.location.search);
+		const isLtiParam = params.get('isLti');
+		const isLtiParamLower = params.get('islti');
+		const isLti = pathname.endsWith('/ltislide') || (isLtiParam?.toString().toLowerCase() === 'true'); //TODO remove this flag,that hiding header and nav menu
 		const isHeaderVisible = !isLti;
 
 		if(isLti) {
@@ -131,14 +134,14 @@ class InternalUlearnApp extends Component<Props, State> {
 						{ isHeaderVisible && <Header initializing={ initializing }/> }
 						<NotFoundErrorBoundary>
 							{ !initializing && // Avoiding bug: don't show page while initializing.
-							// Otherwise we make two GET requests sequentially.
-							// Unfortunately some our GET handlers are not idempotent (i.e. /Admin/CheckNextExerciseForSlide)
-							<Router account={ account }/>
+								// Otherwise we make two GET requests sequentially.
+								// Unfortunately some our GET handlers are not idempotent (i.e. /Admin/CheckNextExerciseForSlide)
+								<Router account={ account }/>
 							}
 						</NotFoundErrorBoundary>
 						{ account
-						&& this.isEmailNotConfirmed()
-						&& <EmailNotConfirmedModal/>
+							&& this.isEmailNotConfirmed()
+							&& <EmailNotConfirmedModal/>
 						}
 						{ this.renderMetricsIfNotDevelopment() }
 					</ErrorBoundary>

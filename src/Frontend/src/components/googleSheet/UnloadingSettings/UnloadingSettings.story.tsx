@@ -40,6 +40,7 @@ Default.args = {
 	items: [
 		{
 			props: {
+				courseTitle: 'Course',
 				api: apiMocked,
 			},
 			header: 'Default',
@@ -53,6 +54,7 @@ ManyGroups.args = {
 	items: [
 		{
 			props: {
+				courseTitle: 'Course',
 				api: {
 					...apiMocked,
 					getTaskById: (taskId) => {
@@ -77,6 +79,7 @@ LongNameAuthor.args = {
 	items: [
 		{
 			props: {
+				courseTitle: 'Course',
 				api: {
 					...apiMocked,
 					getTaskById: (taskId) => {

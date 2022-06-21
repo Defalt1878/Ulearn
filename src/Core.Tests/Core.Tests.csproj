@@ -6,6 +6,8 @@
 		<RootNamespace>Ulearn.Core.Tests</RootNamespace>
 		<SatelliteResourceLanguages>en</SatelliteResourceLanguages>
 		<ErrorOnDuplicatePublishOutputFiles>false</ErrorOnDuplicatePublishOutputFiles>
+		<Authors>SKB Kontur Ulearn Team</Authors>
+		<Copyright>Copyright 2014–2022 SKB Kontur</Copyright>
 	</PropertyGroup>
 
 	<ItemGroup>

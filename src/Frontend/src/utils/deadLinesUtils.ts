@@ -1,6 +1,6 @@
 import { DeadLineInfo, DeadLineSlideType } from "src/models/deadLines";
 import { momentFromServerToLocal, momentToServerFormat, } from "./momentUtils";
-import moment from "moment";
+import moment from "moment-timezone";
 
 export function isDeadLineOverlappedByAnother(deadLine: DeadLineInfo, deadLines: DeadLineInfo[]): boolean {
 	const currentDeadLine = getDeadLine(deadLines, momentFromServerToLocal(deadLine.date));

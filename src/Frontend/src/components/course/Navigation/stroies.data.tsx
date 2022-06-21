@@ -9,7 +9,8 @@ import { connect } from "react-redux";
 import { deviceChangeAction } from "src/actions/device";
 import { RootState } from "src/redux/reducers";
 
-export const DesktopWrapper: React.FunctionComponent = ({ children }) => (
+export const DesktopWrapper: (props: { children?: React.ReactNode; }) => React.ReactElement
+	= ({ children }) => (
 	<div style={ { width: '360px', } }>
 		{ children }
 	</div>
@@ -93,7 +94,7 @@ export const deviceTypeToViewportStyle = (dt: DeviceType): CSSProperties => {
 	}
 };
 
-export const ViewportWrapper = ({ children }: { children: React.ReactNode }) => {
+export const ViewportWrapper = ({ children }: { children: React.ReactNode }): React.ReactElement => {
 	return (
 		<ViewportChangeHandlerRedux render={ render }/>
 	);
@@ -209,7 +210,7 @@ export function getModuleNavigationProps(): MenuItem<SlideType>[] {
 				connectToPrev: finalSlide.visited && index > 0 && array[index - 1].visited || false,
 				connectToNext: !isLastItem && finalSlide.visited && (isLastItem || array[index + 1].visited) || false,
 			};
-			return finalSlide;
+			return { ...finalSlide, api: '', isActive: false, };
 		});
 }
 
@@ -431,12 +432,19 @@ export function getCourseModules(): CourseMenuItem[] {
 		},
 		isNotPublished: true
 	}].map(
-		s=>({
+		s => ({
 			...s,
 			additionalContentInfo: {
 				publicationDate: null,
 				isAdditionalContent: false,
-			}
+			},
+			progress: {
+				...s.progress,
+				inProgress: s.progress?.inProgress || 0,
+				max: s.progress?.max || 0,
+				current: s.progress?.current || 0,
+				additionalInfoBySlide: {}
+			},
 		})
 	);
 }

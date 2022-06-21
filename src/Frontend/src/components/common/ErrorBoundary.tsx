@@ -2,7 +2,9 @@ import React, { Component, ErrorInfo } from "react";
 
 import { Toast } from "ui";
 import * as Sentry from "@sentry/react";
-import { RouteComponentProps, withRouter } from "react-router-dom";
+import { withLocation } from "src/utils/router";
+
+import { HasReactChildStrict } from "src/consts/common";
 
 import styles from './ErrorBoundary.less';
 
@@ -10,13 +12,17 @@ interface State {
 	error: Error | null;
 }
 
-class ErrorBoundary extends Component<RouteComponentProps, State> {
-	constructor(props: RouteComponentProps) {
+interface Props extends HasReactChildStrict{
+	location: Location;
+}
+
+class ErrorBoundary extends Component<Props, State> {
+	constructor(props: Props) {
 		super(props);
 		this.state = { error: null };
 	}
 
-	componentDidUpdate(prevProps: RouteComponentProps) {
+	componentDidUpdate(prevProps: Props) {
 		const { error, } = this.state;
 		const { location, } = this.props;
 
@@ -54,4 +60,4 @@ class ErrorBoundary extends Component<RouteComponentProps, State> {
 	};
 }
 
-export default withRouter(ErrorBoundary);
+export default withLocation(ErrorBoundary);

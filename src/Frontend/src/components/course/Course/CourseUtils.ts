@@ -10,7 +10,6 @@ import {
 } from "../Navigation/types";
 import { ScoringGroupsIds } from "src/consts/scoringGroup";
 import { ShortSlideInfo, SlideType } from "src/models/slide";
-import { RouteComponentProps } from "react-router-dom";
 import { MatchParams } from "src/models/router";
 import { ReviewInfoRedux, SubmissionInfoRedux } from "src/models/reduxState";
 import { SubmissionInfo } from "src/models/exercise";
@@ -138,8 +137,8 @@ export const getUnitStatistics = (
 						!waitingForManualChecking && score >= scoreAfterDeadLine ||
 						prohibitFurtherManualChecking ||
 						isSkipped
-						? SlideProgressStatus.done
-						: SlideProgressStatus.canBeImproved;
+							? SlideProgressStatus.done
+							: SlideProgressStatus.canBeImproved;
 					break;
 				}
 			}
@@ -221,14 +220,13 @@ export const slideActionsRegex = {
 };
 
 export default function getSlideInfo(
-	route: RouteComponentProps<MatchParams>,
+	params: MatchParams,
+	location: Location,
 	courseInfo: CourseInfo | undefined,
 	deadLines: DeadLineInfo[] | undefined,
 	isUserTesterOrHigher: boolean,
 ): SlideInfo {
-	const { location, match } = route;
 	const { search, pathname, } = location;
-	const { params, } = match;
 	const { slideSlugOrAction, courseId, } = params;
 
 	const queryParams = parseKnownQueryParams(search);

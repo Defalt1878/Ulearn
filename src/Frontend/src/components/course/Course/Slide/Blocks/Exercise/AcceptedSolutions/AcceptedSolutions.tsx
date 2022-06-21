@@ -2,7 +2,6 @@
 import classnames from "classnames";
 import { Modal, Tabs, Hint } from "@skbkontur/react-ui";
 
-import texts from "./AcceptedSolutions.texts";
 import {
 	AcceptedSolution,
 	AcceptedSolutionsResponse,
@@ -13,6 +12,8 @@ import StaticCode from "../StaticCode";
 import { AcceptedSolutionsApi } from "src/api/acceptedSolutions";
 
 import { Heart, HeartLite, Star, Star2 } from 'icons';
+
+import texts from "./AcceptedSolutions.texts";
 import styles from './AcceptedSolutions.less';
 
 interface AcceptedSolutionsProps {
@@ -141,12 +142,12 @@ class AcceptedSolutionsModal extends React.Component<AcceptedSolutionsProps, Sta
 				</Modal.Header>
 				<Modal.Body>
 					{ isInstructor &&
-					<div className={ styles.tabs }>
-						<Tabs value={ activeTab } onValueChange={ this.handleTabChange }>
-							<Tabs.Tab id={ TabsType.instructorTab }>{ texts.instructorTabName }</Tabs.Tab>
-							<Tabs.Tab id={ TabsType.studentTab }>{ texts.studentTabName }</Tabs.Tab>
-						</Tabs>
-					</div>
+						<div className={ styles.tabs }>
+							<Tabs value={ activeTab } onValueChange={ this.handleTabChange }>
+								<Tabs.Tab id={ TabsType.instructorTab }>{ texts.instructorTabName }</Tabs.Tab>
+								<Tabs.Tab id={ TabsType.studentTab }>{ texts.studentTabName }</Tabs.Tab>
+							</Tabs>
+						</div>
 					}
 					{ activeTab === TabsType.instructorTab && this.renderInstructorTab() }
 					{ activeTab === TabsType.studentTab && this.renderStudentTab() }
@@ -172,21 +173,21 @@ class AcceptedSolutionsModal extends React.Component<AcceptedSolutionsProps, Sta
 
 		return <div key={ TabsType.studentTab }>
 			{ promotedSolutions.length > 0 &&
-			<>
-				<h4>{ texts.promotedSolutionsHeader }</h4>
-				<div className={ styles.solutions }>
-					{ promotedSolutions.map(s => this.renderSolution(solutions[s])) }
-				</div>
-			</>
+				<>
+					<h4>{ texts.promotedSolutionsHeader }</h4>
+					<div className={ styles.solutions }>
+						{ promotedSolutions.map(s => this.renderSolution(solutions[s])) }
+					</div>
+				</>
 			}
 			{ randomAndNewestSolutions.length > 0 &&
-			<>
-				{ promotedSolutions.length > 0 && <h4>{ texts.solutionsHeader }</h4> }
-				<p>{ texts.studentInstructions }</p>
-				<div className={ styles.solutions }>
-					{ randomAndNewestSolutions.map(s => this.renderSolution(solutions[s])) }
-				</div>
-			</>
+				<>
+					{ promotedSolutions.length > 0 && <h4>{ texts.solutionsHeader }</h4> }
+					<p>{ texts.studentInstructions }</p>
+					<div className={ styles.solutions }>
+						{ randomAndNewestSolutions.map(s => this.renderSolution(solutions[s])) }
+					</div>
+				</>
 			}
 		</div>;
 	}

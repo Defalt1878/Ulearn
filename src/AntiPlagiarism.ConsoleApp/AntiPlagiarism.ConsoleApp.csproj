@@ -3,6 +3,8 @@
     <PropertyGroup>
         <OutputType>Exe</OutputType>
         <TargetFramework>net5.0</TargetFramework>
+        <Authors>SKB Kontur Ulearn Team</Authors>
+        <Copyright>Copyright 2014–2022 SKB Kontur</Copyright>
     </PropertyGroup>
 
     <ItemGroup>

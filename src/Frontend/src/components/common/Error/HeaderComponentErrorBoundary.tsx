@@ -2,13 +2,14 @@ import React, { Component, ErrorInfo } from "react";
 
 import { Warning } from "icons";
 import { Toast } from "ui";
+import { HasReactChild } from "src/consts/common";
 
 import * as Sentry from "@sentry/react";
 import cn from "classnames";
 
 import styles from './style.less';
 
-interface Props {
+interface Props extends HasReactChild {
 	className?: string;
 }
 

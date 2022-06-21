@@ -9,14 +9,14 @@
     <Company>SKB Kontur</Company>
     <Product>Course creating, testing and debugging tool for ulearn.me</Product>
     <Description>Course.exe tool for developing, testing and debugging courses for ulearn.me</Description>
-    <Copyright>Copyright 2014–2018 SKB Kontur</Copyright>
+    <Copyright>Copyright 2014–2022 SKB Kontur</Copyright>
     <Deterministic>false</Deterministic>
     <BuildDependsOn>$(BuildDependsOn);AfterBuildMigrated</BuildDependsOn>
-    <Authors>SKB Kontur</Authors>
+    <Authors>SKB Kontur Ulearn Team</Authors>
     <PackageId>Kontur.Ulearn.CourseTool</PackageId>
     <PackageLicenseUrl>https://ulearn.me/Home/Terms</PackageLicenseUrl>
     <PackageProjectUrl>https://ulearn.me</PackageProjectUrl>
-    <PackageTags>ulearn education mooc</PackageTags>
+    <PackageTags>ulearn education</PackageTags>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
     <LangVersion>default</LangVersion>
   </PropertyGroup>

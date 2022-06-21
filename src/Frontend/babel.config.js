@@ -5,8 +5,8 @@ module.exports = function (api) {
 		["@babel/preset-env",
 			{
 				modules: false,
-				useBuiltIns: "usage",
-				corejs: { version: "3.18", proposals: true }
+				// useBuiltIns: "usage",
+				// corejs: { version: "3.23", proposals: true }
 			}
 		],
 		"@babel/preset-react",
@@ -14,10 +14,10 @@ module.exports = function (api) {
 	];
 
 	const plugins = [
-		"@babel/plugin-proposal-class-properties",
-		"@babel/plugin-proposal-object-rest-spread",
-		"@babel/plugin-transform-arrow-functions",
-		'@babel/plugin-proposal-private-methods',
+		// "@babel/plugin-proposal-class-properties",
+		// "@babel/plugin-proposal-object-rest-spread",
+		// "@babel/plugin-transform-arrow-functions",
+		// '@babel/plugin-proposal-private-methods',
 	];
 
 	return {

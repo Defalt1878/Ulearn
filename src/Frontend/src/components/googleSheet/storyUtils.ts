@@ -24,6 +24,8 @@ export const apiMocked: GoogleSheetApi = {
 		groups: params.groupsIds.map(id => getMockedShortGroup({ id })),
 		...params,
 		authorInfo: getMockedUser(),
+		lastUpdateErrorMessage: null,
+		lastUpdateDate: null,
 	}),
 	deleteTask: (taskId: number) => returnPromiseAfterDelay(100),
 	exportTaskNow: (taskId: number) => returnPromiseAfterDelay(100),
@@ -44,5 +46,7 @@ export const getMockedTask = (task?: Partial<GoogleSheetsExportTaskResponse>): G
 		refreshTimeInMinutes: task?.refreshTimeInMinutes || 60,
 		refreshEndDate: task?.refreshEndDate || new Date(2020, 11, 10).toDateString(),
 		refreshStartDate: task?.refreshStartDate || new Date(2020, 5, 10).toDateString(),
+		lastUpdateDate: null,
+		lastUpdateErrorMessage: null,
 	};
 };

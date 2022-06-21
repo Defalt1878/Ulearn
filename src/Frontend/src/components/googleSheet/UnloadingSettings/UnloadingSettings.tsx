@@ -1,15 +1,16 @@
 ﻿import React, { useState } from "react";
-import moment from "moment";
+import moment from "moment-timezone";
 import { connect } from "react-redux";
 
-import { Link, RouteComponentProps, withRouter } from "react-router-dom";
+import { Link, } from "react-router-dom";
 import { Button, Gapped, Loader, Toast, } from "ui";
 import Page from "src/pages";
 import Error404 from "../../common/Error/Error404";
 
+import { RequestError } from "src/api";
 import { GoogleSheetApiInObject } from "../UnloadingsList/UnloadingList";
 import { GoogleSheetsExportTaskResponse, GoogleSheetsExportTaskUpdateParams } from "src/models/googleSheet";
-import { MatchParams } from "src/models/router";
+import { WithParams, WithRouter } from "src/models/router";
 import { UTC } from "src/consts/defaultTimezone";
 
 import {
@@ -28,9 +29,9 @@ import { RootState } from "src/redux/reducers";
 
 import styles from './unloadingSettings.less';
 import texts from './UnloadingSettings.texts';
-import { RequestError } from "../../../api";
+import { withOldRouter } from "../../../utils/router";
 
-export type Props = { courseTitle: string; } & GoogleSheetApiInObject & RouteComponentProps<MatchParams>;
+export type Props = { courseTitle: string; } & GoogleSheetApiInObject & WithRouter;
 
 export interface State extends PartialBy<GoogleSheetsExportTaskUpdateParams, 'spreadsheetId' | 'listId'> {
 	link: string;
@@ -41,8 +42,8 @@ export interface State extends PartialBy<GoogleSheetsExportTaskUpdateParams, 'sp
 
 function UnloadingSettings({
 	api = Api,
-	match,
-	history,
+	params,
+	navigate,
 	courseTitle,
 }: Props): React.ReactElement {
 	const courseTitleInMeta = `Выгрузки в курсе ${ courseTitle }`;
@@ -54,7 +55,7 @@ function UnloadingSettings({
 		isVisibleForStudents: false,
 		refreshTimeInMinutes: 60,
 	});
-	const { courseId, taskId, } = match.params;
+	const { courseId, taskId, } = params;
 
 	if(!state.error && (!state.taskId || taskId !== state.taskId)) {
 		const taskIdNumber = parseInt(taskId);
@@ -294,17 +295,17 @@ function UnloadingSettings({
 			api.deleteTask(state.task.id)
 				.then(() => {
 					Toast.push(baseTexts.toast.delete);
-					history.push(`/${ courseId }/google-sheet-tasks`);
+					navigate(`/${ courseId }/google-sheet-tasks`);
 				})
 				.catch(() => Toast.push(baseTexts.toast.deleteFail));
 		}
 	}
 }
 
-const mapStateToProps = (state: RootState, params: RouteComponentProps<MatchParams>) => {
+const mapStateToProps = (state: RootState, { params }: WithParams) => {
 	return {
-		courseTitle: state.courses?.courseById[params.match.params.courseId]?.title?.toLowerCase() ?? '',
+		courseTitle: state.courses?.courseById[params.courseId]?.title?.toLowerCase() ?? '',
 	};
 };
 
-export default withRouter(connect(mapStateToProps)(UnloadingSettings));
+export default withOldRouter(connect(mapStateToProps)(UnloadingSettings));

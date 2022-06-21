@@ -4,6 +4,7 @@ import {
 	AdditionalContentPublicationResponse,
 	AdditionalContentPublicationsResponse
 } from "src/models/additionalContent";
+import { AccountState } from "../../../../redux/account";
 
 export interface Props {
 	getAdditionalContent: (courseId: string, groupId: number) => Promise<AdditionalContentPublicationsResponse>;
@@ -18,10 +19,10 @@ export interface Props {
 		publicationId: string,
 		publication: string,
 	) => Promise<Response>;
-	deletePublication: (publicationId: string) => Promise<void>;
+	deletePublication: (publicationId: string) => Promise<Response>;
 	courseId: string;
 	groupId: number;
-	user: ShortUserInfo;
+	user: AccountState;
 }
 
 export interface State {
