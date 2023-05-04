@@ -6,10 +6,14 @@ namespace Ulearn.Web.Api.Models.Responses.Flashcards
 	[DataContract]
 	public class UserFlashcardStatistics
 	{
-		public UserFlashcardStatistics()
-		{
-			UnitUserStatistics = new List<UnitUserStatistic>();
-		}
+		[DataMember]
+		public int GroupId;
+
+		[DataMember]
+		public string GroupName;
+
+		[DataMember]
+		public List<UnitUserStatistic> UnitUserStatistics;
 
 		[DataMember]
 		public string UserId;
@@ -17,13 +21,9 @@ namespace Ulearn.Web.Api.Models.Responses.Flashcards
 		[DataMember]
 		public string UserName;
 
-		[DataMember]
-		public string GroupName;
-
-		[DataMember]
-		public int GroupId;
-
-		[DataMember]
-		public List<UnitUserStatistic> UnitUserStatistics;
+		public UserFlashcardStatistics()
+		{
+			UnitUserStatistics = new List<UnitUserStatistic>();
+		}
 	}
 }

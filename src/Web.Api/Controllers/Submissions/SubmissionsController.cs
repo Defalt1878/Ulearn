@@ -22,13 +22,13 @@ namespace Ulearn.Web.Api.Controllers.Submissions
 	[Route("/submissions")]
 	public class SubmissionsController : BaseController
 	{
-		private readonly IUserSolutionsRepo userSolutionsRepo;
-		private readonly ISlideCheckingsRepo slideCheckingsRepo;
 		private readonly ICourseRolesRepo courseRolesRepo;
-		private readonly IVisitsRepo visitsRepo;
-		private readonly IUnitsRepo unitsRepo;
 		private readonly IGroupAccessesRepo groupAccessesRepo;
 		private readonly INotificationsRepo notificationsRepo;
+		private readonly ISlideCheckingsRepo slideCheckingsRepo;
+		private readonly IUnitsRepo unitsRepo;
+		private readonly IUserSolutionsRepo userSolutionsRepo;
+		private readonly IVisitsRepo visitsRepo;
 
 		public SubmissionsController(
 			ICourseStorage courseStorage,
@@ -40,7 +40,8 @@ namespace Ulearn.Web.Api.Controllers.Submissions
 			IGroupAccessesRepo groupAccessesRepo,
 			IVisitsRepo visitsRepo,
 			INotificationsRepo notificationsRepo,
-			IUnitsRepo unitsRepo)
+			IUnitsRepo unitsRepo
+		)
 			: base(courseStorage, db, usersRepo)
 		{
 			this.courseRolesRepo = courseRolesRepo;
@@ -57,14 +58,16 @@ namespace Ulearn.Web.Api.Controllers.Submissions
 		public async Task<ActionResult<SubmissionsResponse>> GetSubmissions([FromQuery] [CanBeNull] string userId, [FromQuery] string courseId, [FromQuery] Guid slideId)
 		{
 			var isCourseAdmin = await courseRolesRepo.HasUserAccessToCourse(UserId, courseId, CourseRoleType.CourseAdmin);
-			if (userId != null && !isCourseAdmin && !userId.Equals(UserId, StringComparison.OrdinalIgnoreCase))
+			if (userId is not null && !isCourseAdmin && !userId.Equals(UserId, StringComparison.OrdinalIgnoreCase))
 			{
 				var isInstructor = await courseRolesRepo.HasUserAccessToCourse(UserId, courseId, CourseRoleType.Instructor);
 				if (!isInstructor)
 					return StatusCode((int)HttpStatusCode.Forbidden, new ErrorResponse("You don't have access to view submissions"));
 			}
 			else
+			{
 				userId ??= UserId;
+			}
 
 			var submissions = await userSolutionsRepo
 				.GetAllSubmissionsByUserAllInclude(courseId, slideId, userId)
@@ -75,8 +78,8 @@ namespace Ulearn.Web.Api.Controllers.Submissions
 				return NotFound($"Course {courseId} not found");
 
 			if (courseStorage
-				.GetCourse(courseId)
-				.GetSlideByIdNotSafe(slideId) is not ExerciseSlide slide)
+					.GetCourse(courseId)
+					.GetSlideByIdNotSafe(slideId) is not ExerciseSlide)
 				return NotFound($"Slide with id {slideId} not found");
 
 			var codeReviewComments = await slideCheckingsRepo.GetExerciseCodeReviewComments(courseId, slideId, userId);
@@ -97,7 +100,7 @@ namespace Ulearn.Web.Api.Controllers.Submissions
 			if (!await groupAccessesRepo.HasInstructorEditAccessToStudentGroup(UserId, submission.UserId))
 				return StatusCode((int)HttpStatusCode.Forbidden, "You don't have access to edit ProhibitFurtherReview flag for this submission");
 
-			if (submission.ManualChecking != null)
+			if (submission.ManualChecking is not null)
 				Ok($"Manual checking already enabled for submission {submissionId}");
 
 			var checking = await slideCheckingsRepo.AddManualExerciseChecking(submission.CourseId, submission.SlideId, submission.UserId, submission.Id);
@@ -121,27 +124,25 @@ namespace Ulearn.Web.Api.Controllers.Submissions
 
 			/* Invalid form: score isn't from range 0..100 */
 			if (percent is < 0 or > 100)
-			{
 				return StatusCode((int)HttpStatusCode.BadRequest, $"Неверное количество процентов: {percent}");
-			}
 
 			var course = courseStorage.GetCourse(courseId);
 			var slide = course.FindSlideByIdNotSafe(slideId);
 
-			if (submission.ManualChecking == null)
+			if (submission.ManualChecking is null)
 			{
 				var lastAcceptedSubmission = await userSolutionsRepo
 					.GetAllAcceptedSubmissionsByUser(courseId, slideId, userId)
 					.OrderByDescending(s => s.Timestamp)
 					.FirstOrDefaultAsync();
-				if (lastAcceptedSubmission != null && lastAcceptedSubmission.Id != submission.Id)
+				if (lastAcceptedSubmission is not null && lastAcceptedSubmission.Id != submission.Id)
 					return StatusCode((int)HttpStatusCode.BadRequest,
 						new
 						{
 							Status = "error",
 							Error = "has_newest_submission",
 							SubmissionId = lastAcceptedSubmission.Id,
-							SubmissionDate = lastAcceptedSubmission.Timestamp,
+							SubmissionDate = lastAcceptedSubmission.Timestamp
 						});
 			}
 
@@ -155,7 +156,7 @@ namespace Ulearn.Web.Api.Controllers.Submissions
 				await visitsRepo.UpdateScoreForVisit(courseId, slide, userId);
 
 				var visibleUnits = await unitsRepo.GetPublishedUnitIds(course);
-				if (course.FindSlideById(slideId, false, visibleUnits) != null)
+				if (course.FindSlideById(slideId, false, visibleUnits) is not null)
 					await NotifyAboutManualExerciseChecking(checking);
 
 				await transaction.CommitAsync();
@@ -173,7 +174,7 @@ namespace Ulearn.Web.Api.Controllers.Submissions
 			var notification = new PassedManualExerciseCheckingNotification
 			{
 				Checking = checking,
-				IsRecheck = isRecheck,
+				IsRecheck = isRecheck
 			};
 
 			await notificationsRepo.AddNotification(checking.CourseId, notification, UserId);

@@ -20,9 +20,9 @@ namespace Ulearn.Web.Api.Controllers.Review
 	[Route("/reviews")]
 	public class ReviewController : BaseController
 	{
+		private readonly IGroupAccessesRepo groupAccessesRepo;
 		private readonly ISlideCheckingsRepo slideCheckingsRepo;
 		private readonly IUserSolutionsRepo userSolutionsRepo;
-		private readonly IGroupAccessesRepo groupAccessesRepo;
 
 		public ReviewController(ICourseStorage courseStorage, UlearnDb db, IUsersRepo usersRepo,
 			ISlideCheckingsRepo slideCheckingsRepo,
@@ -41,7 +41,7 @@ namespace Ulearn.Web.Api.Controllers.Review
 
 			var submission = await userSolutionsRepo.FindSubmissionById(submissionId);
 
-			if (submission == null)
+			if (submission is null)
 			{
 				context.Result = NotFound(new ErrorResponse($"Submission {submissionId} not found"));
 				return;
@@ -51,17 +51,17 @@ namespace Ulearn.Web.Api.Controllers.Review
 			var slideId = submission.SlideId;
 			var userId = submission.UserId;
 
-			if (submission.ManualChecking == null)
+			if (submission.ManualChecking is null)
 			{
 				var lastAcceptedSubmission = userSolutionsRepo.GetAllAcceptedSubmissionsByUser(courseId, slideId, userId).OrderByDescending(s => s.Timestamp).FirstOrDefault();
-				if (lastAcceptedSubmission != null && lastAcceptedSubmission.Id != submission.Id)
+				if (lastAcceptedSubmission is not null && lastAcceptedSubmission.Id != submission.Id)
 					context.Result = StatusCode((int)HttpStatusCode.BadRequest,
 						new
 						{
 							Status = "error",
 							Error = "has_newest_submission",
 							SubmissionId = lastAcceptedSubmission.Id,
-							SubmissionDate = lastAcceptedSubmission.Timestamp,
+							SubmissionDate = lastAcceptedSubmission.Timestamp
 						});
 				else
 					context.Result = BadRequest(new ErrorResponse($"Submission {submissionId} doesn't contain manual checking"));
@@ -79,7 +79,7 @@ namespace Ulearn.Web.Api.Controllers.Review
 		}
 
 		/// <summary>
-		/// Добавить ревью к решению
+		///     Добавить ревью к решению
 		/// </summary>
 		[HttpPost]
 		[Authorize]
@@ -106,14 +106,14 @@ namespace Ulearn.Web.Api.Controllers.Review
 				parameters.StartPosition,
 				parameters.FinishLine,
 				parameters.FinishPosition,
-				parameters.Text,
-				true);
+				parameters.Text
+			);
 
 			return ReviewInfo.Build(review, null, false);
 		}
 
 		/// <summary>
-		/// Удалить ревью
+		///     Удалить ревью
 		/// </summary>
 		[HttpDelete]
 		[Authorize]
@@ -122,7 +122,7 @@ namespace Ulearn.Web.Api.Controllers.Review
 			var reviews = await userSolutionsRepo.FindSubmissionReviewsBySubmissionId(submissionId);
 			var review = reviews.FirstOrDefault(r => r.Id == reviewId);
 
-			if (review == null)
+			if (review is null)
 				return NotFound(new ErrorResponse($"Review {reviewId} not found"));
 
 			/* instructor can't delete anyone else review, except ulearn bot */
@@ -135,7 +135,7 @@ namespace Ulearn.Web.Api.Controllers.Review
 		}
 
 		/// <summary>
-		/// Изменить содержание ревью
+		///     Изменить содержание ревью
 		/// </summary>
 		[HttpPatch]
 		[Authorize]
@@ -144,7 +144,7 @@ namespace Ulearn.Web.Api.Controllers.Review
 			var reviews = await userSolutionsRepo.FindSubmissionReviewsBySubmissionId(submissionId);
 			var review = reviews.FirstOrDefault(r => r.Id == reviewId);
 
-			if (review == null)
+			if (review is null)
 				return NotFound(new ErrorResponse($"Review {reviewId} not found"));
 
 			/* instructor can't edit anyone else review */

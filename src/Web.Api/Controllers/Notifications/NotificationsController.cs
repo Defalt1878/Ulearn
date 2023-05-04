@@ -10,11 +10,11 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Options;
-using Vostok.Logging.Abstractions;
 using Ulearn.Common.Extensions;
 using Ulearn.Core.Courses.Manager;
 using Ulearn.Web.Api.Models.Parameters.Notifications;
 using Ulearn.Web.Api.Models.Responses.Notifications;
+using Vostok.Logging.Abstractions;
 using Web.Api.Configuration;
 
 namespace Ulearn.Web.Api.Controllers.Notifications
@@ -22,12 +22,11 @@ namespace Ulearn.Web.Api.Controllers.Notifications
 	[Route("/notifications")]
 	public class NotificationsController : BaseController
 	{
-		private readonly IFeedRepo feedRepo;
-		private readonly IServiceProvider serviceProvider;
-		private readonly INotificationDataPreloader notificationDataPreloader;
-		private readonly WebApiConfiguration configuration;
 		private static int? commentsFeedNotificationTransportId;
-		private static ILog log => LogProvider.Get().ForContext(typeof(NotificationsController));
+		private readonly WebApiConfiguration configuration;
+		private readonly IFeedRepo feedRepo;
+		private readonly INotificationDataPreloader notificationDataPreloader;
+		private readonly IServiceProvider serviceProvider;
 
 		public NotificationsController(ICourseStorage courseStorage, UlearnDb db,
 			IUsersRepo usersRepo,
@@ -40,13 +39,14 @@ namespace Ulearn.Web.Api.Controllers.Notifications
 			this.feedRepo = feedRepo;
 			this.serviceProvider = serviceProvider;
 			this.notificationDataPreloader = notificationDataPreloader;
-			this.configuration = options.Value;
+			configuration = options.Value;
 		}
+
+		private new static ILog Log => LogProvider.Get().ForContext(typeof(NotificationsController));
 
 		public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
 		{
-			if (commentsFeedNotificationTransportId == null)
-				commentsFeedNotificationTransportId = await feedRepo.GetCommentsFeedNotificationTransportId();
+			commentsFeedNotificationTransportId ??= await feedRepo.GetCommentsFeedNotificationTransportId();
 
 			var userId = User.GetUserId();
 			await feedRepo.AddFeedNotificationTransportIfNeeded(userId);
@@ -55,7 +55,7 @@ namespace Ulearn.Web.Api.Controllers.Notifications
 		}
 
 		/// <summary>
-		/// Список уведомлений и комментариев
+		///     Список уведомлений и комментариев
 		/// </summary>
 		[HttpGet]
 		[Authorize]
@@ -67,12 +67,12 @@ namespace Ulearn.Web.Api.Controllers.Notifications
 			return new NotificationListResponse
 			{
 				Important = importantNotificationList,
-				Comments = commentsNotificationList,
+				Comments = commentsNotificationList
 			};
 		}
 
 		/// <summary>
-		/// Число непрочитанных уведомлений
+		///     Число непрочитанных уведомлений
 		/// </summary>
 		[HttpGet("count")]
 		[Authorize]
@@ -80,17 +80,17 @@ namespace Ulearn.Web.Api.Controllers.Notifications
 		{
 			var userId = User.GetUserId();
 			var userNotificationTransportId = await feedRepo.GetUsersFeedNotificationTransportId(userId);
-			var unreadCountAndLastTimestamp = await GetUnreadNotificationsCountAndLastTimestampAsync(userId, userNotificationTransportId.Value, parameters.LastTimestamp);
+			var unreadCountAndLastTimestamp = await GetUnreadNotificationsCountAndLastTimestampAsync(userId, userNotificationTransportId!.Value, parameters.LastTimestamp);
 
 			return new NotificationsCountResponse
 			{
 				Count = unreadCountAndLastTimestamp.Item1,
-				LastTimestamp = unreadCountAndLastTimestamp.Item2,
+				LastTimestamp = unreadCountAndLastTimestamp.Item2
 			};
 		}
 
 		/// <summary>
-		/// Уведомление в плашке под шапкой
+		///     Уведомление в плашке под шапкой
 		/// </summary>
 		[HttpGet("global")]
 		public ActionResult<NotificationBarResponse> GlobalNotification()
@@ -108,9 +108,7 @@ namespace Ulearn.Web.Api.Controllers.Notifications
 			var realFrom = from ?? await feedRepo.GetFeedViewTimestamp(userId, transportId) ?? DateTime.MinValue;
 			var unreadCount = await feedRepo.GetNotificationsCount(userId, realFrom, transportId);
 			if (unreadCount > 0)
-			{
 				from = await feedRepo.GetLastDeliveryTimestamp(transportId);
-			}
 
 			return Tuple.Create(unreadCount, from);
 		}
@@ -120,33 +118,29 @@ namespace Ulearn.Web.Api.Controllers.Notifications
 			var notificationTransportId = await feedRepo.GetUsersFeedNotificationTransportId(userId);
 
 			var importantNotifications = new List<Notification>();
-			if (notificationTransportId != null)
-			{
+			if (notificationTransportId is not null)
 				importantNotifications = await feedRepo.GetNotificationForFeedNotificationDeliveries(userId, n => n.InitiatedBy, notificationTransportId.Value);
-			}
 
 			var commentsNotifications = new List<Notification>();
-			if (commentsFeedNotificationTransportId != null)
-			{
+			if (commentsFeedNotificationTransportId is not null)
 				commentsNotifications = await feedRepo.GetNotificationForFeedNotificationDeliveries(userId, n => n.InitiatedBy, commentsFeedNotificationTransportId.Value);
-			}
 
-			log.Info($"[GetNotificationList] Step 1 done: found {importantNotifications.Count} important notifications and {commentsNotifications.Count} comment notifications");
+			Log.Info($"[GetNotificationList] Step 1 done: found {importantNotifications.Count} important notifications and {commentsNotifications.Count} comment notifications");
 
 			importantNotifications = RemoveBlockedNotifications(importantNotifications).ToList();
 			commentsNotifications = RemoveBlockedNotifications(commentsNotifications, importantNotifications).ToList();
 
-			log.Info($"[GetNotificationList] Step 2 done, removed blocked notifications: left {importantNotifications.Count} important notifications and {commentsNotifications.Count} comment notifications");
+			Log.Info($"[GetNotificationList] Step 2 done, removed blocked notifications: left {importantNotifications.Count} important notifications and {commentsNotifications.Count} comment notifications");
 
 			importantNotifications = RemoveNotActualNotifications(importantNotifications).ToList();
 			commentsNotifications = RemoveNotActualNotifications(commentsNotifications).ToList();
 
-			log.Info($"[GetNotificationList] Step 3 done, removed not actual notifications: left {importantNotifications.Count} important notifications and {commentsNotifications.Count} comment notifications");
+			Log.Info($"[GetNotificationList] Step 3 done, removed not actual notifications: left {importantNotifications.Count} important notifications and {commentsNotifications.Count} comment notifications");
 
 			var importantLastViewTimestamp = await feedRepo.GetFeedViewTimestamp(userId, notificationTransportId ?? -1);
 			var commentsLastViewTimestamp = await feedRepo.GetFeedViewTimestamp(userId, commentsFeedNotificationTransportId ?? -1);
 
-			log.Info("[GetNotificationList] Step 4, building models");
+			Log.Info("[GetNotificationList] Step 4, building models");
 
 			var allNotifications = importantNotifications.Concat(commentsNotifications).ToList();
 			var notificationsData = await notificationDataPreloader.LoadAsync(allNotifications);
@@ -154,12 +148,12 @@ namespace Ulearn.Web.Api.Controllers.Notifications
 			var importantNotificationList = new NotificationList
 			{
 				LastViewTimestamp = importantLastViewTimestamp,
-				Notifications = importantNotifications.Select(notification => BuildNotificationInfo(notification, notificationsData)).ToList(),
+				Notifications = importantNotifications.Select(notification => BuildNotificationInfo(notification, notificationsData)).ToList()
 			};
 			var commentsNotificationList = new NotificationList
 			{
 				LastViewTimestamp = commentsLastViewTimestamp,
-				Notifications = commentsNotifications.Select(notification => BuildNotificationInfo(notification, notificationsData)).ToList(),
+				Notifications = commentsNotifications.Select(notification => BuildNotificationInfo(notification, notificationsData)).ToList()
 			};
 
 			return (importantNotificationList, commentsNotificationList);
@@ -168,7 +162,7 @@ namespace Ulearn.Web.Api.Controllers.Notifications
 		private IEnumerable<Notification> RemoveBlockedNotifications(IReadOnlyCollection<Notification> notifications, IReadOnlyCollection<Notification> searchBlockersAlsoIn = null)
 		{
 			var allNotifications = notifications.ToList();
-			if (searchBlockersAlsoIn != null)
+			if (searchBlockersAlsoIn is not null)
 				allNotifications = allNotifications.Concat(searchBlockersAlsoIn).ToList();
 
 			foreach (var notification in notifications)
@@ -183,7 +177,7 @@ namespace Ulearn.Web.Api.Controllers.Notifications
 		{
 			return notifications.Where(notification =>
 			{
-				log.Info($"Checking actuality of notification #{notification.Id}: {notification} ({notification.GetNotificationType().ToString()})");
+				Log.Info($"Checking actuality of notification #{notification.Id}: {notification} ({notification.GetNotificationType().ToString()})");
 				return notification.IsActual();
 			});
 		}
@@ -197,7 +191,7 @@ namespace Ulearn.Web.Api.Controllers.Notifications
 				Type = notification.GetNotificationType().ToString(),
 				CreateTime = notification.CreateTime,
 				CourseId = notification.CourseId,
-				Data = BuildNotificationData(notification, notificationsData),
+				Data = BuildNotificationData(notification, notificationsData)
 			};
 		}
 

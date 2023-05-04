@@ -6,12 +6,12 @@ namespace Ulearn.Web.Api.Models.Responses.Flashcards
 	[DataContract]
 	public class UserFlashcardStatisticResponse
 	{
+		[DataMember]
+		public List<UserFlashcardStatistics> UsersFlashcardsStatistics;
+
 		public UserFlashcardStatisticResponse()
 		{
 			UsersFlashcardsStatistics = new List<UserFlashcardStatistics>();
 		}
-
-		[DataMember]
-		public List<UserFlashcardStatistics> UsersFlashcardsStatistics;
 	}
 }

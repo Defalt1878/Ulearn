@@ -23,8 +23,8 @@ namespace Ulearn.Web.Api.Controllers.Slides
 		private readonly IAcceptedSolutionsRepo acceptedSolutionsRepo;
 		private readonly ICourseRolesRepo courseRolesRepo;
 		private readonly IUnitsRepo unitsRepo;
-		private readonly IVisitsRepo visitsRepo;
 		private readonly IUserSolutionsRepo userSolutionsRepo;
+		private readonly IVisitsRepo visitsRepo;
 
 		public AcceptedSolutionsController(ICourseStorage courseStorage, UlearnDb db, IUsersRepo usersRepo,
 			IAcceptedSolutionsRepo acceptedSolutionsRepo, ICourseRolesRepo courseRolesRepo, IUnitsRepo unitsRepo, IVisitsRepo visitsRepo, IUserSolutionsRepo userSolutionsRepo)
@@ -38,7 +38,7 @@ namespace Ulearn.Web.Api.Controllers.Slides
 		}
 
 		/// <summary>
-		/// Получить чужие решения
+		///     Получить чужие решения
 		/// </summary>
 		[HttpGet]
 		[Authorize]
@@ -47,14 +47,14 @@ namespace Ulearn.Web.Api.Controllers.Slides
 		public async Task<ActionResult<AcceptedSolutionsResponse>> GetAcceptedSolutions(string courseId, Guid slideId)
 		{
 			var course = courseStorage.FindCourse(courseId);
-			if (course == null)
+			if (course is null)
 				return NotFound(new { status = "error", message = "Course not found" });
 
 			var isInstructor = await courseRolesRepo.HasUserAccessToCourse(UserId, course.Id, CourseRoleType.Instructor);
 			var visibleUnitsIds = await unitsRepo.GetVisibleUnitIds(course, UserId);
 			var slide = course.FindSlideById(slideId, isInstructor, visibleUnitsIds) as ExerciseSlide;
 
-			if (slide == null)
+			if (slide is null)
 				return NotFound(new { status = "error", message = "Slide not found" });
 
 			if (slide.Exercise.HideShowSolutionsButton)
@@ -70,8 +70,8 @@ namespace Ulearn.Web.Api.Controllers.Slides
 				.Select(s => new AcceptedSolution(s.SubmissionId, s.Code, s.Language, s.LikesCount, submissionsLikedByMe.Contains(s.SubmissionId), isInstructor ? BuildShortUserInfo(s.UserWhoPromote) : null))
 				.ToList();
 
-			 var randomLikedSolution = await acceptedSolutionsRepo.GetRandomLikedSubmission(course.Id, slideId);
-			if (randomLikedSolution != null && promotedSolutions.Any(s => s.SubmissionId == randomLikedSolution.Value.SubmissionId || s.Code == randomLikedSolution.Value.Code))
+			var randomLikedSolution = await acceptedSolutionsRepo.GetRandomLikedSubmission(course.Id, slideId);
+			if (randomLikedSolution is not null && promotedSolutions.Any(s => s.SubmissionId == randomLikedSolution.Value.SubmissionId || s.Code == randomLikedSolution.Value.Code))
 				randomLikedSolution = null;
 			var randomLikedSolutions = Enumerable.Repeat(randomLikedSolution, 1).Where(s => s.HasValue)
 				.Select(s => new AcceptedSolution(s.Value.SubmissionId, s.Value.Code, s.Value.Language, s.Value.LikesCount, submissionsLikedByMe.Contains(s.Value.SubmissionId), null))
@@ -89,12 +89,12 @@ namespace Ulearn.Web.Api.Controllers.Slides
 			{
 				PromotedSolutions = promotedSolutions,
 				RandomLikedSolutions = randomLikedSolutions,
-				NewestSolutions = newestSolutions,
+				NewestSolutions = newestSolutions
 			};
 		}
 
 		/// <summary>
-		/// Получить полайканные студентами решения. Используется преподавателями
+		///     Получить полайканные студентами решения. Используется преподавателями
 		/// </summary>
 		[HttpGet("liked")]
 		[Authorize(Policy = "Instructors")]
@@ -112,7 +112,7 @@ namespace Ulearn.Web.Api.Controllers.Slides
 		}
 
 		/// <summary>
-		/// Лайкнуть решение
+		///     Лайкнуть решение
 		/// </summary>
 		[HttpPut("like")]
 		[Authorize]
@@ -131,7 +131,7 @@ namespace Ulearn.Web.Api.Controllers.Slides
 		}
 
 		/// <summary>
-		/// Удалить лайк к решению
+		///     Удалить лайк к решению
 		/// </summary>
 		[HttpDelete("like")]
 		[Authorize]
@@ -146,7 +146,7 @@ namespace Ulearn.Web.Api.Controllers.Slides
 		}
 
 		/// <summary>
-		/// Рекомендовать решение от имени преподавателей курса
+		///     Рекомендовать решение от имени преподавателей курса
 		/// </summary>
 		[HttpPut("promote")]
 		[Authorize]
@@ -169,7 +169,7 @@ namespace Ulearn.Web.Api.Controllers.Slides
 		}
 
 		/// <summary>
-		/// Убрать решение из рекомендаций от имени преподавателей курса
+		///     Убрать решение из рекомендаций от имени преподавателей курса
 		/// </summary>
 		[HttpDelete("promote")]
 		[Authorize]

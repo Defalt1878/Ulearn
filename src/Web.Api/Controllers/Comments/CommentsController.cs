@@ -41,7 +41,7 @@ namespace Ulearn.Web.Api.Controllers.Comments
 		}
 
 		/// <summary>
-		/// Комментарии под слайдом
+		///     Комментарии под слайдом
 		/// </summary>
 		[HttpGet]
 		public async Task<ActionResult<CommentsListResponse>> SlideComments([FromQuery] SlideCommentsParameters parameters)
@@ -54,8 +54,8 @@ namespace Ulearn.Web.Api.Controllers.Comments
 			var isInstructor = await courseRolesRepo.HasUserAccessToCourse(userId, courseId, CourseRoleType.Instructor).ConfigureAwait(false);
 			var isTester = isInstructor || await courseRolesRepo.HasUserAccessToCourse(userId, courseId, CourseRoleType.Tester).ConfigureAwait(false);
 			var visibleUnits = await unitsRepo.GetVisibleUnitIds(course, userId).ConfigureAwait(false);
-			var slide = await GetSlide(courseId, slideId, isInstructor, visibleUnits);
-			if (slide == null)
+			var slide = GetSlide(courseId, slideId, isInstructor, visibleUnits);
+			if (slide is null)
 				return StatusCode((int)HttpStatusCode.NotFound, $"No slide with id {slideId}");
 
 			if (!isTester && !await additionalContentPublicationsRepo.IsSlidePublishedForUser(courseId, slide, userId))
@@ -64,7 +64,7 @@ namespace Ulearn.Web.Api.Controllers.Comments
 			if (parameters.ForInstructors)
 			{
 				if (!IsAuthenticated)
-					return StatusCode((int)HttpStatusCode.Unauthorized, $"You should be authenticated to view instructor comments.");
+					return StatusCode((int)HttpStatusCode.Unauthorized, "You should be authenticated to view instructor comments.");
 				if (!isInstructor)
 					return StatusCode((int)HttpStatusCode.Forbidden, $"You have no access to instructor comments on {courseId}. You should be instructor or course admin.");
 			}
@@ -74,14 +74,14 @@ namespace Ulearn.Web.Api.Controllers.Comments
 			return await GetSlideCommentsResponseAsync(comments, courseId, parameters, slide).ConfigureAwait(false);
 		}
 
-		private async Task<Slide> GetSlide(string courseId, Guid slideId, bool isInstructor, IEnumerable<Guid> visibleUnits)
+		private Slide GetSlide(string courseId, Guid slideId, bool isInstructor, IEnumerable<Guid> visibleUnits)
 		{
 			var course = courseStorage.GetCourse(courseId);
 			var slide = course.FindSlideById(slideId, isInstructor, visibleUnits);
-			if (slide == null)
+			if (slide is null)
 			{
 				var instructorNote = course.FindInstructorNoteByIdNotSafe(slideId);
-				if (instructorNote != null && isInstructor)
+				if (instructorNote is not null && isInstructor)
 					slide = instructorNote;
 			}
 
@@ -114,18 +114,18 @@ namespace Ulearn.Web.Api.Controllers.Comments
 			{
 				TopLevelComments = BuildCommentsListResponse(comments, canUserSeeNotApprovedComments, replies, commentLikesCount, likedByUserCommentsIds,
 					authors2Groups, passedSlideAuthorsIds, userAvailableGroupsIds, canViewAllGroupMembers,
-					addCourseIdAndSlideId: false, addParentCommentId: true, addReplies: true),
+					false, true, true),
 				Pagination = new PaginationResponse
 				{
 					Offset = parameters.Offset,
 					Count = comments.Count,
-					TotalCount = totalCount,
+					TotalCount = totalCount
 				}
 			};
 		}
 
 		/// <summary>
-		/// Добавить комментарий под слайдом
+		///     Добавить комментарий под слайдом
 		/// </summary>
 		[Authorize]
 		[HttpPost]
@@ -142,8 +142,8 @@ namespace Ulearn.Web.Api.Controllers.Comments
 			var isInstructor = await courseRolesRepo.HasUserAccessToCourse(UserId, courseId, CourseRoleType.Instructor).ConfigureAwait(false);
 			var isTester = isInstructor || await courseRolesRepo.HasUserAccessToCourse(userId, courseId, CourseRoleType.Tester).ConfigureAwait(false);
 			var visibleUnits = await unitsRepo.GetVisibleUnitIds(course, UserId).ConfigureAwait(false);
-			var slide = await GetSlide(courseId, slideId, isInstructor, visibleUnits);
-			if (slide == null)
+			var slide = GetSlide(courseId, slideId, isInstructor, visibleUnits);
+			if (slide is null)
 				return StatusCode((int)HttpStatusCode.NotFound, $"No slide with id {slideId}");
 
 			if (!isTester && (slide.IsExtraContent || slide.Unit.Settings.IsExtraContent))
@@ -161,16 +161,13 @@ namespace Ulearn.Web.Api.Controllers.Comments
 
 			var slideIsExercise = slide is ExerciseSlide;
 
-			if (parameters.ForInstructors)
-			{
-				if (!isInstructor)
-					return StatusCode((int)HttpStatusCode.Forbidden, new ErrorResponse($"You can not create comment for instructors. You should be instructor or course admin of course {courseId}."));
-			}
+			if (parameters.ForInstructors && !isInstructor)
+				return StatusCode((int)HttpStatusCode.Forbidden, new ErrorResponse($"You can not create comment for instructors. You should be instructor or course admin of course {courseId}."));
 
 			if (parameters.ParentCommentId.HasValue)
 			{
 				var parentComment = await commentsRepo.FindCommentByIdAsync(parameters.ParentCommentId.Value).ConfigureAwait(false);
-				if (parentComment == null || !parentComment.CourseId.EqualsIgnoreCase(courseId) || parentComment.SlideId != slideId || !parentComment.IsTopLevel)
+				if (parentComment is null || !parentComment.CourseId.EqualsIgnoreCase(courseId) || parentComment.SlideId != slideId || !parentComment.IsTopLevel)
 					return BadRequest(new ErrorResponse($"`parentCommentId` comment {parameters.ParentCommentId.Value} not found, belongs to other course, other slide or is not a top-level comment"));
 
 				if (parentComment.IsForInstructorsOnly != parameters.ForInstructors)
@@ -182,7 +179,7 @@ namespace Ulearn.Web.Api.Controllers.Comments
 			var commentsPolicy = await commentPoliciesRepo.GetCommentsPolicyAsync(courseId).ConfigureAwait(false);
 
 			if (!await CanCommentHereAsync(UserId, courseId, parameters.ParentCommentId.HasValue, commentsPolicy).ConfigureAwait(false))
-				return StatusCode((int)HttpStatusCode.Forbidden, new ErrorResponse($"You can not create comment here by comments policy."));
+				return StatusCode((int)HttpStatusCode.Forbidden, new ErrorResponse("You can not create comment here by comments policy."));
 
 			if (!await CanCommentNowAsync(UserId, courseId, commentsPolicy).ConfigureAwait(false))
 				return StatusCode((int)HttpStatusCode.TooManyRequests, new ErrorResponse("You are commenting too fast. Please wait some time"));
@@ -198,12 +195,12 @@ namespace Ulearn.Web.Api.Controllers.Comments
 
 			var userAvailableGroupsIds = !isInstructor ? null : (await groupAccessesRepo.GetAvailableForUserGroupsAsync(User.GetUserId(), false, true, true).ConfigureAwait(false)).Select(g => g.Id).ToHashSet();
 			var authors2Groups = !isInstructor ? null : await groupMembersRepo.GetUsersGroupsAsync(courseId, new List<string> { UserId }, true).ConfigureAwait(false);
-			var passed = slideIsExercise ? await visitsRepo.IsPassed(comment.CourseId, comment.SlideId, comment.AuthorId) : false;
+			var passed = slideIsExercise && await visitsRepo.IsPassed(comment.CourseId, comment.SlideId, comment.AuthorId);
 
 			return BuildCommentResponse(
 				comment,
 				false, new DefaultDictionary<int, List<Comment>>(), new DefaultDictionary<int, int>(), new HashSet<int>(), // canUserSeeNotApprovedComments not used if addReplies == false
-				authors2Groups, passed ? new HashSet<string> { comment.AuthorId } : null, userAvailableGroupsIds, false, addCourseIdAndSlideId: true, addParentCommentId: true, addReplies: false
+				authors2Groups, passed ? new HashSet<string> { comment.AuthorId } : null, userAvailableGroupsIds, false, true, true, false
 			);
 		}
 

@@ -12,10 +12,10 @@ namespace Ulearn.Web.Api.Utils
 {
 	public class ControllerUtils
 	{
-		private readonly IGroupMembersRepo groupMembersRepo;
-		private readonly IGroupsRepo groupsRepo;
 		private readonly ICourseRolesRepo courseRolesRepo;
 		private readonly IGroupAccessesRepo groupAccessesRepo;
+		private readonly IGroupMembersRepo groupMembersRepo;
+		private readonly IGroupsRepo groupsRepo;
 
 		public ControllerUtils(IGroupMembersRepo groupMembersRepo, ICourseRolesRepo courseRolesRepo, IGroupsRepo groupsRepo, IGroupAccessesRepo groupAccessesRepo)
 		{
@@ -93,10 +93,8 @@ namespace Ulearn.Web.Api.Utils
 
 			var result = new List<string>();
 			foreach (var groupId in groupsIds)
-			{
 				if (int.TryParse(groupId, out var groupIdInt))
 					result.AddRange(enabledAdditionalScoringGroupsForGroups.GetOrDefault(groupIdInt, new List<string>()));
-			}
 
 			return result;
 		}

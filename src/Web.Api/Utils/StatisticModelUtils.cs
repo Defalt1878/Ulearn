@@ -21,16 +21,16 @@ namespace Ulearn.Web.Api.Utils
 {
 	public class StatisticModelUtils
 	{
-		private readonly ICourseRolesRepo courseRolesRepo;
-		private readonly IGroupMembersRepo groupMembersRepo;
-		private readonly IUnitsRepo unitsRepo;
-		private readonly IGroupsRepo groupsRepo;
-		private readonly ControllerUtils controllerUtils;
-		private readonly IVisitsRepo visitsRepo;
 		private readonly IAdditionalScoresRepo additionalScoresRepo;
-		private readonly IGroupAccessesRepo groupAccessesRepo;
+		private readonly ControllerUtils controllerUtils;
+		private readonly ICourseRolesRepo courseRolesRepo;
 		private readonly ICourseStorage courseStorage;
 		private readonly UlearnDb db;
+		private readonly IGroupAccessesRepo groupAccessesRepo;
+		private readonly IGroupMembersRepo groupMembersRepo;
+		private readonly IGroupsRepo groupsRepo;
+		private readonly IUnitsRepo unitsRepo;
+		private readonly IVisitsRepo visitsRepo;
 
 		public StatisticModelUtils(ICourseRolesRepo courseRolesRepo, IGroupMembersRepo groupMembersRepo,
 			IUnitsRepo unitsRepo, IGroupsRepo groupsRepo, ControllerUtils controllerUtils,
@@ -59,16 +59,16 @@ namespace Ulearn.Web.Api.Utils
 			return builder.Build();
 		}
 
-		public void FillUnitNames(ISheetBuilder builder, CourseStatisticPageModel model, bool exportEmails = false, bool onlyFullScores = false, DateTime? lastUpdateTime = null)
+		private static void FillUnitNames(ISheetBuilder builder, CourseStatisticPageModel model, bool exportEmails = false, DateTime? lastUpdateTime = null)
 		{
-			if (lastUpdateTime != null)
+			if (lastUpdateTime is not null)
 				builder.AddCell(lastUpdateTime.Value);
 
 			builder.AddStyleRule(s => s.Font.Bold = true);
 
-			// 2 or 3 is summ of columns in FillColumnNames
+			// 2 or 3 is sum of columns in FillColumnNames
 			var startColumn = 3;
-			if (lastUpdateTime != null) startColumn--;
+			if (lastUpdateTime is not null) startColumn--;
 			if (exportEmails) startColumn++;
 			builder.AddCell("", startColumn);
 			builder.AddCell("За весь курс", model.ScoringGroups.Count);
@@ -91,7 +91,7 @@ namespace Ulearn.Web.Api.Utils
 			builder.GoToNewLine();
 		}
 
-		public void FillColumnNames(ISheetBuilder builder, CourseStatisticPageModel model, bool exportEmails = false, bool onlyFullScores = false)
+		private static void FillColumnNames(ISheetBuilder builder, CourseStatisticPageModel model, bool exportEmails = false)
 		{
 			builder.AddCell("Фамилия Имя");
 			builder.AddCell("Ulearn id");
@@ -121,7 +121,7 @@ namespace Ulearn.Web.Api.Utils
 			builder.GoToNewLine();
 		}
 
-		public void FillMaxsRow(ISheetBuilder builder, CourseStatisticPageModel model, bool exportEmails = false, bool onlyFullScores = false)
+		private static void FillMaxesRow(ISheetBuilder builder, CourseStatisticPageModel model, bool exportEmails = false)
 		{
 			builder.AddStyleRule(s => s.Border.Bottom.Style = ExcelBorderStyle.Thin);
 			builder.AddStyleRuleForOneCell(s =>
@@ -131,14 +131,14 @@ namespace Ulearn.Web.Api.Utils
 			});
 			builder.AddCell("Максимум:", exportEmails ? 4 : 3);
 			foreach (var scoringGroup in model.ScoringGroups.Values)
-				builder.AddCell(model.Units.Sum(unit => model.GetMaxScoreForUnitByScoringGroup(unit, scoringGroup)));
+				builder.AddCell(model.Units.Sum(unit => CourseStatisticPageModel.GetMaxScoreForUnitByScoringGroup(unit, scoringGroup)));
 			foreach (var unit in model.Units)
 			{
 				builder.AddStyleRuleForOneCell(s => s.Border.Left.Style = ExcelBorderStyle.Thin);
 				foreach (var scoringGroup in model.GetUsingUnitScoringGroups(unit, model.ScoringGroups).Values)
 				{
 					var shouldBeSolvedSlides = model.ShouldBeSolvedSlidesByUnitScoringGroup[Tuple.Create(unit.Id, scoringGroup.Id)];
-					builder.AddCell(model.GetMaxScoreForUnitByScoringGroup(unit, scoringGroup));
+					builder.AddCell(CourseStatisticPageModel.GetMaxScoreForUnitByScoringGroup(unit, scoringGroup));
 					foreach (var slide in shouldBeSolvedSlides)
 						builder.AddCell(slide.MaxScore);
 					if (shouldBeSolvedSlides.Count > 0 && scoringGroup.CanBeSetByInstructor)
@@ -150,7 +150,7 @@ namespace Ulearn.Web.Api.Utils
 			builder.GoToNewLine();
 		}
 
-		public void FillUserLines(ISheetBuilder builder, CourseStatisticPageModel model, bool exportEmails = false, bool onlyFullScores = false)
+		private static void FillUserLines(ISheetBuilder builder, CourseStatisticPageModel model, bool exportEmails = false, bool onlyFullScores = false)
 		{
 			builder.AddStyleRule(s => s.Font.Bold = false);
 
@@ -186,7 +186,7 @@ namespace Ulearn.Web.Api.Utils
 						foreach (var slide in shouldBeSolvedSlides)
 						{
 							var slideScore = model.ScoreByUserAndSlide[Tuple.Create(user.UserId, slide.Id)];
-							builder.AddCell(onlyFullScores ? model.GetOnlyFullScore(slideScore, slide) : slideScore);
+							builder.AddCell(onlyFullScores ? CourseStatisticPageModel.GetOnlyFullScore(slideScore, slide) : slideScore);
 						}
 
 						if (shouldBeSolvedSlides.Count > 0 && scoringGroup.CanBeSetByInstructor)
@@ -198,11 +198,11 @@ namespace Ulearn.Web.Api.Utils
 			}
 		}
 
-		public void FillStatisticModelBuilder(ISheetBuilder builder, CourseStatisticPageModel model, bool exportEmails = false, bool onlyFullScores = false, DateTime? lastUpdateTime = null)
+		public static void FillStatisticModelBuilder(ISheetBuilder builder, CourseStatisticPageModel model, bool exportEmails = false, bool onlyFullScores = false, DateTime? lastUpdateTime = null)
 		{
-			FillUnitNames(builder, model, exportEmails, onlyFullScores, lastUpdateTime); // За весь курс - Модуль 1 - Модуль 2 - ... - Модуль N
-			FillColumnNames(builder, model, exportEmails, onlyFullScores); // ФИО - Id - Группа - ScoringGroup 1 - Scoring group 2 - SG: SlideName - ...
-			FillMaxsRow(builder, model, exportEmails, onlyFullScores); // Максимум ... ... ...
+			FillUnitNames(builder, model, exportEmails, lastUpdateTime); // За весь курс - Модуль 1 - Модуль 2 - ... - Модуль N
+			FillColumnNames(builder, model, exportEmails); // ФИО - Id - Группа - ScoringGroup 1 - Scoring group 2 - SG: SlideName - ...
+			FillMaxesRow(builder, model, exportEmails); // Максимум ... ... ...
 			FillUserLines(builder, model, exportEmails, onlyFullScores); // filling all lines
 		}
 
@@ -221,13 +221,13 @@ namespace Ulearn.Web.Api.Utils
 
 			var slidesIds = visibleUnits.SelectMany(u => u.GetSlides(isInstructor).Select(s => s.Id)).ToHashSet();
 
-			var filterOptions = await controllerUtils.GetFilterOptionsByGroup<VisitsFilterOptions>(userId, courseId, groupsIds, allowSeeGroupForAnyMember: true);
+			var filterOptions = await controllerUtils.GetFilterOptionsByGroup<VisitsFilterOptions>(userId, courseId, groupsIds, true);
 			filterOptions.PeriodStart = DateTime.MinValue;
 			filterOptions.PeriodFinish = DateTime.MaxValue.Subtract(TimeSpan.FromDays(1));
 
 			List<string> usersIds;
 			/* If we filtered out users from one or several groups show them all */
-			if (filterOptions.UserIds != null && !filterOptions.IsUserIdsSupplement)
+			if (filterOptions.UserIds is not null && !filterOptions.IsUserIdsSupplement)
 				usersIds = filterOptions.UserIds;
 			else
 				usersIds = await GetUsersIds(filterOptions);
@@ -280,7 +280,9 @@ namespace Ulearn.Web.Api.Utils
 				groupsAccesses = await groupAccessesRepo.GetGroupAccessesAsync(groups.Select(g => g.Id));
 			}
 			else
+			{
 				groups = (await groupMembersRepo.GetUserGroupsAsync(courseId, userId)).AsGroups().ToList();
+			}
 
 			var model = new CourseStatisticPageModel
 			{
@@ -300,7 +302,7 @@ namespace Ulearn.Web.Api.Utils
 				ScoreByUserAndSlide = scoreByUserAndSlide,
 				AdditionalScores = additionalScores,
 				UsersGroupsIds = usersGroupsIds,
-				EnabledAdditionalScoringGroupsForGroups = enabledAdditionalScoringGroupsForGroups,
+				EnabledAdditionalScoringGroupsForGroups = enabledAdditionalScoringGroupsForGroups
 			};
 			return model;
 		}
@@ -354,7 +356,7 @@ namespace Ulearn.Web.Api.Utils
 				.ToDefaultDictionary();
 		}
 
-		private DefaultDictionary<Tuple<Guid, string>, List<Slide>> GetShouldBeSolvedSlidesByUnitScoringGroup(List<Slide> shouldBeSolvedSlides, Dictionary<Guid, Guid> unitBySlide)
+		private static DefaultDictionary<Tuple<Guid, string>, List<Slide>> GetShouldBeSolvedSlidesByUnitScoringGroup(List<Slide> shouldBeSolvedSlides, Dictionary<Guid, Guid> unitBySlide)
 		{
 			return shouldBeSolvedSlides
 				.GroupBy(s => Tuple.Create(unitBySlide[s.Id], s.ScoringGroup))
@@ -363,7 +365,7 @@ namespace Ulearn.Web.Api.Utils
 		}
 
 		private async Task<DefaultDictionary<Tuple<string, Guid>, int>> GetScoreByUserAndSlide(VisitsFilterOptions filterOptions,
-			HashSet<Guid> shouldBeSolvedSlidesIds)
+			IReadOnlySet<Guid> shouldBeSolvedSlidesIds)
 		{
 			return (await visitsRepo.GetVisitsInPeriod(filterOptions)
 					.Select(v => new { v.UserId, v.SlideId, v.Score })
@@ -375,7 +377,7 @@ namespace Ulearn.Web.Api.Utils
 		}
 
 		private async Task<DefaultDictionary<Tuple<string, Guid, string>, int>> GetAdditionalScores(string courseId,
-			List<string> visitedUsersIds)
+			IEnumerable<string> visitedUsersIds)
 		{
 			return (await additionalScoresRepo
 					.GetAdditionalScoresForUsers(courseId, visitedUsersIds))

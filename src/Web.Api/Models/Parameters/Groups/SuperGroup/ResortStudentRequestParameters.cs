@@ -7,7 +7,7 @@ namespace Ulearn.Web.Api.Models.Parameters.Groups.SuperGroup;
 public class ResortStudentRequestParameters
 {
 	/// <summary>
-	/// Contains expected groups members after sorting
+	///     Contains expected groups members after sorting
 	/// </summary>
 	[DataMember]
 	public Dictionary<string, List<string>> StudentNamesByGroupsName { get; set; }

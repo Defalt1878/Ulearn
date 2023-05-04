@@ -10,7 +10,7 @@ namespace Ulearn.Web.Api.Models.Parameters.Groups
 		[DataMember(IsRequired = true)]
 		[NotEmpty(ErrorMessage = "Group name can not be empty")]
 		public string Name { get; set; }
-		
+
 		[DataMember(IsRequired = true)]
 		public GroupType GroupType { get; set; }
 	}

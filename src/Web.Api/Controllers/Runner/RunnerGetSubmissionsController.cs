@@ -9,7 +9,6 @@ using Database.Repos;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using Vostok.Logging.Abstractions;
 using Ulearn.Common.Api.Models.Responses;
 using Ulearn.Core.Courses.Manager;
 using Ulearn.Core.Courses.Slides.Exercises;
@@ -17,6 +16,7 @@ using Ulearn.Core.Courses.Slides.Exercises.Blocks;
 using Ulearn.Core.RunCheckerJobApi;
 using Ulearn.Core.Telegram;
 using Ulearn.Web.Api.Utils.Courses;
+using Vostok.Logging.Abstractions;
 using Web.Api.Configuration;
 
 namespace Ulearn.Web.Api.Controllers.Runner
@@ -25,9 +25,8 @@ namespace Ulearn.Web.Api.Controllers.Runner
 	[Produces("application/json")]
 	public class RunnerGetSubmissionsController : ControllerBase
 	{
-		private readonly IServiceScopeFactory serviceScopeFactory;
 		private readonly WebApiConfiguration configuration;
-		private static ILog log => LogProvider.Get().ForContext(typeof(RunnerGetSubmissionsController));
+		private readonly IServiceScopeFactory serviceScopeFactory;
 
 		public RunnerGetSubmissionsController(IOptions<WebApiConfiguration> options, IServiceScopeFactory serviceScopeFactory)
 		{
@@ -35,8 +34,10 @@ namespace Ulearn.Web.Api.Controllers.Runner
 			this.serviceScopeFactory = serviceScopeFactory;
 		}
 
+		private static ILog Log => LogProvider.Get().ForContext(typeof(RunnerGetSubmissionsController));
+
 		/// <summary>
-		/// Взять на проверку решения задач
+		///     Взять на проверку решения задач
 		/// </summary>
 		[HttpPost("/runner/get-submissions")]
 		public async Task<ActionResult<List<RunnerSubmission>>> GetSubmissions([FromQuery] string token, [FromQuery] string sandboxes, [FromQuery] string agent)
@@ -51,12 +52,12 @@ namespace Ulearn.Web.Api.Controllers.Runner
 			{
 				using (var scope = serviceScopeFactory.CreateScope())
 				{
-					var userSolutionsRepo = (IUserSolutionsRepo)scope.ServiceProvider.GetService(typeof(IUserSolutionsRepo));
+					var userSolutionsRepo = (IUserSolutionsRepo)scope.ServiceProvider.GetService(typeof(IUserSolutionsRepo))!;
 					var submission = await userSolutionsRepo.GetUnhandledSubmission(agent, sandboxesImageNames);
-					if (submission != null || sw.Elapsed > TimeSpan.FromSeconds(10))
+					if (submission is not null || sw.Elapsed > TimeSpan.FromSeconds(10))
 					{
-						if (submission != null)
-							log.Info($"Отдаю на проверку решение: [{submission.Id}], агент {agent}, только сначала соберу их");
+						if (submission is not null)
+							Log.Info($"Отдаю на проверку решение: [{submission.Id}], агент {agent}, только сначала соберу их");
 						else
 							return new List<RunnerSubmission>();
 
@@ -64,14 +65,14 @@ namespace Ulearn.Web.Api.Controllers.Runner
 						var courseManager = scope.ServiceProvider.GetService<IMasterCourseManager>();
 						try
 						{
-							var builtSubmissions = new List<RunnerSubmission> { await ToRunnerSubmission(submission, courseStorage, courseManager) };
-							log.Info($"Собрал решения: [{submission.Id}], отдаю их агенту {agent}");
+							var builtSubmissions = new List<RunnerSubmission> { ToRunnerSubmission(submission, courseStorage, courseManager) };
+							Log.Info($"Собрал решения: [{submission.Id}], отдаю их агенту {agent}");
 							return builtSubmissions;
 						}
 						catch (Exception ex)
 						{
 							await userSolutionsRepo.SetExceptionStatusForSubmission(submission);
-							log.Error(ex);
+							Log.Error(ex);
 							var errorsBot = scope.ServiceProvider.GetService<ErrorsBot>();
 							var slide = courseStorage.GetCourse(submission.CourseId).GetSlideByIdNotSafe(submission.SlideId);
 							await errorsBot.PostToChannelAsync($"Не смог собрать архив с решением для проверки.\nКурс «{submission.CourseId}», слайд «{slide.Title}» ({submission.SlideId})\n\nhttps://ulearn.me/Sandbox");
@@ -85,37 +86,35 @@ namespace Ulearn.Web.Api.Controllers.Runner
 			}
 		}
 
-		private static async Task<RunnerSubmission> ToRunnerSubmission(UserExerciseSubmission submission,
+		private static RunnerSubmission ToRunnerSubmission(UserExerciseSubmission submission,
 			ICourseStorage courseStorage, IMasterCourseManager courseManager)
 		{
-			log.Info($"Собираю для отправки в RunCsJob решение {submission.Id}");
+			Log.Info($"Собираю для отправки в RunCsJob решение {submission.Id}");
 			var slide = courseStorage.FindCourse(submission.CourseId)?.FindSlideByIdNotSafe(submission.SlideId);
 
-			if (slide is ExerciseSlide exerciseSlide)
-			{
-				var courseDictionary = courseManager.GetExtractedCourseDirectory(submission.CourseId).FullName;
-				if (exerciseSlide is PolygonExerciseSlide)
-					return ((PolygonExerciseBlock)exerciseSlide.Exercise).CreateSubmission(
-						submission.Id.ToString(),
-						submission.SolutionCode.Text,
-						submission.Language,
-						courseDictionary
-					);
+			if (slide is not ExerciseSlide exerciseSlide)
+				return new FileRunnerSubmission
+				{
+					Id = submission.Id.ToString(),
+					Code = "// no slide anymore",
+					Input = "",
+					NeedRun = true
+				};
 
-				return exerciseSlide.Exercise.CreateSubmission(
+			var courseDictionary = courseManager.GetExtractedCourseDirectory(submission.CourseId).FullName;
+			if (exerciseSlide is PolygonExerciseSlide)
+				return ((PolygonExerciseBlock)exerciseSlide.Exercise).CreateSubmission(
 					submission.Id.ToString(),
 					submission.SolutionCode.Text,
+					submission.Language,
 					courseDictionary
 				);
-			}
 
-			return new FileRunnerSubmission
-			{
-				Id = submission.Id.ToString(),
-				Code = "// no slide anymore",
-				Input = "",
-				NeedRun = true
-			};
+			return exerciseSlide.Exercise.CreateSubmission(
+				submission.Id.ToString(),
+				submission.SolutionCode.Text,
+				courseDictionary
+			);
 		}
 	}
 }

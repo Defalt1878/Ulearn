@@ -18,11 +18,11 @@ using Ulearn.Web.Api.Utils;
 namespace Ulearn.Web.Api.Controllers.Review
 {
 	[Authorize(Policy = "Instructors")]
-	[Route("review-queue")]
+	[Route("review-queue/{courseId}")]
 	public class ReviewQueueController : BaseController
 	{
-		private readonly ISlideCheckingsRepo slideCheckingsRepo;
 		private readonly ControllerUtils controllerUtils;
+		private readonly ISlideCheckingsRepo slideCheckingsRepo;
 
 		public ReviewQueueController(
 			ICourseStorage courseStorage,
@@ -50,7 +50,7 @@ namespace Ulearn.Web.Api.Controllers.Review
 			await base.OnActionExecutionAsync(context, next);
 		}
 
-		[HttpGet("{courseId}")]
+		[HttpGet]
 		public async Task<ReviewQueueResponse> GetReviewQueueInfo(
 			[FromRoute] string courseId,
 			[FromQuery] string groupsIds = null,
@@ -60,7 +60,7 @@ namespace Ulearn.Web.Api.Controllers.Review
 		)
 		{
 			const int maxShownQueueSize = 500;
-			var groupsIdsList = groupsIds != null ? groupsIds.Split(',').ToList() : new List<string>();
+			var groupsIdsList = groupsIds is not null ? groupsIds.Split(',').ToList() : new List<string>();
 			var filterOptions = await GetManualCheckingFilterOptionsByGroup(courseId, groupsIdsList);
 
 			if (!string.IsNullOrEmpty(userId))
@@ -76,7 +76,7 @@ namespace Ulearn.Web.Api.Controllers.Review
 			return ReviewQueueResponse.Build(checkings);
 		}
 
-		[HttpPost("{courseId}/{submissionId}")]
+		[HttpPost("{submissionId:int}")]
 		public async Task<ActionResult> LockSubmission([FromRoute] string courseId, [FromRoute] int submissionId, [FromQuery] QueueItemType type)
 		{
 			AbstractManualSlideChecking checking =
@@ -84,7 +84,7 @@ namespace Ulearn.Web.Api.Controllers.Review
 					? await slideCheckingsRepo.FindManualCheckingById<ManualExerciseChecking>(submissionId)
 					: await slideCheckingsRepo.FindManualCheckingById<ManualQuizChecking>(submissionId);
 
-			if (checking == null)
+			if (checking is null)
 				return NotFound(new ErrorResponse($"Submission {submissionId} not found"));
 
 			await slideCheckingsRepo.LockManualChecking(checking, UserId);

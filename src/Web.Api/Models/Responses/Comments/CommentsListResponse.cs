@@ -5,6 +5,8 @@ using JetBrains.Annotations;
 using Ulearn.Common.Api.Models.Responses;
 using Ulearn.Web.Api.Models.Common;
 
+// ReSharper disable NotNullOrRequiredMemberIsNotInitialized
+
 namespace Ulearn.Web.Api.Models.Responses.Comments
 {
 	[DataContract]

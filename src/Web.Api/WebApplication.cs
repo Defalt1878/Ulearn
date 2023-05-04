@@ -9,6 +9,7 @@ using AntiPlagiarism.Api;
 using Database;
 using Database.Di;
 using Database.Models;
+using HibernatingRhinos.Profiler.Appender.EntityFramework;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
@@ -57,12 +58,14 @@ using Ulearn.Web.Api.Workers;
 using Vostok.Applications.AspNetCore.Builders;
 using Vostok.Hosting.Abstractions;
 using Web.Api.Configuration;
-using Enum = System.Enum;
 
 namespace Ulearn.Web.Api
 {
 	public class WebApplication : BaseApiWebApplication
 	{
+		private const string websocketsPath = "/ws";
+
+		private static readonly Regex coursesStaticFilesPattern = new("/courses/[^/]+/files", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 		private WebApiConfiguration configuration;
 		private Type[] polymorphismBaseTypes = { typeof(IApiSlideBlock), typeof(RunnerSubmission) };
 
@@ -70,7 +73,7 @@ namespace Ulearn.Web.Api
 		{
 #if DEBUG
 			/* Initialize EntityFramework Profiler. See https://www.hibernatingrhinos.com/products/efprof/learn for details */
-			HibernatingRhinos.Profiler.Appender.EntityFramework.EntityFrameworkProfiler.Initialize();
+			EntityFrameworkProfiler.Initialize();
 #endif
 			provider.GetService<WebsocketsEventSender>();
 			return Task.CompletedTask;
@@ -106,13 +109,11 @@ namespace Ulearn.Web.Api
 			database.CreateInitialDataAsync(initialDataCreator);
 		}
 
-		private const string websocketsPath = "/ws";
-
 		private static void ConfigureWebsockets(IApplicationBuilder app)
 		{
 			app.Map(
 				new PathString(websocketsPath), // Map применяет middleware только при обработке запросов по указанному префиксу пути
-				a =>
+				_ =>
 				{
 					app.UseWebSockets();
 					app.UseRouting(); // Включает обработку UseEndpoints
@@ -120,17 +121,15 @@ namespace Ulearn.Web.Api
 				});
 		}
 
-		private static readonly Regex coursesStaticFilesPattern = new("/courses/[^/]+/files", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-
 		protected override IApplicationBuilder UseStaticFiles(IApplicationBuilder app)
 		{
 			var contentTypeProvider = new FileExtensionContentTypeProvider(CourseStaticFilesHelper.AllowedExtensions);
 
 			var options = new RewriteOptions()
-				.AddRewrite(@"^courses/([^/]+)/files/(.+)", "courses/$1/$2", skipRemainingRules: true);
+				.AddRewrite(@"^courses/([^/]+)/files/(.+)", "courses/$1/$2", true);
 			app.UseRewriter(options);
-			app.MapWhen(c => coursesStaticFilesPattern.IsMatch(c.Request.Path.Value),
-				a =>
+			app.MapWhen(c => c.Request.Path.Value is not null && coursesStaticFilesPattern.IsMatch(c.Request.Path.Value),
+				_ =>
 				{
 					app.UseStaticFiles(new StaticFileOptions
 					{
@@ -150,7 +149,6 @@ namespace Ulearn.Web.Api
 
 			base.ConfigureServices(services, hostingEnvironment);
 
-			/* TODO (andgein): use UlearnDbFactory here */
 			services.AddDbContext<UlearnDb>( // AddDbContextPool: DbContext Pooling does not dispose LazyLoader https://github.com/dotnet/efcore/issues/11308
 				options => options
 					.UseLazyLoadingProxies()
@@ -234,7 +232,7 @@ namespace Ulearn.Web.Api
 						},
 						Scheme = "oauth2",
 						Name = "Bearer",
-						In = ParameterLocation.Header,
+						In = ParameterLocation.Header
 					},
 					new List<string>()
 				}
@@ -243,8 +241,8 @@ namespace Ulearn.Web.Api
 			c.OperationFilter<RemoveCourseParameterOperationFilter>();
 			foreach (var polymorphismBaseType in polymorphismBaseTypes)
 			{
-				c.DocumentFilterDescriptors.Add(new FilterDescriptor { Type = typeof(PolymorphismDocumentFilter<>).MakeGenericType(polymorphismBaseType), Arguments = new object[0] });
-				c.SchemaFilterDescriptors.Add(new FilterDescriptor { Type = typeof(PolymorphismSchemaFilter<>).MakeGenericType(polymorphismBaseType), Arguments = new object[0] });
+				c.DocumentFilterDescriptors.Add(new FilterDescriptor { Type = typeof(PolymorphismDocumentFilter<>).MakeGenericType(polymorphismBaseType), Arguments = Array.Empty<object>() });
+				c.SchemaFilterDescriptors.Add(new FilterDescriptor { Type = typeof(PolymorphismSchemaFilter<>).MakeGenericType(polymorphismBaseType), Arguments = Array.Empty<object>() });
 			}
 		}
 
@@ -267,8 +265,8 @@ namespace Ulearn.Web.Api
 		{
 			base.ConfigureDi(services);
 
-			services.AddSingleton(MasterCourseManager.CourseStorageInstance);
-			services.AddSingleton(MasterCourseManager.CourseStorageUpdaterInstance);
+			services.AddSingleton(CourseManager.CourseStorageInstance);
+			services.AddSingleton(CourseManager.CourseStorageUpdaterInstance);
 			services.AddSingleton<MasterCourseManager>();
 			services.AddSingleton<ExerciseStudentZipsCache>();
 			services.AddSingleton<IMasterCourseManager>(x => x.GetRequiredService<MasterCourseManager>());
@@ -282,9 +280,9 @@ namespace Ulearn.Web.Api
 			services.AddScoped<SlideRenderer, SlideRenderer>();
 			services.AddSingleton<WebsocketsEventSender, WebsocketsEventSender>();
 			services.AddScoped(sp => new MetricSender(
-				((IOptions<WebApiConfiguration>)sp.GetService(typeof(IOptions<WebApiConfiguration>))).Value.GraphiteServiceName));
+				((IOptions<WebApiConfiguration>)sp.GetService(typeof(IOptions<WebApiConfiguration>)))!.Value.GraphiteServiceName));
 			services.AddScoped(sp => new ErrorsBot(
-				((IOptions<WebApiConfiguration>)sp.GetService(typeof(IOptions<WebApiConfiguration>))).Value,
+				((IOptions<WebApiConfiguration>)sp.GetService(typeof(IOptions<WebApiConfiguration>)))!.Value,
 				(MetricSender)sp.GetService(typeof(MetricSender))));
 			services.AddScoped<XQueueResultObserver>();
 			services.AddScoped<SandboxErrorsResultObserver>();
@@ -298,12 +296,12 @@ namespace Ulearn.Web.Api
 			services.AddSingleton<SuperGroupManager>();
 			services.AddSingleton<IAntiPlagiarismClient>(sp =>
 			{
-				var antiplagiarismClientConfiguration = ((IOptions<WebApiConfiguration>)sp.GetService(typeof(IOptions<WebApiConfiguration>))).Value.AntiplagiarismClient;
+				var antiplagiarismClientConfiguration = ((IOptions<WebApiConfiguration>)sp.GetService(typeof(IOptions<WebApiConfiguration>)))!.Value.AntiplagiarismClient!;
 				return new AntiPlagiarismClient(antiplagiarismClientConfiguration.Endpoint, antiplagiarismClientConfiguration.Token);
 			});
 			services.AddSingleton<IPythonVisualizerClient>(sp =>
 			{
-				var pythonVisualizerEndpoint = ((IOptions<WebApiConfiguration>)sp.GetService(typeof(IOptions<WebApiConfiguration>))).Value.PythonVisualizerEndpoint;
+				var pythonVisualizerEndpoint = ((IOptions<WebApiConfiguration>)sp.GetService(typeof(IOptions<WebApiConfiguration>)))!.Value.PythonVisualizerEndpoint;
 				return new PythonVisualizerClient(pythonVisualizerEndpoint);
 			});
 
@@ -318,20 +316,20 @@ namespace Ulearn.Web.Api
 			builder.AddHostedServiceFromApplication<RefreshGoogleSheetWorker>();
 		}
 
-		public void ConfigureAuthServices(IServiceCollection services, WebApiConfiguration configuration)
+		public void ConfigureAuthServices(IServiceCollection services, WebApiConfiguration cfg)
 		{
 			/* Configure sharing cookies between application.
-			   See https://docs.microsoft.com/en-us/aspnet/core/security/cookie-sharing?tabs=aspnetcore2x for details */
+				See https://docs.microsoft.com/en-us/aspnet/core/security/cookie-sharing?tabs=aspnetcore2x for details */
 			services
 				.AddDataProtection()
-				.PersistKeysToFileSystem(new DirectoryInfo(configuration.Web.CookieKeyRingDirectory))
+				.PersistKeysToFileSystem(new DirectoryInfo(cfg.Web.CookieKeyRingDirectory))
 				.SetApplicationName("ulearn");
 
 			services.ConfigureApplicationCookie(options =>
 			{
-				options.Cookie.Name = configuration.Web.CookieName;
+				options.Cookie.Name = cfg.Web.CookieName;
 				options.ExpireTimeSpan = TimeSpan.FromDays(14);
-				options.Cookie.Domain = configuration.Web.CookieDomain;
+				options.Cookie.Domain = cfg.Web.CookieDomain;
 				options.LoginPath = "/users/login";
 				options.LogoutPath = "/users/logout";
 				options.Events.OnRedirectToLogin = context =>
@@ -364,9 +362,9 @@ namespace Ulearn.Web.Api
 						ValidateLifetime = true,
 						ValidateIssuerSigningKey = true,
 
-						ValidIssuer = configuration.Web.Authentication.Jwt.Issuer,
-						ValidAudience = configuration.Web.Authentication.Jwt.Audience,
-						IssuerSigningKey = JwtBearerHelpers.CreateSymmetricSecurityKey(configuration.Web.Authentication.Jwt.IssuerSigningKey)
+						ValidIssuer = cfg.Web.Authentication.Jwt.Issuer,
+						ValidAudience = cfg.Web.Authentication.Jwt.Audience,
+						IssuerSigningKey = JwtBearerHelpers.CreateSymmetricSecurityKey(cfg.Web.Authentication.Jwt.IssuerSigningKey)
 					};
 					options.Events = new JwtBearerEvents // Jwt-токен в websocket передается через query string
 					{

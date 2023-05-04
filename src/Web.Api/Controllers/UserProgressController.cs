@@ -23,20 +23,20 @@ using Ulearn.Web.Api.Utils.LTI;
 
 namespace Ulearn.Web.Api.Controllers
 {
-	[Route("/user-progress")]
+	[Route("/user-progress/{courseId}")]
 	public class UserProgressController : BaseController
 	{
-		private readonly IVisitsRepo visitsRepo;
-		private readonly IUserQuizzesRepo userQuizzesRepo;
 		private readonly IAdditionalScoresRepo additionalScoresRepo;
 		private readonly ICourseRolesRepo courseRolesRepo;
 		private readonly IGroupAccessesRepo groupAccessesRepo;
 		private readonly IGroupMembersRepo groupMembersRepo;
-		private readonly ISlideCheckingsRepo slideCheckingsRepo;
-		private readonly ILtiRequestsRepo ltiRequestsRepo;
-		private readonly ILtiConsumersRepo ltiConsumersRepo;
-		private readonly IUnitsRepo unitsRepo;
 		private readonly IGroupsRepo groupsRepo;
+		private readonly ILtiConsumersRepo ltiConsumersRepo;
+		private readonly ILtiRequestsRepo ltiRequestsRepo;
+		private readonly ISlideCheckingsRepo slideCheckingsRepo;
+		private readonly IUnitsRepo unitsRepo;
+		private readonly IUserQuizzesRepo userQuizzesRepo;
+		private readonly IVisitsRepo visitsRepo;
 
 		public UserProgressController(ICourseStorage courseStorage, UlearnDb db, IUsersRepo usersRepo,
 			IVisitsRepo visitsRepo, IUserQuizzesRepo userQuizzesRepo, IAdditionalScoresRepo additionalScoresRepo,
@@ -58,9 +58,9 @@ namespace Ulearn.Web.Api.Controllers
 		}
 
 		/// <summary>
-		/// Прогресс пользователя в курсе 
+		///     Прогресс пользователя в курсе
 		/// </summary>
-		[HttpPost("{courseId}")]
+		[HttpPost]
 		[Authorize]
 		public async Task<ActionResult<UsersProgressResponse>> UserProgress([FromRoute] string courseId, [FromBody] UserProgressParameters parameters)
 		{
@@ -68,8 +68,10 @@ namespace Ulearn.Web.Api.Controllers
 				return NotFound(new ErrorResponse($"Course {courseId} not found"));
 			var course = courseStorage.FindCourse(courseId);
 			var userIds = parameters.UserIds;
-			if (userIds == null || userIds.Count == 0)
+			if (userIds is null || userIds.Count == 0)
+			{
 				userIds = new List<string> { UserId };
+			}
 			else
 			{
 				var userIdsWithProgressNotVisibleForUser = await GetUserIdsWithProgressNotVisibleForUser(course.Id, userIds);
@@ -131,7 +133,7 @@ namespace Ulearn.Web.Api.Controllers
 
 			return new UsersProgressResponse
 			{
-				UserProgress = usersProgress,
+				UserProgress = usersProgress
 			};
 		}
 
@@ -173,31 +175,31 @@ namespace Ulearn.Web.Api.Controllers
 		}
 
 		/// <summary>
-		/// Отметить посещение слайда в курсе
+		///     Отметить посещение слайда в курсе
 		/// </summary>
 		/// <returns></returns>
-		[HttpPost("{courseId}/visit/{slideId}")]
-		[HttpPut("{courseId}/{slideId}/visit")]
+		[HttpPost("visit/{slideId:guid}")]
+		[HttpPut("{slideId:guid}/visit")]
 		[Authorize]
 		public async Task<ActionResult<UsersProgressResponse>> Visit([FromRoute] Course course, [FromRoute] Guid slideId)
 		{
 			var isInstructor = await courseRolesRepo.HasUserAccessToCourse(UserId, course.Id, CourseRoleType.Instructor).ConfigureAwait(false);
 			var slide = course.FindSlideByIdNotSafe(slideId);
-			if (slide == null)
+			if (slide is null)
 			{
 				var instructorNote = course.FindInstructorNoteByIdNotSafe(slideId);
-				if (instructorNote != null && isInstructor)
+				if (instructorNote is not null && isInstructor)
 					slide = instructorNote;
 			}
 
-			if (slide == null)
+			if (slide is null)
 				return StatusCode((int)HttpStatusCode.NotFound, $"No slide with id {slideId}");
 			var visit = await visitsRepo.AddVisit(course.Id, slideId, UserId, GetRealClientIp());
 			await ResendLtiScore(course.Id, slide, visit);
 			return await UserProgress(course.Id, new UserProgressParameters());
 		}
 
-		[HttpPut("{courseId}/{slideId}/prohibit-further-manual-checking")]
+		[HttpPut("{slideId:guid}/prohibit-further-manual-checking")]
 		[Authorize(Policy = "Instructors")]
 		public async Task<ActionResult> ProhibitFurtherManualChecking([FromRoute] string courseId, [FromRoute] Guid slideId, [FromQuery] string userId, [FromQuery] bool prohibit)
 		{
@@ -213,20 +215,20 @@ namespace Ulearn.Web.Api.Controllers
 		}
 
 		/// <summary>
-		/// Пропустить задачу. Это позволит увидеть чужие решения. Но не даст получить баллы за задачу, если их еще нет
+		///     Пропустить задачу. Это позволит увидеть чужие решения. Но не даст получить баллы за задачу, если их еще нет
 		/// </summary>
-		[HttpPut("{courseId}/{slideId}/exercise/skip")]
+		[HttpPut("{slideId:guid}/exercise/skip")]
 		[Authorize]
 		public async Task<IActionResult> SkipExercise([FromRoute] Course course, [FromRoute] Guid slideId)
 		{
-			if (course == null)
+			if (course is null)
 				return NotFound(new { status = "error", message = "Course not found" });
 
 			var isInstructor = await courseRolesRepo.HasUserAccessToCourse(UserId, course.Id, CourseRoleType.Instructor);
 			var visibleUnitsIds = await unitsRepo.GetVisibleUnitIds(course, UserId);
 			var exerciseSlide = course.FindSlideById(slideId, isInstructor, visibleUnitsIds) as ExerciseSlide;
 
-			if (exerciseSlide == null)
+			if (exerciseSlide is null)
 				return NotFound(new { status = "error", message = "Slide not found" });
 
 			if (exerciseSlide.Exercise.HideShowSolutionsButton)
@@ -245,7 +247,7 @@ namespace Ulearn.Web.Api.Controllers
 			if (!visit.IsPassed)
 				return;
 			var ltiRequestJson = await ltiRequestsRepo.Find(courseId, UserId, slide.Id);
-			if (ltiRequestJson != null)
+			if (ltiRequestJson is not null)
 				await LtiUtils.SubmitScore(slide, UserId, visit.Score, ltiRequestJson, ltiConsumersRepo);
 		}
 

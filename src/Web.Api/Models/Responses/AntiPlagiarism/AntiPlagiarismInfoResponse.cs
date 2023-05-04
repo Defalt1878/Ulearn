@@ -9,7 +9,7 @@ namespace Ulearn.Web.Api.Models.Responses.AntiPlagiarism
 	{
 		None = 0,
 		Faint = 1,
-		Strong = 2,
+		Strong = 2
 	}
 
 	[DataContract]
@@ -25,4 +25,3 @@ namespace Ulearn.Web.Api.Models.Responses.AntiPlagiarism
 		public int SuspiciousAuthorsCount { get; set; }
 	}
 }
-

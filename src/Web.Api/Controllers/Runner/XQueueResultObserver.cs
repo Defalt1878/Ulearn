@@ -16,7 +16,6 @@ namespace Ulearn.Web.Api.Controllers.Runner
 	{
 		private readonly ICourseStorage courseStorage;
 		private readonly IXQueueRepo xQueueRepo;
-		private static ILog log => LogProvider.Get().ForContext(typeof(XQueueResultObserver));
 
 		public XQueueResultObserver(ICourseStorage courseStorage, IXQueueRepo xQueueRepo)
 		{
@@ -24,10 +23,12 @@ namespace Ulearn.Web.Api.Controllers.Runner
 			this.xQueueRepo = xQueueRepo;
 		}
 
+		private static ILog Log => LogProvider.Get().ForContext(typeof(XQueueResultObserver));
+
 		public async Task ProcessResult(UserExerciseSubmission submission, RunningResults result)
 		{
 			var xQueueSubmission = await xQueueRepo.FindXQueueSubmission(submission);
-			if (xQueueSubmission == null)
+			if (xQueueSubmission is null)
 				return;
 
 			var watcher = xQueueSubmission.Watcher;
@@ -41,7 +42,7 @@ namespace Ulearn.Web.Api.Controllers.Runner
 		{
 			return await FuncUtils.TrySeveralTimesAsync(
 				() => TrySendSubmissionResultsToQueue(client, submission),
-				5, 
+				5,
 				() => Task.Delay(TimeSpan.FromMilliseconds(1)));
 		}
 
@@ -50,15 +51,15 @@ namespace Ulearn.Web.Api.Controllers.Runner
 			var checking = submission.Submission.AutomaticChecking;
 
 			var slide = courseStorage.FindCourse(checking.CourseId)?.FindSlideByIdNotSafe(checking.SlideId) as ExerciseSlide;
-			if (slide == null)
+			if (slide is null)
 			{
-				log.Warn($"Can't find exercise slide {checking.SlideId} in course {checking.CourseId}. Exit");
+				Log.Warn($"Can't find exercise slide {checking.SlideId} in course {checking.CourseId}. Exit");
 				return false;
 			}
 
 			var score = checking.IsRightAnswer ? 1 : 0;
 
-			var message = checking.IsCompilationError ? checking.CompilationError.Text : checking.Output.Text;
+			var message = checking.IsCompilationError ? checking.CompilationError!.Text : checking.Output!.Text;
 			return await client.PutResult(new XQueueResult
 			{
 				header = submission.XQueueHeader,
@@ -66,7 +67,7 @@ namespace Ulearn.Web.Api.Controllers.Runner
 				{
 					IsCorrect = checking.IsRightAnswer,
 					Message = message,
-					Score = score,
+					Score = score
 				}
 			});
 		}

@@ -11,7 +11,7 @@ namespace Ulearn.Web.Api.Swagger
 		{
 			var parametersWithCourseType = context.ApiDescription
 				.ParameterDescriptions
-				.Where(desc => desc.ParameterDescriptor?.ParameterType == typeof(Course) || desc.ParameterDescriptor?.ParameterType == typeof(ICourse))
+				.Where(desc => desc.ParameterDescriptor.ParameterType == typeof(Course) || desc.ParameterDescriptor.ParameterType == typeof(ICourse))
 				.ToList();
 
 			parametersWithCourseType
@@ -19,7 +19,7 @@ namespace Ulearn.Web.Api.Swagger
 				{
 					var toRemove = operation.Parameters.SingleOrDefault(p => p.Name == param.Name);
 
-					if (toRemove != null)
+					if (toRemove is not null)
 						operation.Parameters.Remove(toRemove);
 				});
 		}

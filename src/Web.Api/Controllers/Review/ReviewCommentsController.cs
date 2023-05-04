@@ -17,29 +17,28 @@ using Ulearn.Web.Api.Models.Responses.Review;
 
 namespace Ulearn.Web.Api.Controllers.Review
 {
+	[Route("reviews/{reviewId}/comments")]
 	public class ReviewCommentsController : BaseController
 	{
-		private readonly ISlideCheckingsRepo slideCheckingsRepo;
 		private readonly ICourseRolesRepo courseRolesRepo;
-		private readonly IUnitsRepo unitsRepo;
-		private readonly INotificationsRepo notificationsRepo;
 		private readonly IGroupAccessesRepo groupAccessesRepo;
+		private readonly INotificationsRepo notificationsRepo;
+		private readonly ISlideCheckingsRepo slideCheckingsRepo;
 
 		public ReviewCommentsController(ICourseStorage courseStorage, UlearnDb db, IUsersRepo usersRepo, IGroupAccessesRepo groupAccessesRepo,
-			ISlideCheckingsRepo slideCheckingsRepo, ICourseRolesRepo courseRolesRepo, IUnitsRepo unitsRepo, INotificationsRepo notificationsRepo)
+			ISlideCheckingsRepo slideCheckingsRepo, ICourseRolesRepo courseRolesRepo, INotificationsRepo notificationsRepo)
 			: base(courseStorage, db, usersRepo)
 		{
 			this.slideCheckingsRepo = slideCheckingsRepo;
 			this.courseRolesRepo = courseRolesRepo;
-			this.unitsRepo = unitsRepo;
 			this.notificationsRepo = notificationsRepo;
 			this.groupAccessesRepo = groupAccessesRepo;
 		}
 
 		/// <summary>
-		/// Добавить комментарий к сделанному преподавателем ревью (т.е. замечанию к коду)
+		///     Добавить комментарий к сделанному преподавателем ревью (т.е. замечанию к коду)
 		/// </summary>
-		[HttpPost("reviews/{reviewId}/comments")]
+		[HttpPost]
 		[Authorize]
 		[SwaggerResponse((int)HttpStatusCode.Forbidden, "You don't have access to this comment")]
 		[SwaggerResponse((int)HttpStatusCode.TooManyRequests, "You are commenting too fast. Please wait some time")]
@@ -61,26 +60,26 @@ namespace Ulearn.Web.Api.Controllers.Review
 
 			var comment = await slideCheckingsRepo.AddExerciseCodeReviewComment(UserId, reviewId, parameters.Text);
 
-			if (review.ExerciseChecking?.IsChecked ?? false)
-			{
-				var course = courseStorage.FindCourse(submissionCourseId);
-				var slideId = review.SlideId;
-				if (course.FindSlideById(slideId, true, null) != null)
-					await NotifyAboutCodeReviewComment(comment);
-			}
+			if (review.ExerciseChecking is not { IsChecked: true })
+				return ReviewCommentResponse.Build(comment);
+		
+			var course = courseStorage.FindCourse(submissionCourseId);
+			var slideId = review.SlideId;
+			if (course.FindSlideById(slideId, true, null) is not null)
+				await NotifyAboutCodeReviewComment(comment);
 
 			return ReviewCommentResponse.Build(comment);
 		}
 
 		/// <summary>
-		/// Изменить содержание ревью
+		///     Изменить содержание ревью
 		/// </summary>
-		[HttpPatch("reviews/{reviewId}/comments/{commentId}")]
+		[HttpPatch("{commentId:int}")]
 		[Authorize]
 		public async Task<ActionResult<ReviewCommentResponse>> EditReviewComment([FromRoute] int commentId, [FromBody] ReviewCreateCommentParameters parameters)
 		{
 			var comment = await slideCheckingsRepo.FindExerciseCodeReviewCommentById(commentId);
-			if (comment == null)
+			if (comment is null)
 				return NotFound(new ErrorResponse($"Comment {commentId} not found"));
 
 			var courseId = comment.Review.CourseId;
@@ -93,15 +92,15 @@ namespace Ulearn.Web.Api.Controllers.Review
 		}
 
 		/// <summary>
-		/// Удалить комментарий к ревью
+		///     Удалить комментарий к ревью
 		/// </summary>
-		[HttpDelete("reviews/{reviewId}/comments/{commentId:int:min(0)}")]
+		[HttpDelete("{commentId:int:min(0)}")]
 		[Authorize]
 		[SwaggerResponse((int)HttpStatusCode.Forbidden, "You don't have access to this comment")]
 		public async Task<ActionResult> DeleteExerciseCodeReviewComment([FromRoute] int reviewId, [FromRoute] int commentId)
 		{
 			var comment = await slideCheckingsRepo.FindExerciseCodeReviewCommentById(commentId);
-			if (comment == null)
+			if (comment is null)
 				return NotFound(new ErrorResponse($"Comment {commentId} not found"));
 
 			var courseId = comment.Review.CourseId;
@@ -113,14 +112,14 @@ namespace Ulearn.Web.Api.Controllers.Review
 			return Ok(new SuccessResponseWithMessage($"Review comment {commentId} successfully deleted"));
 		}
 
-		// Оповещает о создании комментария к ревью, а не самого ревью (т.е. замечения к коду)
+		// Оповещает о создании комментария к ревью, а не самого ревью (т.е. замечания к коду)
 		// Перед вызовом этого метода нужно проверить, что посылка уже проверена, чтобы не отправить сообщение раньше.
 		private async Task NotifyAboutCodeReviewComment(ExerciseCodeReviewComment comment)
 		{
 			var courseId = comment.Review.CourseId;
 			await notificationsRepo.AddNotification(courseId, new ReceivedCommentToCodeReviewNotification
 			{
-				CommentId = comment.Id,
+				CommentId = comment.Id
 			}, comment.AuthorId);
 		}
 	}

@@ -9,9 +9,13 @@ namespace Ulearn.Web.Api.Models.Responses.SlideBlocks
 	[DisplayName("spoiler")]
 	public class SpoilerBlockResponse : IApiSlideBlock
 	{
-		[DefaultValue(false)]
-		[DataMember(Name = "hide", EmitDefaultValue = false)]
-		public bool Hide { get; set; }
+		public SpoilerBlockResponse(SpoilerBlock spoilerBlock, List<IApiSlideBlock> innerBlocks)
+		{
+			Hide = spoilerBlock.Hide;
+			Text = spoilerBlock.Text;
+			HideQuizButton = spoilerBlock.HideQuizButton;
+			InnerBlocks = innerBlocks;
+		}
 
 		[DataMember]
 		public string Text { get; set; }
@@ -22,12 +26,8 @@ namespace Ulearn.Web.Api.Models.Responses.SlideBlocks
 		[DataMember(Name = "blocks")]
 		public List<IApiSlideBlock> InnerBlocks { get; set; }
 
-		public SpoilerBlockResponse(SpoilerBlock spoilerBlock, List<IApiSlideBlock> innerBlocks)
-		{
-			Hide = spoilerBlock.Hide;
-			Text = spoilerBlock.Text;
-			HideQuizButton = spoilerBlock.HideQuizButton;
-			InnerBlocks = innerBlocks;
-		}
+		[DefaultValue(false)]
+		[DataMember(Name = "hide", EmitDefaultValue = false)]
+		public bool Hide { get; set; }
 	}
 }

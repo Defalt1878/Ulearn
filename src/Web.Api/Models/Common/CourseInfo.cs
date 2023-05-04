@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Runtime.Serialization;
 using JetBrains.Annotations;
 
+// ReSharper disable NotNullOrRequiredMemberIsNotInitialized
+
 namespace Ulearn.Web.Api.Models.Common
 {
 	[DataContract]
@@ -23,15 +25,15 @@ namespace Ulearn.Web.Api.Models.Common
 		[DataMember]
 		public DateTime? NextUnitPublishTime { get; set; }
 
-		[DataMember][NotNull]
+		[DataMember] [NotNull]
 		public ScoringSettingsModel Scoring { get; set; }
 
 		[DataMember]
 		public bool ContainsFlashcards { get; set; }
-		
+
 		[DataMember]
 		public bool IsTempCourse { get; set; }
-		
+
 		[DataMember]
 		public string TempCourseError { get; set; }
 	}
@@ -44,16 +46,16 @@ namespace Ulearn.Web.Api.Models.Common
 
 	public class ScoringGroupModel
 	{
-		[DataMember][NotNull]
+		[DataMember] [NotNull]
 		public string Id { get; set; }
-		
-		[DataMember][NotNull]
+
+		[DataMember] [NotNull]
 		public string Name { get; set; }
 
-		[DataMember][CanBeNull]
+		[DataMember] [CanBeNull]
 		public string Abbr { get; set; }
 
-		[DataMember][CanBeNull]
+		[DataMember] [CanBeNull]
 		public string Description { get; set; }
 
 		[DataMember]

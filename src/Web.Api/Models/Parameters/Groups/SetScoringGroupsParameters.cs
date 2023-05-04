@@ -8,7 +8,7 @@ namespace Ulearn.Web.Api.Models.Parameters.Groups
 	public class SetScoringGroupsParameters : ApiParameters
 	{
 		/// <summary>
-		/// ScoringGroupIds
+		///     ScoringGroupIds
 		/// </summary>
 		[DataMember(IsRequired = true)]
 		public List<string> Scores { get; set; }

@@ -7,10 +7,7 @@ namespace Ulearn.Web.Api.Models.Responses.Flashcards
 	public class UnitUserStatistic
 	{
 		[DataMember]
-		public Guid UnitId;
-
-		[DataMember]
-		public string UnitTitle;
+		public int Rate5Count;
 
 		[DataMember]
 		public int TotalFlashcardsCount;
@@ -22,6 +19,9 @@ namespace Ulearn.Web.Api.Models.Responses.Flashcards
 		public int UniqueFlashcardVisits;
 
 		[DataMember]
-		public int Rate5Count;
+		public Guid UnitId;
+
+		[DataMember]
+		public string UnitTitle;
 	}
 }

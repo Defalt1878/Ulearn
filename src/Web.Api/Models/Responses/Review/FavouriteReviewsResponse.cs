@@ -20,11 +20,11 @@ namespace Ulearn.Web.Api.Models.Responses.Review
 
 		public static FavouriteReviewsResponse Build(List<FavouriteReview> favouriteReviews, List<FavouriteReview> userFavouriteReviews, List<string> lastUsedReviews)
 		{
-			return new()
+			return new FavouriteReviewsResponse
 			{
 				FavouriteReviews = favouriteReviews.Select(FavouriteReviewResponse.Build).ToList(),
 				UserFavouriteReviews = userFavouriteReviews.Select(FavouriteReviewResponse.Build).ToList(),
-				LastUsedReviews = lastUsedReviews,
+				LastUsedReviews = lastUsedReviews
 			};
 		}
 	}
@@ -43,7 +43,7 @@ namespace Ulearn.Web.Api.Models.Responses.Review
 
 		public static FavouriteReviewResponse Build(FavouriteReview fr)
 		{
-			return new() { Id = fr.Id, Text = fr.Text, RenderedText = CommentTextHelper.RenderCommentTextToHtml(fr.Text) };
+			return new FavouriteReviewResponse { Id = fr.Id, Text = fr.Text, RenderedText = CommentTextHelper.RenderCommentTextToHtml(fr.Text) };
 		}
 
 		public static FavouriteReviewResponse Build(FavouriteReviewByUser fr)

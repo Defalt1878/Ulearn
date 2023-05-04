@@ -20,15 +20,15 @@ namespace Ulearn.Web.Api.Controllers
 	[Route("/exercise-statistics")]
 	public class ExerciseStatisticsController : BaseController
 	{
-		private readonly ICoursesRepo coursesRepo;
 		private readonly ICourseRolesRepo courseRolesRepo;
-		private readonly IUserSolutionsRepo userSolutionsRepo;
-		private readonly IUserSolutionsRepo solutionsRepo;
-		private readonly IUserQuizzesRepo userQuizzesRepo;
-		private readonly IVisitsRepo visitsRepo;
+		private readonly ICoursesRepo coursesRepo;
 		private readonly IGroupsRepo groupsRepo;
 		private readonly SlideRenderer slideRenderer;
+		private readonly IUserSolutionsRepo solutionsRepo;
 		private readonly IUnitsRepo unitsRepo;
+		private readonly IUserQuizzesRepo userQuizzesRepo;
+		private readonly IUserSolutionsRepo userSolutionsRepo;
+		private readonly IVisitsRepo visitsRepo;
 
 		public ExerciseStatisticsController(ICourseStorage courseStorage, IUserSolutionsRepo userSolutionsRepo, UlearnDb db, IUsersRepo usersRepo,
 			IUserSolutionsRepo solutionsRepo, IUserQuizzesRepo userQuizzesRepo, IVisitsRepo visitsRepo, IGroupsRepo groupsRepo,
@@ -47,30 +47,26 @@ namespace Ulearn.Web.Api.Controllers
 		}
 
 		/// <summary>
-		/// Статистика по выполнению каждого упражнения в курсе
+		///     Статистика по выполнению каждого упражнения в курсе
 		/// </summary>
 		[HttpGet]
-		public async Task<ActionResult<CourseExercisesStatisticsResponse>> CourseStatistics([FromQuery][BindRequired] string courseId,
+		public async Task<ActionResult<CourseExercisesStatisticsResponse>> CourseStatistics([FromQuery] [BindRequired] string courseId,
 			int count = 10000, DateTime? from = null, DateTime? to = null)
 		{
 			var course = courseStorage.FindCourse(courseId);
-			if (course == null)
+			if (course is null)
 				return NotFound();
 
-			if (!from.HasValue)
-				from = DateTime.MinValue;
-			if (!to.HasValue)
-				to = DateTime.MaxValue;
+			from ??= DateTime.MinValue;
+			to ??= DateTime.MaxValue;
 
 			count = Math.Min(count, 10000);
 
 			var isInstructor = await courseRolesRepo.HasUserAccessToCourse(UserId, course.Id, CourseRoleType.Instructor).ConfigureAwait(false);
 			var visibleUnitsIds = await unitsRepo.GetVisibleUnitIds(course, UserId);
 			var exerciseSlides = course.GetSlides(isInstructor, visibleUnitsIds).OfType<ExerciseSlide>().ToList();
-			/* TODO (andgein): I can't select all submissions because ApplicationUserId column doesn't exist in database (ApplicationUser_Id exists).
-			   We should remove this column after EF Core 2.1 release (and remove tuples here)
-			*/
-			var submissions = await userSolutionsRepo.GetAllSubmissions(course.Id, includeManualAndAutomaticCheckings: false)
+		
+			var submissions = await userSolutionsRepo.GetAllSubmissions(course.Id, false)
 				.Where(s => s.Timestamp >= from && s.Timestamp <= to)
 				.OrderByDescending(s => s.Timestamp)
 				.Take(count)

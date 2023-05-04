@@ -1,28 +1,21 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Configuration;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Database;
 using Database.Models;
 using Database.Repos.Groups;
-using Google;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Ulearn.Core.GoogleSheet;
 using Ulearn.Web.Api.Utils.SuperGroup;
-using Ulearn.Web.Api.Workers;
-using Vostok.Logging.Abstractions;
 using Web.Api.Configuration;
 
 namespace Ulearn.Web.Api.Utils;
 
 public class SuperGroupManager
 {
+	private readonly SuperGroupGoogleSheetCache cache;
 	private readonly string googleAccessCredentials;
 	private readonly IGroupsRepo groupsRepo;
-	private readonly SuperGroupGoogleSheetCache cache;
 
 	public SuperGroupManager(IOptions<WebApiConfiguration> options, IGroupsRepo groupsRepo, SuperGroupGoogleSheetCache cache)
 	{
@@ -33,7 +26,7 @@ public class SuperGroupManager
 
 	private async Task<(string groupName, string studentName)[]> GetSpreadSheetGroups(string spreadsheetUrl)
 	{
-		if (googleAccessCredentials == null)
+		if (googleAccessCredentials is null)
 			throw new ConfigurationErrorsException("GoogleAccessCredentials are null");
 
 		var client = new GoogleApiClient(googleAccessCredentials);
@@ -44,7 +37,7 @@ public class SuperGroupManager
 			.Select((p, index) => p.Count != 2 || p.Any(s => s == "")
 				? new { columns = p, rawIndex = index }
 				: null)
-			.Where(p => p != null)
+			.Where(p => p is not null)
 			.ToList();
 		if (unFilledRows.Count > 0)
 			throw new GoogleSheetFormatException { RawsIndexes = unFilledRows.Select(r => r.rawIndex).ToList() };
@@ -55,11 +48,11 @@ public class SuperGroupManager
 	}
 
 	/// <summary>
-	/// Finding namesake users in groups
+	///     Finding namesake users in groups
 	/// </summary>
 	/// <param name="groups"></param>
 	/// <returns></returns>
-	public Dictionary<string, string[]> GetGroupsByUserName((string groupName, string studentName)[] groups)
+	public static Dictionary<string, string[]> GetGroupsByUserName(IEnumerable<(string groupName, string studentName)> groups)
 	{
 		return groups
 			.GroupBy(g => g.studentName)

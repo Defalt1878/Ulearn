@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Net;
@@ -24,9 +23,9 @@ namespace Ulearn.Web.Api.Controllers.Groups
 	[Route("/groups/")]
 	public class GroupsController : BaseGroupController
 	{
-		private readonly IGroupsRepo groupsRepo;
 		private readonly IGroupAccessesRepo groupAccessesRepo;
 		private readonly IGroupMembersRepo groupMembersRepo;
+		private readonly IGroupsRepo groupsRepo;
 		private readonly INotificationsRepo notificationsRepo;
 
 		public GroupsController(ICourseStorage courseStorage, UlearnDb db,
@@ -41,7 +40,7 @@ namespace Ulearn.Web.Api.Controllers.Groups
 		}
 
 		/// <summary>
-		/// Список групп в курсе
+		///     Список групп в курсе
 		/// </summary>
 		[HttpGet]
 		[Authorize(Policy = "Instructors")]
@@ -58,12 +57,12 @@ namespace Ulearn.Web.Api.Controllers.Groups
 			var superGroupsIds = groups
 				.Select(g => g.SuperGroupId)
 				.Distinct()
-				.Where(id => id != null)
+				.Where(id => id is not null)
 				.Cast<int>()
 				.ToList();
 			var superGroups = (await groupsRepo.FindGroupsByIdsAsync<SuperGroup>(superGroupsIds))
 				.ToDictionary(g => g.Id);
-			if (parameters.UserId != null)
+			if (parameters.UserId is not null)
 			{
 				var groupsWithUserAsMemberIds = (await groupMembersRepo.GetUserGroupsIdsAsync(parameters.CourseId, parameters.UserId, parameters.Archived)).ToHashSet();
 				groups = groups.Where(g => groupsWithUserAsMemberIds.Contains(g.Id)).ToList();
@@ -91,8 +90,8 @@ namespace Ulearn.Web.Api.Controllers.Groups
 				g,
 				membersCountByGroup[g.Id],
 				groupAccessesByGroup[g.Id],
-				addGroupApiUrl: true,
-				superGroupName: g.SuperGroupId.HasValue && superGroups.ContainsKey(g.SuperGroupId.Value) ? superGroups[g.SuperGroupId.Value].Name : null
+				true,
+				superGroupName: g.SuperGroupId.HasValue && superGroups.TryGetValue(g.SuperGroupId.Value, out var group) ? group.Name : null
 			)).ToList();
 
 			return new GroupsListResponse
@@ -102,13 +101,13 @@ namespace Ulearn.Web.Api.Controllers.Groups
 				{
 					Offset = parameters.Offset,
 					Count = filteredGroups.Count,
-					TotalCount = groups.Count,
+					TotalCount = groups.Count
 				}
 			};
 		}
 
 		/// <summary>
-		/// Создать новую группу в курсе
+		///     Создать новую группу в курсе
 		/// </summary>
 		/// <param name="parameters">Название новой группы</param>
 		[HttpPost]
@@ -125,11 +124,11 @@ namespace Ulearn.Web.Api.Controllers.Groups
 				UserId
 			);
 
-			var url = Url.Action(new UrlActionContext { Action = nameof(GroupController.Group), Controller = "Group", Values = new { groupId = group.Id } });
+			var url = Url.Action(new UrlActionContext { Action = nameof(GroupController.Group), Controller = "Group", Values = new { groupId = group.Id } })!;
 			return Created(url, new CreateGroupResponse
 			{
 				Id = group.Id,
-				ApiUrl = url,
+				ApiUrl = url
 			});
 		}
 	}

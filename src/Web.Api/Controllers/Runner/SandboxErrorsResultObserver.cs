@@ -23,7 +23,7 @@ namespace Ulearn.Web.Api.Controllers.Runner
 				return;
 
 			var output = result.GetOutput();
-			var logs = result.Logs == null ? null : string.Join("\n", result.Logs);
+			var logs = result.Logs is null ? null : string.Join("\n", result.Logs);
 			var message = $"<b>Решение #{submission.Id} не запустилось в песочнице {submission.Sandbox} (SandboxError).</b>\n";
 			if (!string.IsNullOrEmpty(output))
 				message += $"Вывод:\n<pre>{output.EscapeHtml()}</pre>\n";

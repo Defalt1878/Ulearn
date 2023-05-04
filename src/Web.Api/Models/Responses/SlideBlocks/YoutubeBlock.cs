@@ -11,9 +11,13 @@ namespace Ulearn.Web.Api.Models.Responses.SlideBlocks
 	[DisplayName("youtube")]
 	public class YoutubeBlockResponse : IApiSlideBlock
 	{
-		[DefaultValue(false)]
-		[DataMember(Name = "hide", EmitDefaultValue = false)]
-		public bool Hide { get; set; }
+		public YoutubeBlockResponse(YoutubeBlock youtubeBlock, [CanBeNull] Annotation annotation, [CanBeNull] string googleDocLink)
+		{
+			Hide = youtubeBlock.Hide;
+			VideoId = youtubeBlock.VideoId;
+			Annotation = annotation;
+			GoogleDocLink = googleDocLink;
+		}
 
 		[XmlText]
 		[DataMember(Name = "videoId")]
@@ -27,12 +31,8 @@ namespace Ulearn.Web.Api.Models.Responses.SlideBlocks
 		[CanBeNull]
 		public string GoogleDocLink { get; set; }
 
-		public YoutubeBlockResponse(YoutubeBlock youtubeBlock, [CanBeNull]Annotation annotation, [CanBeNull]string googleDocLink)
-		{
-			Hide = youtubeBlock.Hide;
-			VideoId = youtubeBlock.VideoId;
-			Annotation = annotation;
-			GoogleDocLink = googleDocLink;
-		}
+		[DefaultValue(false)]
+		[DataMember(Name = "hide", EmitDefaultValue = false)]
+		public bool Hide { get; set; }
 	}
 }

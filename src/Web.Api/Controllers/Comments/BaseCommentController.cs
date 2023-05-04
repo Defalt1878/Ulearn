@@ -19,16 +19,16 @@ namespace Ulearn.Web.Api.Controllers.Comments
 {
 	public class BaseCommentController : BaseController
 	{
-		protected readonly ICommentsRepo commentsRepo;
-		protected readonly ICommentLikesRepo commentLikesRepo;
-		protected readonly ICoursesRepo coursesRepo;
-		protected readonly ICourseRolesRepo courseRolesRepo;
-		protected readonly INotificationsRepo notificationsRepo;
-		protected readonly IGroupMembersRepo groupMembersRepo;
-		protected readonly IGroupAccessesRepo groupAccessesRepo;
-		protected readonly IVisitsRepo visitsRepo;
-		protected readonly IUnitsRepo unitsRepo;
 		protected readonly IAdditionalContentPublicationsRepo additionalContentPublicationsRepo;
+		protected readonly ICommentLikesRepo commentLikesRepo;
+		protected readonly ICommentsRepo commentsRepo;
+		protected readonly ICourseRolesRepo courseRolesRepo;
+		protected readonly ICoursesRepo coursesRepo;
+		protected readonly IGroupAccessesRepo groupAccessesRepo;
+		protected readonly IGroupMembersRepo groupMembersRepo;
+		protected readonly INotificationsRepo notificationsRepo;
+		protected readonly IUnitsRepo unitsRepo;
+		protected readonly IVisitsRepo visitsRepo;
 
 		public BaseCommentController(ICourseStorage courseStorage, UlearnDb db, IUsersRepo usersRepo,
 			ICommentsRepo commentsRepo, ICommentLikesRepo commentLikesRepo, ICoursesRepo coursesRepo, ICourseRolesRepo courseRolesRepo,
@@ -50,7 +50,7 @@ namespace Ulearn.Web.Api.Controllers.Comments
 
 		protected List<CommentResponse> BuildCommentsListResponse(IEnumerable<Comment> comments,
 			bool canUserSeeNotApprovedComments, DefaultDictionary<int, List<Comment>> replies, DefaultDictionary<int, int> commentLikesCount, HashSet<int> likedByUserCommentsIds,
-			[CanBeNull] Dictionary<string, List<SingleGroup>> authorId2Groups, [CanBeNull]HashSet<string> authorsWithPassed,  [CanBeNull] HashSet<int> userAvailableGroups, bool canViewAllGroupMembers, bool addCourseIdAndSlideId, bool addParentCommentId, bool addReplies)
+			[CanBeNull] Dictionary<string, List<SingleGroup>> authorId2Groups, [CanBeNull] HashSet<string> authorsWithPassed, [CanBeNull] HashSet<int> userAvailableGroups, bool canViewAllGroupMembers, bool addCourseIdAndSlideId, bool addParentCommentId, bool addReplies)
 		{
 			return comments.Select(c => BuildCommentResponse(c, canUserSeeNotApprovedComments, replies, commentLikesCount, likedByUserCommentsIds,
 				authorId2Groups, authorsWithPassed, userAvailableGroups, canViewAllGroupMembers, addCourseIdAndSlideId, addParentCommentId, addReplies)).ToList();
@@ -59,7 +59,7 @@ namespace Ulearn.Web.Api.Controllers.Comments
 		protected CommentResponse BuildCommentResponse(
 			Comment comment,
 			bool canUserSeeNotApprovedComments, DefaultDictionary<int, List<Comment>> replies, DefaultDictionary<int, int> commentLikesCount, HashSet<int> likedByUserCommentsIds,
-			[CanBeNull] Dictionary<string, List<SingleGroup>> authorId2Groups, [CanBeNull]HashSet<string> authorsWithPassed, [CanBeNull] HashSet<int> userAvailableGroups,
+			[CanBeNull] Dictionary<string, List<SingleGroup>> authorId2Groups, [CanBeNull] HashSet<string> authorsWithPassed, [CanBeNull] HashSet<int> userAvailableGroups,
 			bool canViewAllGroupMembers, bool addCourseIdAndSlideId, bool addParentCommentId, bool addReplies
 		)
 		{
@@ -77,13 +77,11 @@ namespace Ulearn.Web.Api.Controllers.Comments
 				Replies = new List<CommentResponse>()
 			};
 
-			if (authorId2Groups != null && userAvailableGroups != null && authorId2Groups.ContainsKey(comment.Author.Id))
-			{
+			if (authorId2Groups is not null && userAvailableGroups is not null && authorId2Groups.ContainsKey(comment.Author.Id))
 				commentInfo.AuthorGroups = authorId2Groups[comment.AuthorId]
 					.Where(g => canViewAllGroupMembers || userAvailableGroups.Contains(g.Id))
 					.Select(BuildShortGroupInfo)
 					.ToList().NullIfEmpty();
-			}
 
 			if (addCourseIdAndSlideId)
 			{
@@ -105,7 +103,7 @@ namespace Ulearn.Web.Api.Controllers.Comments
 			{
 				var commentReplies = FilterVisibleComments(replies[comment.Id], canUserSeeNotApprovedComments);
 				commentInfo.Replies = BuildCommentsListResponse(commentReplies, canUserSeeNotApprovedComments, null, commentLikesCount, likedByUserCommentsIds,
-					authorId2Groups, authorsWithPassed, userAvailableGroups, canViewAllGroupMembers, addCourseIdAndSlideId, addParentCommentId, addReplies);
+					authorId2Groups, authorsWithPassed, userAvailableGroups, canViewAllGroupMembers, addCourseIdAndSlideId, addParentCommentId, true);
 			}
 
 			return commentInfo;
@@ -133,24 +131,24 @@ namespace Ulearn.Web.Api.Controllers.Comments
 			if (!comment.IsTopLevel)
 			{
 				var parentComment = await commentsRepo.FindCommentByIdAsync(comment.ParentCommentId).ConfigureAwait(false);
-				if (parentComment != null)
+				if (parentComment is not null)
 				{
 					var replyNotification = new RepliedToYourCommentNotification
 					{
 						Comment = comment,
-						ParentComment = parentComment,
+						ParentComment = parentComment
 					};
 					await notificationsRepo.AddNotification(courseId, replyNotification, comment.AuthorId).ConfigureAwait(false);
 				}
 			}
 
 			/* Create NewCommentFromStudentFormYourGroupNotification later than RepliedToYourCommentNotification, because the last one is blocker for the first one.
-			 * We don't send NewCommentNotification if there is a RepliedToYouCommentNotification */
+			* We don't send NewCommentNotification if there is a RepliedToYouCommentNotification */
 			var commentFromYourGroupStudentNotification = new NewCommentFromYourGroupStudentNotification { Comment = comment };
 			await notificationsRepo.AddNotification(courseId, commentFromYourGroupStudentNotification, comment.AuthorId);
 
 			/* Create NewComment[ForInstructors]Notification later than RepliedToYourCommentNotification and NewCommentFromYourGroupStudentNotification, because the last one is blocker for the first one.
-			 * We don't send NewCommentNotification if there is a RepliedToYouCommentNotification or NewCommentFromYourGroupStudentNotification */
+			* We don't send NewCommentNotification if there is a RepliedToYouCommentNotification or NewCommentFromYourGroupStudentNotification */
 			var notification = comment.IsForInstructorsOnly
 				? (Notification)new NewCommentForInstructorsOnlyNotification { Comment = comment }
 				: new NewCommentNotification { Comment = comment };

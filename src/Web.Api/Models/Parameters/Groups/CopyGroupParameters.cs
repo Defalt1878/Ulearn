@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+// ReSharper disable UnusedAutoPropertyAccessor.Global
 
 namespace Ulearn.Web.Api.Models.Parameters.Groups
 {

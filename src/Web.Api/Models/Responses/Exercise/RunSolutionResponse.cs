@@ -1,17 +1,20 @@
 ﻿using System.Runtime.Serialization;
 using JetBrains.Annotations;
 
+// ReSharper disable UnusedAutoPropertyAccessor.Global
+
 namespace Ulearn.Web.Api.Models.Responses.Exercise
 {
 	public enum SolutionRunStatus
 	{
 		Success,
 		InternalServerError, // Ошибка в проверяющей системе, подробности могут быть в Message. Если submission создан, он лежит в Submission, иначе null.
-		Ignored, // Сервер отказался обрабатывать решение, причина написана в Message. Cлишком частые запросы на проверку или слишком длинный код.
-		SubmissionCheckingTimeout, // Ждали, но не дожадлись проверки
+		Ignored, // Сервер отказался обрабатывать решение, причина написана в Message. Слишком частые запросы на проверку или слишком длинный код.
+		SubmissionCheckingTimeout, // Ждали, но не дождались проверки
+
 		// В случае ошибки компиляции Submission создается не всегда. Не создается для C#-задач. Тогда текст ошибки компиляции кладется в Message.
 		// Если Submission создался, то об ошибках компиляции пишется внутри Submission -> AutomaticChecking.
-		CompilationError 
+		CompilationError
 	}
 
 	[DataContract]

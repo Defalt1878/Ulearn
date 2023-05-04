@@ -41,25 +41,25 @@ namespace Ulearn.Web.Api.Controllers.Websockets
 
 		private async Task SendCourseChangedEvent(string courseId)
 		{
-			using (var scope = serviceScopeFactory.CreateScope())
+			using var scope = serviceScopeFactory.CreateScope();
+			var unitsRepo = scope.ServiceProvider.GetService<IUnitsRepo>();
+			var courseRolesRepo = scope.ServiceProvider.GetService<ICourseRolesRepo>();
+			var usersRepo = scope.ServiceProvider.GetService<IUsersRepo>();
+
+			IClientProxy clientProxy;
+			if (await unitsRepo.IsCourseVisibleForStudents(courseId))
 			{
-				var unitsRepo = scope.ServiceProvider.GetService<IUnitsRepo>();
-				var courseRolesRepo = scope.ServiceProvider.GetService<ICourseRolesRepo>();
-				var usersRepo = scope.ServiceProvider.GetService<IUsersRepo>();
-
-				IClientProxy clientProxy;
-				if (await unitsRepo.IsCourseVisibleForStudents(courseId))
-					clientProxy = hubContext.Clients.All;
-				else
-				{
-					var instructors = await courseRolesRepo.GetListOfUsersWithCourseRole(CourseRoleType.Instructor, courseId, true);
-					var sysAdmins = await usersRepo.GetSysAdminsIds();
-					clientProxy = hubContext.Clients.Users(instructors.Concat(sysAdmins).Distinct().ToList());
-				}
-
-				var courseChangedResponse = new CourseChangedResponse { CourseId = courseId };
-				await clientProxy.SendAsync("courseChanged", JsonConvert.SerializeObject(courseChangedResponse));
+				clientProxy = hubContext.Clients.All;
 			}
+			else
+			{
+				var instructors = await courseRolesRepo.GetListOfUsersWithCourseRole(CourseRoleType.Instructor, courseId, true);
+				var sysAdmins = await usersRepo.GetSysAdminsIds();
+				clientProxy = hubContext.Clients.Users(instructors.Concat(sysAdmins).Distinct().ToList());
+			}
+
+			var courseChangedResponse = new CourseChangedResponse { CourseId = courseId };
+			await clientProxy.SendAsync("courseChanged", JsonConvert.SerializeObject(courseChangedResponse));
 		}
 	}
 }

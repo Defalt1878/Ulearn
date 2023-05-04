@@ -6,16 +6,11 @@ namespace Ulearn.Web.Api.Models.Responses.Flashcards
 	[DataContract]
 	public class FlashcardStatistic
 	{
-		public FlashcardStatistic()
-		{
-			Statistics = new TotalRateResponse();
-		}
-
 		[DataMember]
 		public string FlashcardId;
 
 		[DataMember]
-		public int VisitCount;
+		public TotalRateResponse Statistics;
 
 		[DataMember]
 		public int UniqueVisitCount;
@@ -27,6 +22,11 @@ namespace Ulearn.Web.Api.Models.Responses.Flashcards
 		public string UnitTitle;
 
 		[DataMember]
-		public TotalRateResponse Statistics;
+		public int VisitCount;
+
+		public FlashcardStatistic()
+		{
+			Statistics = new TotalRateResponse();
+		}
 	}
 }

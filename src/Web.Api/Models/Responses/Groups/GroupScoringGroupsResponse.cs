@@ -23,7 +23,7 @@ namespace Ulearn.Web.Api.Models.Responses.Groups
 			Description = scoringGroup.Description ?? "";
 			Weight = scoringGroup.Weight;
 		}
-		
+
 		[DataMember]
 		public string Id { get; set; }
 
@@ -35,8 +35,9 @@ namespace Ulearn.Web.Api.Models.Responses.Groups
 
 		[DataMember]
 		public string Description { get; set; }
-		
+
 		[DataMember]
+		// ReSharper disable once MemberInitializerValueIgnored
 		public decimal Weight { get; set; } = 1;
 	}
 
@@ -47,7 +48,7 @@ namespace Ulearn.Web.Api.Models.Responses.Groups
 			: base(scoringGroup)
 		{
 		}
-		
+
 		[DataMember]
 		public bool AreAdditionalScoresEnabledForAllGroups { get; set; }
 
@@ -61,12 +62,13 @@ namespace Ulearn.Web.Api.Models.Responses.Groups
 	[DataContract]
 	public class UnitScoringGroupInfo : AbstractScoringGroupInfo
 	{
-		public UnitScoringGroupInfo(ScoringGroup scoringGroup) : base(scoringGroup)
+		public UnitScoringGroupInfo(ScoringGroup scoringGroup)
+			: base(scoringGroup)
 		{
 			MaxAdditionalScore = scoringGroup.MaxAdditionalScore;
 			CanInstructorSetAdditionalScore = scoringGroup.CanBeSetByInstructor;
 		}
-		
+
 		[DataMember]
 		public bool CanInstructorSetAdditionalScore { get; set; }
 

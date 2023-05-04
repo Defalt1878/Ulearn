@@ -30,33 +30,29 @@ using Ulearn.Web.Api.Models.Parameters.Exercise;
 using Ulearn.Web.Api.Models.Responses.Exercise;
 using Ulearn.Web.Api.Utils.Courses;
 using Vostok.Logging.Abstractions;
-using AutomaticExerciseCheckingStatus = Database.Models.AutomaticExerciseCheckingStatus;
 
 namespace Ulearn.Web.Api.Controllers.Slides
 {
 	public class ExerciseController : BaseController
 	{
-		private readonly IUserSolutionsRepo userSolutionsRepo;
+		private readonly IAdditionalContentPublicationsRepo additionalContentPublicationsRepo;
+		private readonly IMasterCourseManager courseManager;
 		private readonly ICourseRolesRepo courseRolesRepo;
-		private readonly IVisitsRepo visitsRepo;
-		private readonly ISlideCheckingsRepo slideCheckingsRepo;
+		private readonly ErrorsBot errorsBot;
 		private readonly IGroupsRepo groupsRepo;
-		private readonly IStyleErrorsRepo styleErrorsRepo;
-		private readonly IUnitsRepo unitsRepo;
 		private readonly MetricSender metricSender;
 		private readonly IServiceScopeFactory serviceScopeFactory;
-		private readonly IMasterCourseManager courseManager;
+		private readonly ISlideCheckingsRepo slideCheckingsRepo;
+		private readonly IStyleErrorsRepo styleErrorsRepo;
 		private readonly StyleErrorsResultObserver styleErrorsResultObserver;
-		private readonly IAdditionalContentPublicationsRepo additionalContentPublicationsRepo;
-		private readonly ISelfCheckupsRepo selfCheckupsRepo;
-		private readonly ErrorsBot errorsBot;
-		private static ILog log => LogProvider.Get().ForContext(typeof(ExerciseController));
+		private readonly IUnitsRepo unitsRepo;
+		private readonly IUserSolutionsRepo userSolutionsRepo;
+		private readonly IVisitsRepo visitsRepo;
 
 		public ExerciseController(ICourseStorage courseStorage, IMasterCourseManager courseManager, UlearnDb db, MetricSender metricSender,
 			IUsersRepo usersRepo, IUserSolutionsRepo userSolutionsRepo, ICourseRolesRepo courseRolesRepo, IVisitsRepo visitsRepo,
 			ISlideCheckingsRepo slideCheckingsRepo, IGroupsRepo groupsRepo, StyleErrorsResultObserver styleErrorsResultObserver,
 			IAdditionalContentPublicationsRepo additionalContentPublicationsRepo,
-			ISelfCheckupsRepo selfCheckupsRepo,
 			IStyleErrorsRepo styleErrorsRepo, IUnitsRepo unitsRepo, ErrorsBot errorsBot, IServiceScopeFactory serviceScopeFactory)
 			: base(courseStorage, db, usersRepo)
 		{
@@ -72,11 +68,12 @@ namespace Ulearn.Web.Api.Controllers.Slides
 			this.styleErrorsResultObserver = styleErrorsResultObserver;
 			this.serviceScopeFactory = serviceScopeFactory;
 			this.courseManager = courseManager;
-			this.selfCheckupsRepo = selfCheckupsRepo;
 			this.errorsBot = errorsBot;
 		}
 
-		[HttpPost("/slides/{courseId}/{slideId}/exercise/submit")]
+		private new static ILog Log => LogProvider.Get().ForContext(typeof(ExerciseController));
+
+		[HttpPost("/slides/{courseId}/{slideId:guid}/exercise/submit")]
 		[Authorize]
 		public async Task<ActionResult<RunSolutionResponse>> RunSolution(
 			[FromRoute] Course course,
@@ -89,27 +86,23 @@ namespace Ulearn.Web.Api.Controllers.Slides
 			var delta = TimeSpan.FromSeconds(30);
 			var halfMinuteAgo = DateTime.Now.Subtract(delta);
 			if (!course.IsTempCourse() && await userSolutionsRepo.IsCheckingSubmissionByUser(courseId, slideId, User.Identity.GetUserId(), halfMinuteAgo, DateTime.MaxValue))
-			{
 				return Json(new RunSolutionResponse(SolutionRunStatus.Ignored)
 				{
 					Message = $"Ваше решение по этой задаче уже проверяется. Дождитесь окончания проверки. Вы можете отправить новое решение через {delta.Seconds} секунд."
 				});
-			}
 
 			var code = parameters.Solution;
 			if (code.Length > TextsRepo.MaxTextSize)
-			{
 				return Json(new RunSolutionResponse(SolutionRunStatus.Ignored)
 				{
 					Message = "Слишком длинный код"
 				});
-			}
 
 			var isInstructor = await courseRolesRepo.HasUserAccessToCourse(UserId, courseId, CourseRoleType.Instructor);
 			var isTester = isInstructor || await courseRolesRepo.HasUserAccessToCourse(UserId, courseId, CourseRoleType.Tester);
 			var visibleUnitsIds = await unitsRepo.GetVisibleUnitIds(course, UserId);
 			var exerciseSlide = courseStorage.FindCourse(courseId)?.FindSlideById(slideId, isInstructor, visibleUnitsIds) as ExerciseSlide;
-			if (exerciseSlide == null)
+			if (exerciseSlide is null)
 				return NotFound(new ErrorResponse("Slide not found"));
 			if (!isTester && (exerciseSlide.IsExtraContent || exerciseSlide.Unit.Settings.IsExtraContent))
 			{
@@ -121,8 +114,14 @@ namespace Ulearn.Web.Api.Controllers.Slides
 			}
 
 			var result = await CheckSolution(
-				courseId, exerciseSlide, code, language, UserId, User.Identity.Name,
-				waitUntilChecked: true, saveSubmissionOnCompileErrors: false
+				courseId, 
+				exerciseSlide, 
+				code, 
+				language,
+				UserId, 
+				User.Identity!.Name,
+				true, 
+				false
 			).ConfigureAwait(false);
 
 			return result;
@@ -151,10 +150,8 @@ namespace Ulearn.Web.Api.Controllers.Slides
 				metricSender.SendCount($"exercise.{exerciseMetricId}.CompilationError");
 
 			if (!saveSubmissionOnCompileErrors)
-			{
 				if (buildResult.HasErrors)
 					return new RunSolutionResponse(SolutionRunStatus.CompilationError) { Message = buildResult.ErrorMessage };
-			}
 
 			var hasAutomaticChecking = exerciseBlock.HasAutomaticChecking();
 			var sandbox = (exerciseSlide.Exercise as UniversalExerciseBlock)?.DockerImageName ?? "csharp";
@@ -181,7 +178,7 @@ namespace Ulearn.Web.Api.Controllers.Slides
 			}
 			catch (SubmissionCheckingTimeout)
 			{
-				log.Error($"Не смог запустить проверку решения, никто не взял его на проверку за {executionTimeout.TotalSeconds} секунд.\nКурс «{course.Title}», слайд «{exerciseSlide.Title}» ({exerciseSlide.Id})");
+				Log.Error($"Не смог запустить проверку решения, никто не взял его на проверку за {executionTimeout.TotalSeconds} секунд.\nКурс «{course.Title}», слайд «{exerciseSlide.Title}» ({exerciseSlide.Id})");
 				await errorsBot.PostToChannelAsync($"Не смог запустить проверку решения, никто не взял его на проверку за {executionTimeout.TotalSeconds} секунд.\nКурс «{course.Title}», слайд «{exerciseSlide.Title}» ({exerciseSlide.Id})\n\nhttps://ulearn.me/Sandbox");
 				submissionNoTracking = await userSolutionsRepo.FindSubmissionByIdNoTracking(submissionId);
 				var message = submissionNoTracking.AutomaticChecking.Status == AutomaticExerciseCheckingStatus.Running
@@ -199,7 +196,7 @@ namespace Ulearn.Web.Api.Controllers.Slides
 			if (!waitUntilChecked)
 			{
 				metricSender.SendCount($"exercise.{exerciseMetricId}.dont_wait_result");
-				// По вовзращаемому значению нельзя отличить от случая, когда никто не взял на проверку
+				// По возвращаемому значению нельзя отличить от случая, когда никто не взял на проверку
 				return new RunSolutionResponse(SolutionRunStatus.Success) { Submission = SubmissionInfo.Build(submissionNoTracking, null, isCourseAdmin) };
 			}
 
@@ -223,7 +220,7 @@ namespace Ulearn.Web.Api.Controllers.Slides
 				.Where(s => s.UserId == userId)
 				.OrderBy(s => s.Timestamp)
 				.FirstOrDefaultAsync();
-			if (firstAcceptedSubmission != null && (DateTime.UtcNow - firstAcceptedSubmission.Timestamp).TotalHours < 1)
+			if (firstAcceptedSubmission is not null && (DateTime.UtcNow - firstAcceptedSubmission.Timestamp).TotalHours < 1)
 			{
 				metricSender.SendCount($"exercise.{exerciseMetricId}.accepted.resend-in-hour.has-checkups.{checkups.Count > 0}");
 				metricSender.SendCount($"exercise.accepted.resend-in-hour.has-checkups.{checkups.Count > 0}");
@@ -242,31 +239,29 @@ namespace Ulearn.Web.Api.Controllers.Slides
 		private static async Task<int> CreateInitialSubmission(string courseId, ExerciseSlide exerciseSlide, string userCode, Language language,
 			string userId, string userName, bool hasAutomaticChecking, SolutionBuildResult buildResult, IServiceScopeFactory serviceScopeFactory)
 		{
-			using (var scope = serviceScopeFactory.CreateScope())
-			{
-				var userSolutionsRepo = (IUserSolutionsRepo)scope.ServiceProvider.GetService(typeof(IUserSolutionsRepo));
-				var compilationErrorMessage = buildResult.HasErrors ? buildResult.ErrorMessage : null;
-				var submissionSandbox = (exerciseSlide.Exercise as UniversalExerciseBlock)?.DockerImageName;
-				var automaticCheckingStatus = hasAutomaticChecking
-					? buildResult.HasErrors
-						? AutomaticExerciseCheckingStatus.Done
-						: AutomaticExerciseCheckingStatus.Waiting
-					: (AutomaticExerciseCheckingStatus?)null;
-				return await userSolutionsRepo.AddUserExerciseSubmission(
-					courseId,
-					exerciseSlide.Id,
-					userCode,
-					compilationErrorMessage,
-					null,
-					userId,
-					"uLearn",
-					GenerateSubmissionName(exerciseSlide, userName),
-					language,
-					submissionSandbox,
-					hasAutomaticChecking,
-					automaticCheckingStatus
-				);
-			}
+			using var scope = serviceScopeFactory.CreateScope();
+			var userSolutionsRepo = (IUserSolutionsRepo)scope.ServiceProvider.GetService(typeof(IUserSolutionsRepo))!;
+			var compilationErrorMessage = buildResult.HasErrors ? buildResult.ErrorMessage : null;
+			var submissionSandbox = (exerciseSlide.Exercise as UniversalExerciseBlock)?.DockerImageName;
+			var automaticCheckingStatus = hasAutomaticChecking
+				? buildResult.HasErrors
+					? AutomaticExerciseCheckingStatus.Done
+					: AutomaticExerciseCheckingStatus.Waiting
+				: (AutomaticExerciseCheckingStatus?)null;
+			return await userSolutionsRepo.AddUserExerciseSubmission(
+				courseId,
+				exerciseSlide.Id,
+				userCode,
+				compilationErrorMessage,
+				null,
+				userId,
+				"uLearn",
+				GenerateSubmissionName(exerciseSlide, userName),
+				language,
+				submissionSandbox,
+				hasAutomaticChecking,
+				automaticCheckingStatus
+			);
 		}
 
 		private static string GenerateSubmissionName(Slide exerciseSlide, string userName)
@@ -314,7 +309,7 @@ namespace Ulearn.Web.Api.Controllers.Slides
 
 			if (exerciseSlide.Exercise is SingleFileExerciseBlock)
 				return NotFound();
-			if ((exerciseSlide.Exercise as UniversalExerciseBlock)?.NoStudentZip ?? false)
+			if (exerciseSlide.Exercise is UniversalExerciseBlock {NoStudentZip: true})
 				return NotFound();
 
 			var zipFile = await courseManager.GenerateOrFindStudentZip(courseId, exerciseSlide);

@@ -25,15 +25,6 @@ namespace Ulearn.Web.Api.Models.Responses.Account
 	[DataContract]
 	public class AccountProblem
 	{
-		[DataMember]
-		public string Title { get; set; }
-
-		[DataMember]
-		public string Description { get; set; }
-		
-		[DataMember]
-		public string ProblemType { get; set; }
-
 		public AccountProblem()
 		{
 		}
@@ -44,5 +35,14 @@ namespace Ulearn.Web.Api.Models.Responses.Account
 			Description = description;
 			ProblemType = type;
 		}
+
+		[DataMember]
+		public string Title { get; set; }
+
+		[DataMember]
+		public string Description { get; set; }
+
+		[DataMember]
+		public string ProblemType { get; set; }
 	}
 }

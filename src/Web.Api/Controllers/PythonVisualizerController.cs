@@ -18,11 +18,10 @@ namespace Ulearn.Web.Api.Controllers
 	[Route("/python-visualizer")]
 	public class PythonVisualizerController : BaseController
 	{
-		private static ILog log => LogProvider.Get().ForContext(typeof(PythonVisualizerController));
-		private readonly IPythonVisualizerClient pythonVisualizerClient;
 		private readonly ErrorsBot errorsBot;
+		private readonly IPythonVisualizerClient pythonVisualizerClient;
 
-		public PythonVisualizerController(ICourseStorage courseStorage, UlearnDb db, IUsersRepo usersRepo,ErrorsBot errorsBot,
+		public PythonVisualizerController(ICourseStorage courseStorage, UlearnDb db, IUsersRepo usersRepo, ErrorsBot errorsBot,
 			IPythonVisualizerClient pythonVisualizerClient)
 			: base(courseStorage, db, usersRepo)
 		{
@@ -30,19 +29,21 @@ namespace Ulearn.Web.Api.Controllers
 			this.errorsBot = errorsBot;
 		}
 
+		private new static ILog Log => LogProvider.Get().ForContext(typeof(PythonVisualizerController));
+
 		/// <summary>
-		/// Получить результат отладки кода на python
+		///     Получить результат отладки кода на python
 		/// </summary>
 		[Authorize]
 		[HttpPost("run")]
 		public async Task<ActionResult> Run([FromBody] PythonVisualizerRunParameters parameters)
 		{
 			var response = await pythonVisualizerClient.GetResult(parameters);
-			if (response == null)
+			if (response is null)
 				return StatusCode((int)HttpStatusCode.InternalServerError);
 			if (response.Code == ResponseCode.RequestTimeout)
 			{
-				log.Error($"Python Visualizer request timed out, posting data to errors bot");
+				Log.Error("Python Visualizer request timed out, posting data to errors bot");
 				await errorsBot.PostToChannelAsync($"Визуализатор питона не смог обработать запрос для code=[{parameters.Code}] input=[{parameters.InputData}]");
 			}
 
@@ -63,9 +64,8 @@ namespace Ulearn.Web.Api.Controllers
 
 	public class PythonVisualizerClient : BaseApiClient, IPythonVisualizerClient
 	{
-		private readonly string endpointUrl;
-
 		private static readonly TimeSpan defaultTimeout = TimeSpan.FromSeconds(30);
+		private readonly string endpointUrl;
 
 		public PythonVisualizerClient(string endpointUrl)
 			: base(new ApiClientSettings(endpointUrl)
@@ -82,7 +82,7 @@ namespace Ulearn.Web.Api.Controllers
 			var builder = new UriBuilder(endpointUrl + "run");
 			var json = JsonConvert.SerializeObject(parameters);
 			var request = Request.Post(builder.Uri)
-				.WithHeader("Content-Type","application/json")
+				.WithHeader("Content-Type", "application/json")
 				.WithContent(json);
 			return (await MakeRequestAsync(request)).Response;
 		}

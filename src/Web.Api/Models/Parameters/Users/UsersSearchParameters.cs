@@ -3,6 +3,7 @@ using Database.Models;
 using Microsoft.AspNetCore.Mvc;
 using Ulearn.Common.Api.Models.Parameters;
 using Ulearn.Common.Api.Models.Validations;
+// ReSharper disable UnusedAutoPropertyAccessor.Global
 
 namespace Ulearn.Web.Api.Models.Parameters.Users
 {
@@ -10,7 +11,7 @@ namespace Ulearn.Web.Api.Models.Parameters.Users
 	{
 		[FromQuery(Name = "userId")]
 		public string UserId { get; set; }
-		
+
 		[FromQuery(Name = "query")]
 		[MaxLength(100, ErrorMessage = "Query should be at most 100 chars")]
 		public string Query { get; set; }

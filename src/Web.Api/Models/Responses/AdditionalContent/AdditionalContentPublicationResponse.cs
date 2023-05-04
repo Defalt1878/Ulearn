@@ -42,7 +42,7 @@ namespace Ulearn.Web.Api.Models.Responses.AdditionalContent
 				UnitId = p.UnitId,
 				SlideId = p.SlideId,
 				CourseId = p.CourseId,
-				GroupId = p.GroupId,
+				GroupId = p.GroupId
 			};
 		}
 	}

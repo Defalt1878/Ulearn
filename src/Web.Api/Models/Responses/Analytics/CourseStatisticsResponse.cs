@@ -13,6 +13,15 @@ namespace Ulearn.Web.Api.Models.Responses.Analytics
 	[DataContract]
 	public class CourseStatisticsModel
 	{
+		[DataMember(Name = "course")]
+		public CourseStatisticsCourseInfo Course;
+
+		[DataMember(Name = "groups")]
+		public CourseStatisticsGroupInfo[] Groups;
+
+		[DataMember(Name = "students")]
+		public CourseStatisticsStudentInfo[] Students;
+
 		public CourseStatisticsModel()
 		{
 		}
@@ -42,7 +51,7 @@ namespace Ulearn.Web.Api.Models.Responses.Analytics
 							{
 								UnitId = u.Id,
 								ScoringGroupId = g.Id,
-								Score = model.AdditionalScores[Tuple.Create(user.UserId, u.Id, g.Id)],
+								Score = model.AdditionalScores[Tuple.Create(user.UserId, u.Id, g.Id)]
 							})
 						)
 						.ToArray()
@@ -52,20 +61,20 @@ namespace Ulearn.Web.Api.Models.Responses.Analytics
 
 			Students = students.ToArray();
 		}
-
-		[DataMember(Name = "course")]
-		public CourseStatisticsCourseInfo Course;
-
-		[DataMember(Name = "groups")]
-		public CourseStatisticsGroupInfo[] Groups;
-
-		[DataMember(Name = "students")]
-		public CourseStatisticsStudentInfo[] Students;
 	}
-	
+
 	[DataContract(Name = "course")]
 	public class CourseStatisticsCourseInfo
 	{
+		[DataMember(Name = "title")]
+		public string Title;
+
+		[DataMember(Name = "units")]
+		public CourseStatisticsUnitInfo[] Units;
+
+		[DataMember(Name = "scoring_groups")]
+		public CourseStatisticsScoringGroupInfo[] ScoringGroups;
+
 		public CourseStatisticsCourseInfo()
 		{
 		}
@@ -76,20 +85,20 @@ namespace Ulearn.Web.Api.Models.Responses.Analytics
 			Units = units.Select(u => new CourseStatisticsUnitInfo(u)).ToArray();
 			ScoringGroups = scoringGroups.Select(g => new CourseStatisticsScoringGroupInfo(g)).ToArray();
 		}
-
-		[DataMember(Name = "title")]
-		public string Title;
-
-		[DataMember(Name = "units")]
-		public CourseStatisticsUnitInfo[] Units;
-
-		[DataMember(Name = "scoring_groups")]
-		public CourseStatisticsScoringGroupInfo[] ScoringGroups;
 	}
 
 	[DataContract(Name = "scoring_group")]
 	public class CourseStatisticsScoringGroupInfo
 	{
+		[DataMember(Name = "id")]
+		public string Id;
+
+		[DataMember(Name = "abbreviation")]
+		public string Abbreviation;
+
+		[DataMember(Name = "name")]
+		public string Name;
+
 		public CourseStatisticsScoringGroupInfo()
 		{
 		}
@@ -100,32 +109,11 @@ namespace Ulearn.Web.Api.Models.Responses.Analytics
 			Abbreviation = group.Abbreviation;
 			Name = group.Name;
 		}
-
-		[DataMember(Name = "id")]
-		public string Id;
-
-		[DataMember(Name = "abbreviation")]
-		public string Abbreviation;
-
-		[DataMember(Name = "name")]
-		public string Name;
 	}
 
 	[DataContract(Name = "unit")]
 	public class CourseStatisticsUnitInfo
 	{
-		public CourseStatisticsUnitInfo()
-		{
-		}
-
-		public CourseStatisticsUnitInfo(Unit unit)
-		{
-			Id = unit.Id;
-			Title = unit.Title;
-			Slides = unit.GetSlides(false).Where(s => s.ShouldBeSolved).Select(s => new CourseStatisticsSlideInfo(s)).ToArray();
-			AdditionalScores = unit.Scoring.Groups.Values.Where(g => g.CanBeSetByInstructor).Select(g => new CourseStatisticsUnitAdditionalScoreInfo(g)).ToArray();
-		}
-
 		[DataMember(Name = "id")]
 		public Guid Id;
 
@@ -137,11 +125,29 @@ namespace Ulearn.Web.Api.Models.Responses.Analytics
 
 		[DataMember(Name = "additional_scores")]
 		public CourseStatisticsUnitAdditionalScoreInfo[] AdditionalScores;
+
+		public CourseStatisticsUnitInfo()
+		{
+		}
+
+		public CourseStatisticsUnitInfo(Unit unit)
+		{
+			Id = unit.Id;
+			Title = unit.Title;
+			Slides = unit.GetSlides(false).Where(s => s.ShouldBeSolved).Select(s => new CourseStatisticsSlideInfo(s)).ToArray();
+			AdditionalScores = unit.Scoring.Groups.Values.Where(g => g.CanBeSetByInstructor).Select(g => new CourseStatisticsUnitAdditionalScoreInfo(g)).ToArray();
+		}
 	}
 
 	[DataContract(Name = "additional_score")]
 	public class CourseStatisticsUnitAdditionalScoreInfo
 	{
+		[DataMember(Name = "scoring_group_id")]
+		public string ScoringGroupId;
+
+		[DataMember(Name = "max_additional_score")]
+		public int MaxAdditionalScore;
+
 		public CourseStatisticsUnitAdditionalScoreInfo()
 		{
 		}
@@ -151,17 +157,20 @@ namespace Ulearn.Web.Api.Models.Responses.Analytics
 			ScoringGroupId = g.Id;
 			MaxAdditionalScore = g.MaxAdditionalScore;
 		}
-
-		[DataMember(Name = "scoring_group_id")]
-		public string ScoringGroupId;
-
-		[DataMember(Name = "max_additional_score")]
-		public int MaxAdditionalScore;
 	}
 
 	[DataContract(Name = "slide")]
 	public class CourseStatisticsSlideInfo
 	{
+		[DataMember(Name = "id")]
+		public Guid Id;
+
+		[DataMember(Name = "title")]
+		public string Title;
+
+		[DataMember(Name = "max_score")]
+		public int MaxScore;
+
 		public CourseStatisticsSlideInfo()
 		{
 		}
@@ -172,20 +181,17 @@ namespace Ulearn.Web.Api.Models.Responses.Analytics
 			Title = s.Title;
 			MaxScore = s.MaxScore;
 		}
-
-		[DataMember(Name = "id")]
-		public Guid Id;
-
-		[DataMember(Name = "title")]
-		public string Title;
-
-		[DataMember(Name = "max_score")]
-		public int MaxScore;
 	}
 
 	[DataContract(Name = "group")]
 	public class CourseStatisticsGroupInfo
 	{
+		[DataMember(Name = "id")]
+		public int Id;
+
+		[DataMember(Name = "Title")]
+		public string Title;
+
 		public CourseStatisticsGroupInfo()
 		{
 		}
@@ -195,12 +201,6 @@ namespace Ulearn.Web.Api.Models.Responses.Analytics
 			Id = g.Id;
 			Title = g.Name;
 		}
-
-		[DataMember(Name = "id")]
-		public int Id;
-
-		[DataMember(Name = "Title")]
-		public string Title;
 	}
 
 	[DataContract(Name = "info")]

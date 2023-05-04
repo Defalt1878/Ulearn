@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Castle.Core.Internal;
@@ -9,18 +10,18 @@ namespace Ulearn.Web.Api.Authorization
 {
 	public class BaseCourseAuthorizationHandler<T> : AuthorizationHandler<T> where T : IAuthorizationRequirement
 	{
-		private static ILog log => LogProvider.Get().ForContext(typeof(BaseCourseAuthorizationHandler<T>));
+		private static ILog Log => LogProvider.Get().ForContext(typeof(BaseCourseAuthorizationHandler<T>));
 
 		protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, T requirement)
 		{
-			throw new System.NotImplementedException();
+			throw new NotImplementedException();
 		}
 
 		/* Find `course_id` arguments in request. Try to get course_id in following order:
-		 * route data (/groups/<course_id>/)
-		 * query string (/groups/?course_id=<course_id>)
-		 * NOTE: not supported JSON request body})
-		 */
+		* route data (/groups/<course_id>/)
+		* query string (/groups/?course_id=<course_id>)
+		* NOTE: not supported JSON request body})
+		*/
 		protected string GetCourseIdFromRequestAsync(AuthorizationFilterContext mvcContext)
 		{
 			/* 1. Route data */
@@ -32,7 +33,7 @@ namespace Ulearn.Web.Api.Authorization
 			if (!courseIdFromQuery.IsNullOrEmpty())
 				return courseIdFromQuery;
 
-			log.Error("Can't find `courseId` parameter in request for checking course role requirement. You should inherit your parameters models from ICourseAuthorizationParameters.");
+			Log.Error("Can't find `courseId` parameter in request for checking course role requirement. You should inherit your parameters models from ICourseAuthorizationParameters.");
 			return null;
 		}
 	}

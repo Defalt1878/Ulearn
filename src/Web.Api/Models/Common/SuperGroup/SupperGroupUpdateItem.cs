@@ -2,12 +2,11 @@
 
 namespace Ulearn.Web.Api.Models.Common.SuperGroup;
 
-
 [DataContract]
 public class SupperGroupUpdateItem
 {
 	/// <summary>
-	/// Null if group doesn't exists
+	///     Null if group doesn't exists
 	/// </summary>
 	[DataMember]
 	public int? GroupId { get; set; }

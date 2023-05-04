@@ -21,20 +21,22 @@ namespace Ulearn.Web.Api.Controllers.Groups
 		{
 		}
 
-		protected GroupSettings BuildGroupInfo(GroupBase group,
+		protected GroupSettings BuildGroupInfo(
+			GroupBase group,
 			int? membersCount = null,
 			IEnumerable<GroupAccess> accesses = null,
 			bool addGroupApiUrl = false,
 			bool? isLinkEnabled = null,
 			bool? isUserMemberOfGroup = null,
-			[CanBeNull] string superGroupName = null)
+			[CanBeNull] string superGroupName = null
+		)
 		{
-			if (group == null)
+			if (group is null)
 				throw new ArgumentNullException(nameof(group));
 
 			var isManualCheckingEnabled = (bool?)null;
 			var isManualCheckingEnabledForOldSolutions = (bool?)null;
-			var defaultProhibitFutherReview = (bool?)null;
+			var defaultProhibitFurtherReview = (bool?)null;
 			var canUsersSeeGroupProgress = (bool?)null;
 			var superGroupId = (int?)null;
 
@@ -44,19 +46,17 @@ namespace Ulearn.Web.Api.Controllers.Groups
 			{
 				isManualCheckingEnabled = singleGroup.IsManualCheckingEnabled;
 				isManualCheckingEnabledForOldSolutions = singleGroup.IsManualCheckingEnabledForOldSolutions;
-				defaultProhibitFutherReview = singleGroup.DefaultProhibitFutherReview;
+				defaultProhibitFurtherReview = singleGroup.DefaultProhibitFutherReview;
 				canUsersSeeGroupProgress = singleGroup.CanUsersSeeGroupProgress;
 				superGroupId = singleGroup.SuperGroupId;
 			}
 
 			if (group is SuperGroup superGroup)
-			{
 				distributionTableLink = superGroup.DistributionTableLink;
-			}
 
 			var course = courseStorage.GetCourse(group.CourseId);
 
-			if (course == null)
+			if (course is null)
 				throw new ArgumentException(nameof(group.CourseId));
 
 			return new GroupSettings
@@ -75,7 +75,7 @@ namespace Ulearn.Web.Api.Controllers.Groups
 
 				IsManualCheckingEnabled = isManualCheckingEnabled,
 				IsManualCheckingEnabledForOldSolutions = isManualCheckingEnabledForOldSolutions,
-				DefaultProhibitFurtherReview = defaultProhibitFutherReview,
+				DefaultProhibitFurtherReview = defaultProhibitFurtherReview,
 				CanStudentsSeeGroupProgress = canUsersSeeGroupProgress,
 
 				StudentsCount = membersCount,
@@ -90,7 +90,7 @@ namespace Ulearn.Web.Api.Controllers.Groups
 
 		protected GroupAccessesInfo BuildGroupAccessesInfo(GroupAccess access)
 		{
-			if (access == null)
+			if (access is null)
 				throw new ArgumentNullException(nameof(access));
 
 			return new GroupAccessesInfo
@@ -123,7 +123,7 @@ namespace Ulearn.Web.Api.Controllers.Groups
 			{
 				AreAdditionalScoresEnabledForAllGroups = scoringGroup.EnabledForEveryone,
 				CanInstructorSetAdditionalScoreInSomeUnit = canBeSetByInstructorInSomeUnit,
-				AreAdditionalScoresEnabledInThisGroup = (scoringGroup.EnabledForEveryone || !canBeSetByInstructorInSomeUnit)
+				AreAdditionalScoresEnabledInThisGroup = scoringGroup.EnabledForEveryone || !canBeSetByInstructorInSomeUnit
 					? null
 					: isEnabledManuallyCount == groupsCount
 						? true //enabled for all groups

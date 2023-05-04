@@ -8,10 +8,5 @@ namespace Ulearn.Web.Api.Models.Responses.Flashcards
 	{
 		[DataMember]
 		public List<FlashcardsUnitInfo> FlashcardsInfo = new();
-
-		public void Add(FlashcardsUnitInfo flashcardsUnitInfo)
-		{
-			FlashcardsInfo.Add(flashcardsUnitInfo);
-		}
 	}
 }

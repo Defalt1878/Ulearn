@@ -13,12 +13,13 @@ namespace Ulearn.Web.Api.Workers
 	public class ArchiveGroupsWorker : VostokScheduledApplication
 	{
 		private readonly IServiceScopeFactory serviceScopeFactory;
-		private static ILog log => LogProvider.Get().ForContext(typeof(ArchiveGroupsWorker));
 
 		public ArchiveGroupsWorker(IServiceScopeFactory serviceScopeFactory)
 		{
 			this.serviceScopeFactory = serviceScopeFactory;
 		}
+
+		private static ILog Log => LogProvider.Get().ForContext(typeof(ArchiveGroupsWorker));
 
 		public override void Setup(IScheduledActionsBuilder builder, IVostokHostingEnvironment environment)
 		{
@@ -28,25 +29,24 @@ namespace Ulearn.Web.Api.Workers
 
 		private async Task ArchiveAllOldGroups()
 		{
-			log.Info("Start ArchiveGroupsWorker");
-			using (var scope = serviceScopeFactory.CreateScope())
-			{
-				var groupsArchiver = scope.ServiceProvider.GetService<IGroupsArchiver>();
-				var usersRepo = scope.ServiceProvider.GetService<IUsersRepo>();
-				var groupsRepo = scope.ServiceProvider.GetService<IGroupsRepo>();
-				var notificationsRepo = scope.ServiceProvider.GetService<INotificationsRepo>();
+			Log.Info("Start ArchiveGroupsWorker");
+			using var scope = serviceScopeFactory.CreateScope();
+			var groupsArchiver = scope.ServiceProvider.GetService<IGroupsArchiver>();
+			var usersRepo = scope.ServiceProvider.GetService<IUsersRepo>();
+			var groupsRepo = scope.ServiceProvider.GetService<IGroupsRepo>();
+			var notificationsRepo = scope.ServiceProvider.GetService<INotificationsRepo>();
 
-				var groupsIdsToArchive = await groupsArchiver.GetOldGroupsToArchive();
-				var bot = await usersRepo.GetUlearnBotUser();
-				foreach (var groupId in groupsIdsToArchive)
-				{
-					var group = await groupsRepo.FindGroupByIdAsync(groupId);
-					await groupsRepo.ArchiveGroupAsync(groupId, true);
-					var notification = new GroupIsArchivedNotification { GroupId = groupId };
-					await notificationsRepo.AddNotification(group.CourseId, notification, bot.Id);
-				}
-				log.Info($"Archived {groupsIdsToArchive.Count} groups");
+			var groupsIdsToArchive = await groupsArchiver.GetOldGroupsToArchive();
+			var bot = await usersRepo.GetUlearnBotUser();
+			foreach (var groupId in groupsIdsToArchive)
+			{
+				var group = await groupsRepo.FindGroupByIdAsync(groupId);
+				await groupsRepo.ArchiveGroupAsync(groupId, true);
+				var notification = new GroupIsArchivedNotification { GroupId = groupId };
+				await notificationsRepo.AddNotification(group.CourseId, notification, bot.Id);
 			}
+
+			Log.Info($"Archived {groupsIdsToArchive.Count} groups");
 		}
 	}
 }

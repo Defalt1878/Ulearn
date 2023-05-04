@@ -20,10 +20,10 @@ namespace Ulearn.Web.Api.Controllers
 	[Route("/codereview-statistics")]
 	public class CodeReviewStatisticsController : BaseController
 	{
-		private readonly ISlideCheckingsRepo slideCheckingsRepo;
-		private readonly IGroupsRepo groupsRepo;
-		private readonly IGroupMembersRepo groupMembersRepo;
 		private readonly ICourseRolesRepo courseRolesRepo;
+		private readonly IGroupMembersRepo groupMembersRepo;
+		private readonly IGroupsRepo groupsRepo;
+		private readonly ISlideCheckingsRepo slideCheckingsRepo;
 
 		public CodeReviewStatisticsController(ICourseStorage courseStorage,
 			ISlideCheckingsRepo slideCheckingsRepo,
@@ -41,21 +41,19 @@ namespace Ulearn.Web.Api.Controllers
 		}
 
 		/// <summary>
-		/// Статистика по выполненным ревью для каждого преподавателя в курсе
+		///     Статистика по выполненным ревью для каждого преподавателя в курсе
 		/// </summary>
 		[HttpGet]
 		[CourseAccessAuthorize(CourseAccessType.ApiViewCodeReviewStatistics)]
-		public async Task<ActionResult<CodeReviewInstructorsStatisticsResponse>> InstructorsStatistics([FromQuery][BindRequired] string courseId,
+		public async Task<ActionResult<CodeReviewInstructorsStatisticsResponse>> InstructorsStatistics([FromQuery] [BindRequired] string courseId,
 			int count = 10000, DateTime? from = null, DateTime? to = null)
 		{
 			var course = courseStorage.FindCourse(courseId);
-			if (course == null)
+			if (course is null)
 				return NotFound();
 
-			if (!from.HasValue)
-				from = DateTime.MinValue;
-			if (!to.HasValue)
-				to = DateTime.MaxValue;
+			from ??= DateTime.MinValue;
+			to ??= DateTime.MaxValue;
 
 			count = Math.Min(count, 10000);
 
@@ -69,8 +67,8 @@ namespace Ulearn.Web.Api.Controllers
 				CourseId = course.Id,
 				Count = count,
 				OnlyChecked = null,
-				From = @from.Value,
-				To = to.Value,
+				From = from.Value,
+				To = to.Value
 			}).ToListAsync();
 
 			var result = new CodeReviewInstructorsStatisticsResponse
@@ -87,14 +85,14 @@ namespace Ulearn.Web.Api.Controllers
 				var comments = checkingsCheckedByInstructor.SelectMany(c => c.NotDeletedReviews).ToList();
 				var instructorStatistics = new CodeReviewInstructorStatistics
 				{
-					Instructor = BuildShortUserInfo(instructor, discloseLogin: true),
+					Instructor = BuildShortUserInfo(instructor, true),
 					Exercises = exerciseSlides.Select(
 							slide => new CodeReviewExerciseStatistics
 							{
 								SlideId = slide.Id,
 								ReviewedSubmissionsCount = checkingsCheckedByInstructor.Count(c => c.SlideId == slide.Id),
 								QueueSize = checkingQueue.Count(c => c.SlideId == slide.Id),
-								CommentsCount = comments.Count(c => c.ExerciseChecking.SlideId == slide.Id),
+								CommentsCount = comments.Count(c => c.ExerciseChecking.SlideId == slide.Id)
 							}
 						)
 						.Where(s => s.ReviewedSubmissionsCount + s.QueueSize + s.CommentsCount > 0) // Ignore empty (zeros) records

@@ -18,9 +18,9 @@ namespace Ulearn.Web.Api.Controllers
 	[Authorize]
 	public class AdditionalContentPublicationsController : BaseController
 	{
-		private IAdditionalContentPublicationsRepo additionalContentPublicationsRepo;
-		private ICourseRolesRepo courseRolesRepo;
-		private IGroupsRepo groupsRepo;
+		private readonly IAdditionalContentPublicationsRepo additionalContentPublicationsRepo;
+		private readonly ICourseRolesRepo courseRolesRepo;
+		private readonly IGroupsRepo groupsRepo;
 
 		public AdditionalContentPublicationsController(ICourseStorage courseStorage, UlearnDb db,
 			IUsersRepo usersRepo,
@@ -42,11 +42,11 @@ namespace Ulearn.Web.Api.Controllers
 
 			if (!isTester)
 				return Forbid($"You have no access to course {courseId}");
-			
+
 			var group = (await groupsRepo.GetCourseGroupsQueryable(courseId, GroupQueryType.SingleGroup, true).Where(g => g.Id == groupId).ToListAsync()).FirstOrDefault();
-			if (group == null)
+			if (group is null)
 				return NotFound($"Group with id {groupId} not found");
-			
+
 			var publications = await additionalContentPublicationsRepo.GetAdditionalContentPublications(courseId, groupId);
 			var userIds = publications.Select(p => p.AuthorId).Distinct().ToList();
 			var users = (await usersRepo.GetUsersByIds(userIds)).ToDictionary(u => u.Id, u => u);
@@ -69,19 +69,19 @@ namespace Ulearn.Web.Api.Controllers
 		)
 		{
 			var course = courseStorage.FindCourse(courseId);
-			if (course == null)
+			if (course is null)
 				return NotFound($"Course {courseId} not found");
-			
+
 			var isTester = await courseRolesRepo.HasUserAccessToCourse(UserId, courseId, CourseRoleType.Tester).ConfigureAwait(false);
 
 			if (!isTester)
 				return Forbid($"You have no access to course {courseId}");
 
 			var unit = course.GetUnits(new[] { unitId }).FirstOrDefault();
-			if (unit == null)
+			if (unit is null)
 				return NotFound($"Unit with id {unitId} not found");
 
-			if (slideId != null)
+			if (slideId is not null)
 			{
 				var slides = unit.GetSlides(false);
 				if (slides.All(s => s.Id != slideId))
@@ -90,11 +90,11 @@ namespace Ulearn.Web.Api.Controllers
 
 			var group = (await groupsRepo.GetCourseGroupsQueryable(courseId, GroupQueryType.SingleGroup, true).Where(g => g.Id == groupId).ToListAsync()).FirstOrDefault();
 
-			if (group == null)
+			if (group is null)
 				return NotFound($"Group with id {groupId} not found");
 
 			if (await additionalContentPublicationsRepo.HasPublication(courseId, groupId, unitId, slideId))
-				return UnprocessableEntity($"There's already a publication for this content, try update it instead");
+				return UnprocessableEntity("There's already a publication for this content, try update it instead");
 
 			var publication = await additionalContentPublicationsRepo.AddAdditionalContentPublication(courseId, groupId, UserId, unitId, slideId, date);
 			var user = (await usersRepo.GetUsersByIds(new[] { UserId })).FirstOrDefault();
@@ -107,17 +107,17 @@ namespace Ulearn.Web.Api.Controllers
 		public async Task<ActionResult> UpdateAdditionalContentPublication([FromRoute] Guid publicationId, [FromQuery] DateTime date)
 		{
 			var publicationToUpdate = await additionalContentPublicationsRepo.GetAdditionalContentPublicationById(publicationId);
-			if (publicationToUpdate == null)
+			if (publicationToUpdate is null)
 				return NotFound($"Publication with id {publicationId} not found");
-			
+
 			var course = courseStorage.FindCourse(publicationToUpdate.CourseId);
-			if (course == null)
+			if (course is null)
 				return NotFound($"Course {publicationToUpdate.CourseId} not found");
 			var isTester = await courseRolesRepo.HasUserAccessToCourse(UserId, publicationToUpdate.CourseId, CourseRoleType.Tester).ConfigureAwait(false);
 
 			if (!isTester)
 				return Forbid($"You have no access to course {publicationToUpdate.CourseId}");
-			
+
 			publicationToUpdate.Date = date;
 
 			await additionalContentPublicationsRepo.UpdateAdditionalContentPublication(publicationToUpdate);
@@ -130,13 +130,13 @@ namespace Ulearn.Web.Api.Controllers
 		public async Task<ActionResult> DeleteAdditionalContentPublication([FromRoute] Guid publicationId)
 		{
 			var publication = await additionalContentPublicationsRepo.GetAdditionalContentPublicationById(publicationId);
-			if (publication == null)
+			if (publication is null)
 				return NotFound($"Publication with id {publicationId} not found");
 
 			var course = courseStorage.FindCourse(publication.CourseId);
-			if (course == null)
+			if (course is null)
 				return NotFound($"Course {publication.CourseId} not found");
-			
+
 			var isTester = await courseRolesRepo.HasUserAccessToCourse(UserId, publication.CourseId, CourseRoleType.Tester).ConfigureAwait(false);
 
 			if (!isTester)

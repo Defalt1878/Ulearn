@@ -40,14 +40,14 @@ namespace Ulearn.Web.Api.Controllers.Review
 			var slideId = (Guid)context.ActionArguments["slideId"];
 
 			var course = courseStorage.FindCourse(courseId);
-			if (course == null)
+			if (course is null)
 			{
 				context.Result = NotFound(new ErrorResponse($"Course {courseId} not found"));
 				return;
 			}
 
 			var slide = course.FindSlideByIdNotSafe(slideId);
-			if (slide == null)
+			if (slide is null)
 			{
 				context.Result = NotFound(new ErrorResponse($"Slide with id {slideId} not found"));
 				return;
@@ -89,7 +89,7 @@ namespace Ulearn.Web.Api.Controllers.Review
 		public async Task<ActionResult> DeleteFavouriteReviewByUser([FromQuery] string courseId, [FromQuery] Guid slideId, [FromQuery] int favouriteReviewId)
 		{
 			var favouriteReviewByUser = await favouriteReviewsRepo.FindFavouriteReviewByUser(courseId, slideId, UserId, favouriteReviewId);
-			if (favouriteReviewByUser == null)
+			if (favouriteReviewByUser is null)
 				return NotFound(new ErrorResponse($"Favourite review with id {favouriteReviewId} not found"));
 
 			await favouriteReviewsRepo.DeleteFavouriteReviewByUser(favouriteReviewByUser);

@@ -17,7 +17,6 @@ namespace Ulearn.Web.Api.Controllers.Runner
 	{
 		private readonly IAntiPlagiarismClient antiPlagiarismClient;
 		private readonly bool isEnabled;
-		private static ILog log => LogProvider.Get().ForContext(typeof(AntiPlagiarismResultObserver));
 
 		public AntiPlagiarismResultObserver(IOptions<WebApiConfiguration> configuration)
 		{
@@ -26,8 +25,10 @@ namespace Ulearn.Web.Api.Controllers.Runner
 			if (!isEnabled)
 				return;
 
-			antiPlagiarismClient = new AntiPlagiarismClient(antiplagiarismClientConfiguration.Endpoint, antiplagiarismClientConfiguration.Token);
+			antiPlagiarismClient = new AntiPlagiarismClient(antiplagiarismClientConfiguration!.Endpoint, antiplagiarismClientConfiguration.Token);
 		}
+
+		private static ILog Log => LogProvider.Get().ForContext(typeof(AntiPlagiarismResultObserver));
 
 		public async Task ProcessResult(UserExerciseSubmission submission, RunningResults result)
 		{
@@ -57,7 +58,7 @@ namespace Ulearn.Web.Api.Controllers.Runner
 			}
 			catch (ApiClientException ex)
 			{
-				log.Error(ex);
+				Log.Error(ex);
 			}
 		}
 	}

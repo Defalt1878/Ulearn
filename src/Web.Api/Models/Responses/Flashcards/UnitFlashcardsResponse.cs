@@ -7,10 +7,8 @@ namespace Ulearn.Web.Api.Models.Responses.Flashcards
 	[DataContract]
 	public class UnitFlashcardsResponse
 	{
-		public UnitFlashcardsResponse()
-		{
-			Flashcards = new List<FlashcardResponse>();
-		}
+		[DataMember]
+		public List<FlashcardResponse> Flashcards;
 
 		[DataMember]
 		public Guid UnitId;
@@ -21,7 +19,9 @@ namespace Ulearn.Web.Api.Models.Responses.Flashcards
 		[DataMember]
 		public bool Unlocked;
 
-		[DataMember]
-		public List<FlashcardResponse> Flashcards;
+		public UnitFlashcardsResponse()
+		{
+			Flashcards = new List<FlashcardResponse>();
+		}
 	}
 }

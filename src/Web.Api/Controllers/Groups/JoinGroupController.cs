@@ -13,7 +13,6 @@ using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using Ulearn.Common.Api.Models.Responses;
 using Ulearn.Core.Courses.Manager;
-using Ulearn.Web.Api.Models.Responses.Groups;
 using Ulearn.Web.Api.Utils;
 using GroupSettings = Ulearn.Web.Api.Models.Responses.Groups.GroupSettings;
 
@@ -24,8 +23,8 @@ namespace Ulearn.Web.Api.Controllers.Groups
 	[Authorize]
 	public class JoinGroupController : BaseGroupController
 	{
-		private readonly IGroupsRepo groupsRepo;
 		private readonly IGroupMembersRepo groupMembersRepo;
+		private readonly IGroupsRepo groupsRepo;
 		private readonly ISlideCheckingsRepo slideCheckingsRepo;
 		private readonly SuperGroupManager superGroupManager;
 
@@ -44,8 +43,8 @@ namespace Ulearn.Web.Api.Controllers.Groups
 		}
 
 		/// <summary>
-		/// Найти группу по инвайт-хешу.
-		/// Группа должна быть не удалена, а инвайт-ссылка в ней — включена.
+		///     Найти группу по инвайт-хешу.
+		///     Группа должна быть не удалена, а инвайт-ссылка в ней — включена.
 		/// </summary>
 		/// <param name="inviteHash">Инвайт-хеш группы</param>
 		[HttpGet]
@@ -53,7 +52,7 @@ namespace Ulearn.Web.Api.Controllers.Groups
 		{
 			var group = await groupsRepo.FindGroupByInviteHashAsync_WithDisabledLink(inviteHash).ConfigureAwait(false);
 
-			if (group == null)
+			if (group is null)
 				return NotFound(new ErrorResponse($"Group with invite hash {inviteHash} not found"));
 
 			var isLinkEnabled = group.IsInviteLinkEnabled;
@@ -61,34 +60,33 @@ namespace Ulearn.Web.Api.Controllers.Groups
 			if (group.GroupType == GroupType.SuperGroup)
 			{
 				var (createdGroups, error) = await GetGroupsToJoinViaSuperGroup(group as SuperGroup);
-				if (error == null)
-					group = createdGroups.FirstOrDefault();
+				if (error is null)
+					group = createdGroups.First();
 			}
 
-			var isMember = await groupMembersRepo.IsUserMemberOfGroup(@group.Id, UserId).ConfigureAwait(false);
+			var isMember = await groupMembersRepo.IsUserMemberOfGroup(group.Id, UserId).ConfigureAwait(false);
 			return BuildGroupInfo(group, isUserMemberOfGroup: isMember, isLinkEnabled: isLinkEnabled);
 		}
 
 		/// <summary>
-		/// Вступить в группу по инвайт-хешу.
-		/// Группа должна быть не удалена, а инвайт-ссылка в ней — включена.
+		///     Вступить в группу по инвайт-хешу.
+		///     Группа должна быть не удалена, а инвайт-ссылка в ней — включена.
 		/// </summary>
 		/// <param name="inviteHash">Инвайт-хеш группы</param>
 		[HttpPost("join")]
-		
 		[SwaggerResponse((int)HttpStatusCode.Conflict, Description = "User is already a student of this group")]
 		public async Task<IActionResult> Join(Guid inviteHash)
 		{
 			var group = await groupsRepo.FindGroupByInviteHashAsync(inviteHash).ConfigureAwait(false);
 
-			if (group == null)
+			if (group is null)
 				return NotFound(new ErrorResponse($"Group with invite hash {inviteHash} not found"));
 
 			if (group.GroupType == GroupType.SuperGroup)
 				return await JoinSuperGroup(group as SuperGroup);
 
 			var groupMember = await groupMembersRepo.AddUserToGroupAsync(group.Id, UserId).ConfigureAwait(false);
-			if (groupMember == null)
+			if (groupMember is null)
 				return StatusCode((int)HttpStatusCode.Conflict, new ErrorResponse($"User {UserId} is already a student of group {group.Id}"));
 
 			await slideCheckingsRepo.ResetManualCheckingLimitsForUser(group.CourseId, UserId);
@@ -100,13 +98,13 @@ namespace Ulearn.Web.Api.Controllers.Groups
 		{
 			var (createdGroups, error) = await GetGroupsToJoinViaSuperGroup(superGroup);
 
-			if (error != null)
+			if (error is not null)
 				return NotFound(error);
 
-			var groupToJoin = createdGroups.FirstOrDefault();
+			var groupToJoin = createdGroups.First();
 
 			var groupMember = await groupMembersRepo.AddUserToGroupAsync(groupToJoin.Id, UserId).ConfigureAwait(false);
-			return groupMember == null
+			return groupMember is null
 				? Conflict(new ErrorResponse($"User {UserId} is already a student of group {groupToJoin.Id}"))
 				: Ok(new SuccessResponseWithMessage($"Student {UserId} is added to group {superGroup.Id}"));
 		}
@@ -116,7 +114,7 @@ namespace Ulearn.Web.Api.Controllers.Groups
 			var (createdGroups, spreadSheetGroups) = await superGroupManager.GetSheetGroupsAndCreatedGroups(superGroup.DistributionTableLink, superGroup.Id);
 			var user = await usersRepo.FindUserById(UserId);
 
-			var userNames = new HashSet<string> { $"{user.FirstName.Trim()} {user.LastName.Trim()}", $"{user.LastName.Trim()} {user.FirstName.Trim()}" };
+			var userNames = new HashSet<string> { $"{user!.FirstName.Trim()} {user.LastName.Trim()}", $"{user.LastName.Trim()} {user.FirstName.Trim()}" };
 			var userGroupsNames = spreadSheetGroups
 				.Where(g => userNames.Contains(g.studentName))
 				.Select(g => g.groupName)

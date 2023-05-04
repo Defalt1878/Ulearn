@@ -42,10 +42,10 @@ namespace Ulearn.Web.Api.Controllers.Comments
 		public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
 		{
 			var commentId = (int)context.ActionArguments["commentId"];
-			var comment = await commentsRepo.FindCommentByIdAsync(commentId, includeDeleted: true).ConfigureAwait(false);
+			var comment = await commentsRepo.FindCommentByIdAsync(commentId, true).ConfigureAwait(false);
 
 			var isPatchRequest = context.HttpContext.Request.Method.Equals("PATCH", StringComparison.InvariantCultureIgnoreCase);
-			if (comment == null || (comment.IsDeleted && !isPatchRequest))
+			if (comment is null || (comment.IsDeleted && !isPatchRequest))
 			{
 				context.Result = NotFound(new ErrorResponse($"Comment {commentId} not found"));
 				return;
@@ -53,7 +53,7 @@ namespace Ulearn.Web.Api.Controllers.Comments
 
 			if (!comment.IsApproved)
 			{
-				var isAuthenticated = User.Identity.IsAuthenticated;
+				var isAuthenticated = User.Identity?.IsAuthenticated ?? false;
 				var canUserSeeNotApprovedComments = await CanUserSeeNotApprovedCommentsAsync(UserId, comment.CourseId).ConfigureAwait(false);
 				if (!isAuthenticated || (!canUserSeeNotApprovedComments && comment.AuthorId != UserId))
 				{
@@ -78,13 +78,13 @@ namespace Ulearn.Web.Api.Controllers.Comments
 		}
 
 		/// <summary>
-		/// Информация о комментарии
+		///     Информация о комментарии
 		/// </summary>
 		[HttpGet]
 		public async Task<ActionResult<CommentResponse>> Comment(int commentId, [FromQuery] CommentParameters parameters)
 		{
 			var comment = await commentsRepo.FindCommentByIdAsync(commentId).ConfigureAwait(false);
-			if (comment == null)
+			if (comment is null)
 				return NotFound(new ErrorResponse($"Comment {commentId} not found"));
 			var canUserSeeNotApprovedComments = await CanUserSeeNotApprovedCommentsAsync(UserId, comment.CourseId).ConfigureAwait(false);
 
@@ -92,7 +92,7 @@ namespace Ulearn.Web.Api.Controllers.Comments
 			var visibleUnitsIds = await unitsRepo.GetVisibleUnitIds(course, UserId);
 			var isInstructor = await courseRolesRepo.HasUserAccessToCourse(User.GetUserId(), comment.CourseId, CourseRoleType.Instructor).ConfigureAwait(false);
 			var slide = course.FindSlideById(comment.SlideId, isInstructor, visibleUnitsIds);
-			if (slide == null)
+			if (slide is null)
 				return NotFound(new ErrorResponse($"Slide with comment {commentId} not found"));
 			var isTester = isInstructor || await courseRolesRepo.HasUserAccessToCourse(UserId, comment.CourseId, CourseRoleType.Tester).ConfigureAwait(false);
 			if (!isTester && !await additionalContentPublicationsRepo.IsSlidePublishedForUser(comment.CourseId, slide, UserId))
@@ -120,7 +120,7 @@ namespace Ulearn.Web.Api.Controllers.Comments
 				return BuildCommentResponse(
 					comment,
 					canUserSeeNotApprovedComments, new DefaultDictionary<int, List<Comment>> { { commentId, replies } }, likesCount, likedByUserCommentsIds,
-					authors2Groups, passedSlideAuthorsIds, userAvailableGroupsIds, canViewAllGroupMembers, addCourseIdAndSlideId: true, addParentCommentId: true, addReplies: true
+					authors2Groups, passedSlideAuthorsIds, userAvailableGroupsIds, canViewAllGroupMembers, true, true, true
 				);
 			}
 
@@ -133,18 +133,18 @@ namespace Ulearn.Web.Api.Controllers.Comments
 				}
 			};
 
-			var passed = slideIsExercise ? await visitsRepo.IsPassed(comment.CourseId, comment.SlideId, comment.AuthorId) : false;
+			var passed = slideIsExercise && await visitsRepo.IsPassed(comment.CourseId, comment.SlideId, comment.AuthorId);
 
 			return BuildCommentResponse(
 				comment,
 				canUserSeeNotApprovedComments, new DefaultDictionary<int, List<Comment>>(), likesCount, likedByUserCommentsIds,
 				author2Groups, passed ? new HashSet<string> { comment.AuthorId } : null,
-				userAvailableGroupsIds, canViewAllGroupMembers, addCourseIdAndSlideId: true, addParentCommentId: true, addReplies: false
+				userAvailableGroupsIds, canViewAllGroupMembers, true, true, false
 			);
 		}
 
 		/// <summary>
-		/// Удалить комментарий
+		///     Удалить комментарий
 		/// </summary>
 		[Authorize]
 		[HttpDelete]
@@ -152,10 +152,10 @@ namespace Ulearn.Web.Api.Controllers.Comments
 		{
 			var comment = await commentsRepo.FindCommentByIdAsync(commentId).ConfigureAwait(false);
 
-			if (comment == null)
+			if (comment is null)
 				return NotFound(new ErrorResponse($"Comment {commentId} not found"));
 
-			var parentComment = comment.ParentCommentId == -1 ? null : await commentsRepo.FindCommentByIdAsync(comment.ParentCommentId, includeDeleted: false).ConfigureAwait(false);
+			var parentComment = comment.ParentCommentId == -1 ? null : await commentsRepo.FindCommentByIdAsync(comment.ParentCommentId).ConfigureAwait(false);
 			var parentCommentCourseId = parentComment?.CourseId;
 
 			var canEditOrDeleteComment = await CanEditOrDeleteCommentAsync(comment, UserId, parentCommentCourseId).ConfigureAwait(false);
@@ -168,19 +168,20 @@ namespace Ulearn.Web.Api.Controllers.Comments
 		}
 
 		/// <summary>
-		/// Обновить комментарий и мета-информацию о нём. Если комментарий был удалён, то любой такой запрос восстанавливает его
+		///     Обновить комментарий и мета-информацию о нём. Если комментарий был удалён, то любой такой запрос восстанавливает
+		///     его
 		/// </summary>
 		[HttpPatch]
 		[Authorize]
 		[SwaggerResponse((int)HttpStatusCode.RequestEntityTooLarge, "Your comment is too large")]
 		public async Task<ActionResult<CommentResponse>> UpdateComment(int commentId, [FromBody] UpdateCommentParameters parameters)
 		{
-			var comment = await commentsRepo.FindCommentByIdAsync(commentId, includeDeleted: true).ConfigureAwait(false);
+			var comment = await commentsRepo.FindCommentByIdAsync(commentId, true).ConfigureAwait(false);
 
-			if (comment == null)
+			if (comment is null)
 				return NotFound(new ErrorResponse($"Comment {commentId} not found"));
 
-			var parentComment = comment.ParentCommentId == -1 ? null : await commentsRepo.FindCommentByIdAsync(comment.ParentCommentId, includeDeleted: false).ConfigureAwait(false);
+			var parentComment = comment.ParentCommentId == -1 ? null : await commentsRepo.FindCommentByIdAsync(comment.ParentCommentId).ConfigureAwait(false);
 			var parentCommentCourseId = parentComment?.CourseId;
 
 			var canEditOrDeleteComment = await CanEditOrDeleteCommentAsync(comment, UserId, parentCommentCourseId).ConfigureAwait(false);
@@ -222,7 +223,7 @@ namespace Ulearn.Web.Api.Controllers.Comments
 		{
 			var canModerateComments =
 				await CanModerateCommentsInCourseAsync(comment.CourseId, UserId).ConfigureAwait(false)
-				|| parentCommentCourseId != comment.CourseId && await CanModerateCommentsInCourseAsync(parentCommentCourseId, UserId).ConfigureAwait(false);
+				|| (parentCommentCourseId != comment.CourseId && await CanModerateCommentsInCourseAsync(parentCommentCourseId, UserId).ConfigureAwait(false));
 			if (!canModerateComments)
 				throw new StatusCodeException((int)HttpStatusCode.Forbidden, "You can not approve/disapprove this comment. Only course admin or user with special privileges can do it.");
 
@@ -235,7 +236,7 @@ namespace Ulearn.Web.Api.Controllers.Comments
 		{
 			var canModerateComments =
 				await CanModerateCommentsInCourseAsync(comment.CourseId, UserId).ConfigureAwait(false)
-				|| parentCommentCourseId != comment.CourseId && await CanModerateCommentsInCourseAsync(parentCommentCourseId, UserId).ConfigureAwait(false);
+				|| (parentCommentCourseId != comment.CourseId && await CanModerateCommentsInCourseAsync(parentCommentCourseId, UserId).ConfigureAwait(false));
 			if (!canModerateComments)
 				throw new StatusCodeException((int)HttpStatusCode.Forbidden, "You can not pin/unpin this comment. Only course admin or user with special privileges can do it.");
 
@@ -246,7 +247,7 @@ namespace Ulearn.Web.Api.Controllers.Comments
 		{
 			var canModerateComments =
 				await CanModerateCommentsInCourseAsync(comment.CourseId, UserId).ConfigureAwait(false)
-				|| parentCommentCourseId != comment.CourseId && await CanModerateCommentsInCourseAsync(parentCommentCourseId, UserId).ConfigureAwait(false);
+				|| (parentCommentCourseId != comment.CourseId && await CanModerateCommentsInCourseAsync(parentCommentCourseId, UserId).ConfigureAwait(false));
 			if (!canModerateComments)
 				throw new StatusCodeException((int)HttpStatusCode.Forbidden, "You can not mark this comment as correct answer or remove this mark. Only course admin or user with special privileges can do it.");
 
@@ -258,7 +259,7 @@ namespace Ulearn.Web.Api.Controllers.Comments
 			return comment.AuthorId == userId
 					|| await CanModerateCommentsInCourseAsync(comment.CourseId, userId).ConfigureAwait(false)
 					// ULEARN-467
-					|| parentCommentCourseId != comment.CourseId && await CanModerateCommentsInCourseAsync(parentCommentCourseId, userId).ConfigureAwait(false);
+					|| (parentCommentCourseId != comment.CourseId && await CanModerateCommentsInCourseAsync(parentCommentCourseId, userId).ConfigureAwait(false));
 		}
 
 		private async Task<bool> CanModerateCommentsInCourseAsync(string courseId, string userId)
@@ -269,7 +270,7 @@ namespace Ulearn.Web.Api.Controllers.Comments
 		}
 
 		/// <summary>
-		/// Лайки к комментарию
+		///     Лайки к комментарию
 		/// </summary>
 		[HttpGet("likes")]
 		public async Task<ActionResult<CommentLikesResponse>> Likes(int commentId, [FromQuery] CommentLikesParameters parameters)
@@ -281,19 +282,19 @@ namespace Ulearn.Web.Api.Controllers.Comments
 				Likes = paginatedLikes.Select(like => new CommentLikeInfo
 				{
 					User = BuildShortUserInfo(like.User),
-					Timestamp = like.Timestamp,
+					Timestamp = like.Timestamp
 				}).ToList(),
 				Pagination = new PaginationResponse
 				{
 					Offset = parameters.Offset,
 					Count = paginatedLikes.Count,
-					TotalCount = likes.Count,
+					TotalCount = likes.Count
 				}
 			};
 		}
 
 		/// <summary>
-		/// Лайкнуть комментарий
+		///     Лайкнуть комментарий
 		/// </summary>
 		[HttpPost("like")]
 		[Authorize]
@@ -310,7 +311,7 @@ namespace Ulearn.Web.Api.Controllers.Comments
 		}
 
 		/// <summary>
-		/// Удалить лайк к комментарию
+		///     Удалить лайк к комментарию
 		/// </summary>
 		[HttpDelete("like")]
 		[Authorize]
@@ -327,12 +328,12 @@ namespace Ulearn.Web.Api.Controllers.Comments
 		private async Task NotifyAboutLikedComment(int commentId)
 		{
 			var comment = await commentsRepo.FindCommentByIdAsync(commentId).ConfigureAwait(false);
-			if (comment != null)
+			if (comment is not null)
 			{
 				var notification = new LikedYourCommentNotification
 				{
 					Comment = comment,
-					LikedUserId = UserId,
+					LikedUserId = UserId
 				};
 				await notificationsRepo.AddNotification(comment.CourseId, notification, UserId).ConfigureAwait(false);
 			}

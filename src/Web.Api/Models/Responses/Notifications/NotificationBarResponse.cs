@@ -11,7 +11,7 @@ namespace Ulearn.Web.Api.Models.Responses.Notifications
 
 		[DataMember]
 		public bool Force { get; set; }
-		
+
 		[DataMember]
 		public bool Overlap { get; set; }
 	}

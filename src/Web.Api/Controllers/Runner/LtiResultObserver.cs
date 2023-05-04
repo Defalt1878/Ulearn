@@ -16,7 +16,6 @@ namespace Ulearn.Web.Api.Controllers.Runner
 		private readonly ILtiConsumersRepo ltiConsumersRepo;
 		private readonly ILtiRequestsRepo ltiRequestsRepo;
 		private readonly IVisitsRepo visitsRepo;
-		private static ILog log => LogProvider.Get().ForContext(typeof(LtiResultObserver));
 
 		public LtiResultObserver(ICourseStorage courseStorage, ILtiConsumersRepo ltiConsumersRepo,
 			ILtiRequestsRepo ltiRequestsRepo, IVisitsRepo visitsRepo)
@@ -27,11 +26,12 @@ namespace Ulearn.Web.Api.Controllers.Runner
 			this.visitsRepo = visitsRepo;
 		}
 
+		private static ILog Log => LogProvider.Get().ForContext(typeof(LtiResultObserver));
+
 		public async Task ProcessResult(UserExerciseSubmission submission, RunningResults result)
 		{
 			var ltiRequestJson = await ltiRequestsRepo.Find(submission.CourseId, submission.UserId, submission.SlideId);
-			if (ltiRequestJson != null)
-			{
+			if (ltiRequestJson is not null)
 				try
 				{
 					var exerciseSlide = courseStorage.FindCourse(submission.CourseId).FindSlideByIdNotSafe(submission.SlideId) as ExerciseSlide;
@@ -40,9 +40,8 @@ namespace Ulearn.Web.Api.Controllers.Runner
 				}
 				catch (Exception e)
 				{
-					log.Error(e, "Мы не смогли отправить баллы на образовательную платформу");
+					Log.Error(e, "Мы не смогли отправить баллы на образовательную платформу");
 				}
-			}
 		}
 	}
 }

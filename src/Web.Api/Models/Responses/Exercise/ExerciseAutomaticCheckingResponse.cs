@@ -8,7 +8,7 @@ namespace Ulearn.Web.Api.Models.Responses.Exercise
 {
 	public enum AutomaticExerciseCheckingProcessStatus
 	{
-		ServerError, // Ошибка на сервере или статус SandoxError в чеккере
+		ServerError, // Ошибка на сервере или статус SandboxError в чеккере
 		Done, // Проверена
 		Waiting, // В очереди на проверку
 		Running, // Проверяется
@@ -58,7 +58,7 @@ namespace Ulearn.Web.Api.Models.Responses.Exercise
 			result.CheckerLogs = showCheckerLogs ? checking.DebugLogs?.Text : null;
 			if (result.ProcessStatus != AutomaticExerciseCheckingProcessStatus.Done)
 			{
-				if (result.Output == null)
+				if (result.Output is null)
 				{
 					if (result.ProcessStatus == AutomaticExerciseCheckingProcessStatus.WaitingTimeLimitExceeded)
 						result.Output ??= "К сожалению, мы не смогли проверить ваше решение. Попробуйте отправить его снова";
@@ -67,16 +67,19 @@ namespace Ulearn.Web.Api.Models.Responses.Exercise
 					else if (result.ProcessStatus == AutomaticExerciseCheckingProcessStatus.Waiting)
 						result.Output ??= "Решение ждет своей очереди на проверку, мы будем пытаться проверить его еще 10 минут";
 				}
+
 				return result;
 			}
+
 			if (checking.IsCompilationError)
 			{
 				result.Result = AutomaticExerciseCheckingResult.CompilationError;
 				result.Output = checking.CompilationError?.Text;
 				return result;
 			}
+
 			result.Result = checking.IsRightAnswer ? AutomaticExerciseCheckingResult.RightAnswer : AutomaticExerciseCheckingResult.WrongAnswer;
-			if(checking.IsRightAnswer)
+			if (checking.IsRightAnswer)
 				result.Reviews = botReviews;
 			return result;
 		}

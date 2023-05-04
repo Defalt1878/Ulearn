@@ -26,7 +26,7 @@ namespace Ulearn.Web.Api.Models.Responses.Submissions
 			return new SubmissionsResponse
 			{
 				Submissions = submissions.Select(s => SubmissionInfo.Build(s, reviewId2Comments, showCheckerLogs)).ToList(),
-				ProhibitFurtherManualChecking = prohibitFurtherManualChecking,
+				ProhibitFurtherManualChecking = prohibitFurtherManualChecking
 			};
 		}
 	}

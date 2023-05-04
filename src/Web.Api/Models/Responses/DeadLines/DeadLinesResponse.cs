@@ -16,7 +16,7 @@ namespace Ulearn.Web.Api.Models.Responses.DeadLines
 		{
 			return new DeadLinesResponse
 			{
-				DeadLines = deadLines.Select(DeadLineInfo.BuildDeadLineInfo).ToList(),
+				DeadLines = deadLines.Select(DeadLineInfo.BuildDeadLineInfo).ToList()
 			};
 		}
 	}

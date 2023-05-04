@@ -27,18 +27,18 @@ namespace Ulearn.Web.Api.Controllers
 	[Route("/courses")]
 	public class CoursesController : BaseController
 	{
-		private readonly ICoursesRepo coursesRepo;
+		private readonly IAdditionalContentPublicationsRepo additionalContentPublicationsRepo;
 		private readonly ICourseRolesRepo courseRolesRepo;
-		private readonly IUnitsRepo unitsRepo;
+		private readonly ICoursesRepo coursesRepo;
+		private readonly IGroupAccessesRepo groupAccessesRepo;
+		private readonly IGroupMembersRepo groupMembersRepo;
+		private readonly IGroupsRepo groupsRepo;
+		private readonly SlideRenderer slideRenderer;
 		private readonly IUserSolutionsRepo solutionsRepo;
+		private readonly ITempCoursesRepo tempCoursesRepo;
+		private readonly IUnitsRepo unitsRepo;
 		private readonly IUserQuizzesRepo userQuizzesRepo;
 		private readonly IVisitsRepo visitsRepo;
-		private readonly IGroupsRepo groupsRepo;
-		private readonly IGroupMembersRepo groupMembersRepo;
-		private readonly IGroupAccessesRepo groupAccessesRepo;
-		private readonly SlideRenderer slideRenderer;
-		private readonly IAdditionalContentPublicationsRepo additionalContentPublicationsRepo;
-		private readonly ITempCoursesRepo tempCoursesRepo;
 
 		public CoursesController(ICourseStorage courseStorage, UlearnDb db, ICoursesRepo coursesRepo,
 			IUsersRepo usersRepo, ICourseRolesRepo courseRolesRepo, IUnitsRepo unitsRepo, IUserSolutionsRepo solutionsRepo,
@@ -62,9 +62,12 @@ namespace Ulearn.Web.Api.Controllers
 		}
 
 		/// <summary>
-		/// Список курсов
+		///     Список курсов
 		/// </summary>
-		/// <param name="role">Роль указывается, если нужно полуичить только те курсы, в которых пользователь имеет роль эту или выше</param>
+		/// <param name="role">
+		///     Роль указывается, если нужно получить только те курсы, в которых пользователь имеет роль эту или
+		///     выше
+		/// </param>
 		[HttpGet]
 		public async Task<ActionResult<CoursesListResponse>> CoursesList([FromQuery] CourseRoleType? role = null)
 		{
@@ -94,17 +97,15 @@ namespace Ulearn.Web.Api.Controllers
 				var userGroupsIds = userGroups.Select(g => g.Id).ToHashSet();
 				HashSet<string> publications = null;
 				if (userGroups.Count > 0)
-				{
 					publications = (await additionalContentPublicationsRepo.GetAdditionalContentPublications(userGroupsIds))
 						.DistinctBy(p => p.CourseId)
 						.Select(p => p.CourseId)
 						.ToHashSet();
-				}
 
 				courses = courses
 					.Where(c => visibleCourses.Contains(c.Id)
 								|| coursesInWhichUserHasAnyRole.Contains(c.Id, StringComparer.OrdinalIgnoreCase)
-								|| publications != null && publications.Contains(c.Id));
+								|| (publications is not null && publications.Contains(c.Id)));
 			}
 
 			// Администратор видит все курсы. Покажем сверху те, в которых он преподаватель.
@@ -114,7 +115,9 @@ namespace Ulearn.Web.Api.Controllers
 				courses = courses.OrderBy(c => !instructorCourseIds.Contains(c.Id, StringComparer.InvariantCultureIgnoreCase)).ThenBy(c => c.Title);
 			}
 			else
+			{
 				courses = courses.OrderBy(c => c.Title);
+			}
 
 			var allTempCourses = (await tempCoursesRepo.GetAllTempCourses()) // Все, потому что старые могут быть еще в памяти.
 				.ToDictionary(t => t.CourseId, t => t, StringComparer.InvariantCultureIgnoreCase);
@@ -126,17 +129,17 @@ namespace Ulearn.Web.Api.Controllers
 					.Select(c => new ShortCourseInfo
 						{
 							Id = c.Id,
-							Title = allTempCourses.ContainsKey(c.Id) ? allTempCourses[c.Id].GetVisibleName(c.Title) : c.Title,
+							Title = allTempCourses.TryGetValue(c.Id, out var tempCourse) ? tempCourse.GetVisibleName(c.Title) : c.Title,
 							ApiUrl = Url.Action("CourseInfo", "Courses", new { courseId = c.Id }),
 							IsTempCourse = allTempCourses.ContainsKey(c.Id),
-							Timestamp = coursesLastVisits.TryGetValue(c.Id, out var date) ? date : null,
+							Timestamp = coursesLastVisits.TryGetValue(c.Id, out var date) ? date : null
 						}
 					).ToList()
 			};
 		}
 
 		/// <summary>
-		/// Информация о курсе
+		///     Информация о курсе
 		/// </summary>
 		/// <param name="groupId">If null, returns data for the current user, otherwise for a group</param>
 		[HttpGet("{courseId}")]
@@ -153,7 +156,7 @@ namespace Ulearn.Web.Api.Controllers
 			var isInstructor = await courseRolesRepo.HasUserAccessToCourse(userId, course.Id, CourseRoleType.Instructor).ConfigureAwait(false);
 			var isTester = isInstructor || await courseRolesRepo.HasUserAccessToCourse(userId, course.Id, CourseRoleType.Tester).ConfigureAwait(false);
 
-			if (groupId == null)
+			if (groupId is null)
 			{
 				if (!isInstructor && visibleUnits.Count == 0)
 					return NotFound(new ErrorResponse("Course not found"));
@@ -178,11 +181,18 @@ namespace Ulearn.Web.Api.Controllers
 			else
 			{
 				var group = await groupsRepo.FindGroupByIdAsync(groupId.Value).ConfigureAwait(false) as SingleGroup;
-				if (group == null)
+				if (group is null)
 					return NotFound(new ErrorResponse("Group not found"));
 
-				async Task<bool> IsUserMemberOfGroup() => await groupMembersRepo.IsUserMemberOfGroup(groupId.Value, userId).ConfigureAwait(false);
-				async Task<bool> IsGroupVisibleForUserAsync() => await groupAccessesRepo.IsGroupVisibleForUserAsync(groupId.Value, userId).ConfigureAwait(false);
+				async Task<bool> IsUserMemberOfGroup()
+				{
+					return await groupMembersRepo.IsUserMemberOfGroup(groupId.Value, userId).ConfigureAwait(false);
+				}
+
+				async Task<bool> IsGroupVisibleForUserAsync()
+				{
+					return await groupAccessesRepo.IsGroupVisibleForUserAsync(groupId.Value, userId).ConfigureAwait(false);
+				}
 
 				var isGroupAvailableForUser = await IsUserMemberOfGroup() || await IsGroupVisibleForUserAsync();
 				if (!isGroupAvailableForUser)
@@ -201,26 +211,27 @@ namespace Ulearn.Web.Api.Controllers
 			units = units
 				.Select(u =>
 				{
-					if (publishedUnits.ContainsKey(u.Id))
+					if (publishedUnits.TryGetValue(u.Id, out var unit))
 					{
-						var unitPublication = publishedUnits[u.Id];
-						u.AdditionalContentInfo.PublicationDate = unitPublication.Date.ToString("yyyy-MM-ddTHH:mm:ss");
-						if (!isTester && unitPublication.Date > DateTime.Now)
+						u.AdditionalContentInfo.PublicationDate = unit.Date.ToString("yyyy-MM-ddTHH:mm:ss");
+						if (!isTester && unit.Date > DateTime.Now)
 							u.Slides = new List<ShortSlideInfo>();
 					}
 					else if (!isTester && u.AdditionalContentInfo.IsAdditionalContent)
+					{
 						return null;
+					}
 
 					var slides = u.Slides
 						.Select(s =>
 						{
-							if (publishedSlides.ContainsKey(s.Id))
-								s.AdditionalContentInfo.PublicationDate = publishedSlides[s.Id].Date.ToString("yyyy-MM-ddTHH:mm:ss");
+							if (publishedSlides.TryGetValue(s.Id, out var slide))
+								s.AdditionalContentInfo.PublicationDate = slide.Date.ToString("yyyy-MM-ddTHH:mm:ss");
 							else if (!isTester && s.AdditionalContentInfo.IsAdditionalContent)
 								return null;
 							return s;
 						})
-						.Where(s => s != null)
+						.Where(s => s is not null)
 						.ToList();
 
 					return new UnitInfo
@@ -231,10 +242,10 @@ namespace Ulearn.Web.Api.Controllers
 						PublicationDate = u.PublicationDate,
 						IsNotPublished = u.IsNotPublished,
 						Slides = slides,
-						AdditionalContentInfo = u.AdditionalContentInfo,
+						AdditionalContentInfo = u.AdditionalContentInfo
 					};
 				})
-				.Where(u => u != null)
+				.Where(u => u is not null)
 				.ToList();
 
 			if (units.Count == 0)
@@ -247,13 +258,13 @@ namespace Ulearn.Web.Api.Controllers
 			return new CourseInfo
 			{
 				Id = course.Id,
-				Title = tempCourse != null ? tempCourse.GetVisibleName(course.Title) : course.Title,
+				Title = tempCourse is not null ? tempCourse.GetVisibleName(course.Title) : course.Title,
 				Description = course.Settings.Description,
 				Scoring = scoringSettings,
 				NextUnitPublishTime = await unitsRepo.GetNextUnitPublishTime(course.Id),
 				Units = units,
 				ContainsFlashcards = containsFlashcards,
-				IsTempCourse = tempCourse != null,
+				IsTempCourse = tempCourse is not null,
 				TempCourseError = tempCourseError
 			};
 		}
@@ -262,7 +273,7 @@ namespace Ulearn.Web.Api.Controllers
 		{
 			var groups = course.Settings.Scoring.Groups.Values
 				.Concat(new[] { course.Settings.Scoring.VisitsGroup })
-				.Where(sg => sg != null)
+				.Where(sg => sg is not null)
 				.Select(sg => new ScoringGroupModel
 				{
 					Id = sg.Id,
@@ -281,7 +292,7 @@ namespace Ulearn.Web.Api.Controllers
 				.GetSlides(isInstructor)
 				.Select(slide => slideRenderer.BuildShortSlideInfo(courseId, slide, getSlideMaxScoreFunc, getGitEditLinkFunc, Url));
 
-			if (isInstructor && unit.InstructorNote != null)
+			if (isInstructor && unit.InstructorNote is not null)
 				slides = slides.Concat(new List<ShortSlideInfo> { slideRenderer.BuildShortSlideInfo(courseId, unit.InstructorNote, getSlideMaxScoreFunc, getGitEditLinkFunc, Url) });
 			return BuildUnitInfo(unit, isNotPublished, publicationDate, slides);
 		}
@@ -299,7 +310,7 @@ namespace Ulearn.Web.Api.Controllers
 				AdditionalContentInfo = new AdditionalContent
 				{
 					IsAdditionalContent = unit.Settings.IsExtraContent,
-					PublicationDate = null,
+					PublicationDate = null
 				}
 			};
 		}

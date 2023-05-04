@@ -3,7 +3,6 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Threading.Tasks;
 using Database;
-using Database.Repos;
 using Database.Repos.Groups;
 using Database.Repos.Users;
 using Microsoft.AspNetCore.Authorization;
@@ -20,24 +19,22 @@ namespace Ulearn.Web.Api.Controllers.Groups;
 [Authorize(Policy = "Instructors")]
 public class SuperGroupsController : BaseGroupController
 {
-	private readonly IGroupsRepo groupsRepo;
 	private readonly IGroupAccessesRepo groupAccessesRepo;
 	private readonly IGroupMembersRepo groupMembersRepo;
-	private readonly INotificationsRepo notificationsRepo;
+	private readonly IGroupsRepo groupsRepo;
 
 	public SuperGroupsController(ICourseStorage courseStorage, UlearnDb db,
 		IUsersRepo usersRepo,
-		IGroupsRepo groupsRepo, IGroupAccessesRepo groupAccessesRepo, IGroupMembersRepo groupMembersRepo, INotificationsRepo notificationsRepo)
+		IGroupsRepo groupsRepo, IGroupAccessesRepo groupAccessesRepo, IGroupMembersRepo groupMembersRepo)
 		: base(courseStorage, db, usersRepo)
 	{
 		this.groupsRepo = groupsRepo;
 		this.groupAccessesRepo = groupAccessesRepo;
 		this.groupMembersRepo = groupMembersRepo;
-		this.notificationsRepo = notificationsRepo;
 	}
 
 	/// <summary>
-	/// Список супер-групп в курсе
+	///     Список супер-групп в курсе
 	/// </summary>
 	[HttpGet]
 	public async Task<ActionResult<SuperGroupsListResponse>> GroupsList([FromQuery] GroupsListParameters parameters)
@@ -82,16 +79,16 @@ public class SuperGroupsController : BaseGroupController
 				g,
 				null,
 				superGroupAccessesByGroup[g.Id],
-				addGroupApiUrl: true))
+				true))
 			.ToList();
 		var subGroupInfos = subGroups
 			.Select(g => BuildGroupInfo(
 				g,
 				membersCountByGroup[g.Id],
 				groupAccessesByGroup[g.Id],
-				addGroupApiUrl: true))
+				true))
 			.GroupBy(g => g.SuperGroupId)
-			.ToDictionary(g => g.Key.Value, g => g.ToList());
+			.ToDictionary(g => g.Key!.Value, g => g.ToList());
 
 		return new SuperGroupsListResponse
 		{
@@ -101,7 +98,7 @@ public class SuperGroupsController : BaseGroupController
 			{
 				Offset = parameters.Offset,
 				Count = filteredGroups.Count,
-				TotalCount = groups.Count,
+				TotalCount = groups.Count
 			}
 		};
 	}

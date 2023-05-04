@@ -6,6 +6,8 @@ using Database.Models;
 using JetBrains.Annotations;
 using Ulearn.Common;
 
+// ReSharper disable NotNullOrRequiredMemberIsNotInitialized
+
 namespace Ulearn.Web.Api.Models.Responses.Exercise
 {
 	[DataContract]
@@ -43,9 +45,9 @@ namespace Ulearn.Web.Api.Models.Responses.Exercise
 			var manualCheckingReviews = (submission.ManualChecking?.NotDeletedReviews).EmptyIfNull()
 				.Select(r => ToReviewInfo(r, false, reviewId2Comments))
 				.ToList();
-			var automaticChecking = submission.AutomaticChecking == null
+			var automaticChecking = submission.AutomaticChecking is null
 				? null : ExerciseAutomaticCheckingResponse.Build(submission.AutomaticChecking, botReviews, showCheckerLogs);
-			var manualChecking = submission.ManualChecking == null ? null : ExerciseManualCheckingResponse.Build(submission.ManualChecking, manualCheckingReviews);
+			var manualChecking = submission.ManualChecking is null ? null : ExerciseManualCheckingResponse.Build(submission.ManualChecking, manualCheckingReviews);
 			return new SubmissionInfo
 			{
 				Id = submission.Id,

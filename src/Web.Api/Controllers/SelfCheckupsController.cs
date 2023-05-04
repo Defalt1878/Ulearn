@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using Database;
 using Database.Repos;
 using Database.Repos.Users;
-using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Mvc;
 using Ulearn.Core.Courses.Manager;
 using Ulearn.Core.Courses.Slides;
@@ -34,12 +33,13 @@ public class SelfCheckupsController : BaseController
 		[FromBody] bool isChecked
 	)
 	{
-		bool HasSelfChecks(SlideBlock s) => s is SelfCheckupsBlock or AbstractExerciseBlock { Checkups: { } };
+		bool HasSelfChecks(SlideBlock s) => s is SelfCheckupsBlock or AbstractExerciseBlock { Checkups: not null };
+
 		var course = courseStorage.GetCourse(courseId);
 		var slideBlocks = course.GetSlideByIdNotSafe(slideId).Blocks;
 		if (!slideBlocks.Any(s =>
-				HasSelfChecks(s)
-				|| s is SpoilerBlock spoilerBlock && spoilerBlock.Blocks.Any(HasSelfChecks)
+				HasSelfChecks(s) ||
+				(s is SpoilerBlock spoilerBlock && spoilerBlock.Blocks.Any(HasSelfChecks))
 			))
 			return BadRequest("Checkup doesn't exists");
 

@@ -16,7 +16,7 @@ namespace Ulearn.Web.Api.Controllers.Notifications
 			this.commentsRepo = commentsRepo;
 		}
 
-		public async Task<NotificationDataStorage> LoadAsync(List<Notification> notifications)
+		public async Task<NotificationDataStorage> LoadAsync(IEnumerable<Notification> notifications)
 		{
 			return new NotificationDataStorage
 			{

@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
 using Ulearn.Common.Api.Models.Validations;
+// ReSharper disable UnusedAutoPropertyAccessor.Global
+// ReSharper disable AutoPropertyCanBeMadeGetOnly.Global
 
 namespace Ulearn.Web.Api.Models.Parameters
 {
@@ -31,7 +33,7 @@ namespace Ulearn.Web.Api.Models.Parameters
 	{
 		[FromQuery(Name = "courseId")]
 		public string CourseId { get; set; }
-		
+
 		[FromQuery(Name = "groupsIds")]
 		public List<int> GroupsIds { get; set; } //удаленные группы
 	}

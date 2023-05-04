@@ -9,7 +9,7 @@ namespace Ulearn.Web.Api.Models.Responses.AcceptedSolutions
 	[DataContract]
 	public class AcceptedSolutionsResponse
 	{
-		// Списки содержат разыне решения
+		// Списки содержат разные решения
 		[DataMember]
 		public List<AcceptedSolution> PromotedSolutions { get; set; }
 
@@ -30,6 +30,16 @@ namespace Ulearn.Web.Api.Models.Responses.AcceptedSolutions
 	[DataContract]
 	public class AcceptedSolution
 	{
+		public AcceptedSolution(int submissionId, string code, Language language, int? likesCount, bool? likedByMe, [CanBeNull] ShortUserInfo promotedBy)
+		{
+			SubmissionId = submissionId;
+			Code = code;
+			Language = language;
+			LikesCount = likesCount;
+			LikedByMe = likedByMe;
+			PromotedBy = promotedBy;
+		}
+
 		[DataMember]
 		public int SubmissionId { get; set; }
 
@@ -50,15 +60,5 @@ namespace Ulearn.Web.Api.Models.Responses.AcceptedSolutions
 		[DataMember(EmitDefaultValue = false)]
 		[CanBeNull]
 		public ShortUserInfo PromotedBy { get; set; }
-
-		public AcceptedSolution(int submissionId, string code, Language language, int? likesCount, bool? likedByMe, [CanBeNull] ShortUserInfo promotedBy)
-		{
-			SubmissionId = submissionId;
-			Code = code;
-			Language = language;
-			LikesCount = likesCount;
-			LikedByMe = likedByMe;
-			PromotedBy = promotedBy;
-		}
 	}
 }

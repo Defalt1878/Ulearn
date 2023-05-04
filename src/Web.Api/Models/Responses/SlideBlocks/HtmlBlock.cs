@@ -8,16 +8,6 @@ namespace Ulearn.Web.Api.Models.Responses.SlideBlocks
 	[DisplayName("html")]
 	public class HtmlBlockResponse : IApiSlideBlock
 	{
-		[DefaultValue(false)]
-		[DataMember(Name = "hide", EmitDefaultValue = false)]
-		public bool Hide { get; set; }
-
-		[DataMember(Name = "content")]
-		public string Content { get; set; }
-
-		[DataMember(Name = "fromMarkdown")]
-		public bool FromMarkdown { get; set; }
-
 		public HtmlBlockResponse(HtmlBlock htmlBlock, bool fromMarkdown, string ulearnBaseUrlApi)
 		{
 			Hide = htmlBlock.Hide;
@@ -28,5 +18,15 @@ namespace Ulearn.Web.Api.Models.Responses.SlideBlocks
 		public HtmlBlockResponse()
 		{
 		}
+
+		[DataMember(Name = "content")]
+		public string Content { get; set; }
+
+		[DataMember(Name = "fromMarkdown")]
+		public bool FromMarkdown { get; set; }
+
+		[DefaultValue(false)]
+		[DataMember(Name = "hide", EmitDefaultValue = false)]
+		public bool Hide { get; set; }
 	}
 }

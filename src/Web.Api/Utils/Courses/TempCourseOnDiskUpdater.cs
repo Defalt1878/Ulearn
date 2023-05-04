@@ -13,18 +13,16 @@ namespace Ulearn.Web.Api.Utils.Courses
 {
 	public class TempCourseOnDiskUpdater
 	{
-		private static ILog log => LogProvider.Get().ForContext(typeof(TempCourseOnDiskUpdater));
-
 		private readonly DirectoryInfo courseDirectory;
-		private readonly FileInfo zipWithChanges;
+		private readonly List<string> directoriesToDelete;
+		private readonly List<string> filesToAdd;
+
+		private readonly List<FileContent> filesToDelete;
+		private readonly List<FileContent> filesToUpdateBeforeChanges;
 
 		private readonly CourseVersionToken newVersionToken;
 		private readonly CourseVersionToken versionTokenBeforeChanges;
-
-		private readonly List<FileContent> filesToDelete;
-		private readonly List<string> directoriesToDelete;
-		private readonly List<FileContent> filesToUpdateBeforeChanges;
-		private readonly List<string> filesToAdd;
+		private readonly FileInfo zipWithChanges;
 
 		public TempCourseOnDiskUpdater(DirectoryInfo courseDirectory, CourseVersionToken versionToken, FileInfo zipWithChanges, bool isFull)
 		{
@@ -75,6 +73,8 @@ namespace Ulearn.Web.Api.Utils.Courses
 			directoriesToDelete = deletedDirectories;
 		}
 
+		private static ILog Log => LogProvider.Get().ForContext(typeof(TempCourseOnDiskUpdater));
+
 		public async Task ApplyChanges()
 		{
 			DeleteFiles(filesToDelete, directoriesToDelete);
@@ -85,7 +85,7 @@ namespace Ulearn.Web.Api.Utils.Courses
 
 		public async Task Revert()
 		{
-			filesToDelete.ForEach(file => new FileInfo(file.Path).Directory.Create());
+			filesToDelete.ForEach(file => new FileInfo(file.Path).Directory!.Create());
 
 			static void WriteContent(FileContent fileContent)
 			{
@@ -101,23 +101,21 @@ namespace Ulearn.Web.Api.Utils.Courses
 			await versionTokenBeforeChanges.Save(courseDirectory);
 		}
 
-		private void UnzipWithOverwrite(FileInfo zipFile, DirectoryInfo unpackDirectory)
+		private static void UnzipWithOverwrite(FileSystemInfo zipFile, DirectoryInfo unpackDirectory)
 		{
-			using (var zip = ZipFile.Read(zipFile.FullName, new ReadOptions { Encoding = Encoding.UTF8 }))
-			{
-				zip.ExtractAll(unpackDirectory.FullName, ExtractExistingFileAction.OverwriteSilently);
-				foreach (var f in unpackDirectory.GetFiles("*", SearchOption.AllDirectories).Cast<FileSystemInfo>().Concat(unpackDirectory.GetDirectories("*", SearchOption.AllDirectories)))
-					f.Attributes &= ~FileAttributes.ReadOnly;
-				var deletedTxt = unpackDirectory.GetFile("deleted.txt");
-				if (deletedTxt.Exists)
-					deletedTxt.Delete();
-				log.Info($"Архив {zipFile.FullName} распакован");
-			}
+			using var zip = ZipFile.Read(zipFile.FullName, new ReadOptions { Encoding = Encoding.UTF8 });
+			zip.ExtractAll(unpackDirectory.FullName, ExtractExistingFileAction.OverwriteSilently);
+			foreach (var f in unpackDirectory.GetFiles("*", SearchOption.AllDirectories).Cast<FileSystemInfo>().Concat(unpackDirectory.GetDirectories("*", SearchOption.AllDirectories)))
+				f.Attributes &= ~FileAttributes.ReadOnly;
+			var deletedTxt = unpackDirectory.GetFile("deleted.txt");
+			if (deletedTxt.Exists)
+				deletedTxt.Delete();
+			Log.Info($"Архив {zipFile.FullName} распакован");
 		}
 
-		private List<string> ParseDeletedTxt(FileInfo stagingTempCourseFile)
+		private static List<string> ParseDeletedTxt(FileSystemInfo stagingTempCourseFile)
 		{
-			var filesToDelete = new List<string>();
+			var filesToDeleteLocal = new List<string>();
 			using (var zip = ZipFile.Read(stagingTempCourseFile.FullName))
 			{
 				var e = zip["deleted.txt"];
@@ -129,15 +127,15 @@ namespace Ulearn.Web.Api.Utils.Courses
 				{
 					var line = sr.ReadLine();
 					if (!string.IsNullOrEmpty(line))
-						filesToDelete.Add(line);
+						filesToDeleteLocal.Add(line);
 				}
 			}
 
-			return filesToDelete
+			return filesToDeleteLocal
 				.Select(x =>
 				{
 					if (x.StartsWith('\\') || x.StartsWith('/'))
-						return x.Substring(1);
+						return x[1..];
 					return x;
 				}).ToList();
 		}
@@ -159,44 +157,39 @@ namespace Ulearn.Web.Api.Utils.Courses
 				File.Delete(file);
 			}
 
-			foreach (string dir in dirs)
-			{
+			foreach (var dir in dirs)
 				DeleteNotEmptyDirectory(dir);
-			}
 
 			Directory.Delete(dirPath, false);
 		}
 
-		private void DeleteEmptySubdirectories(string startLocation)
+		private static void DeleteEmptySubdirectories(string startLocation)
 		{
 			foreach (var directory in Directory.GetDirectories(startLocation))
 			{
 				DeleteEmptySubdirectories(directory);
 				if (Directory.GetFiles(directory).Length == 0 &&
 					Directory.GetDirectories(directory).Length == 0)
-				{
 					Directory.Delete(directory, false);
-				}
 			}
 		}
 
-		private static List<string> GetFilesInDirectoriesToDelete(List<string> filesToDeleteRelativePaths, string pathPrefix)
+		private static IEnumerable<string> GetFilesInDirectoriesToDelete(IEnumerable<string> filesToDeleteRelativePaths, string pathPrefix)
 		{
 			return filesToDeleteRelativePaths
 				.Select(path => Path.Combine(pathPrefix, path))
 				.Where(Directory.Exists)
 				.SelectMany(dir => Directory
 					.EnumerateFiles(dir, "*.*", SearchOption.AllDirectories))
-				.Select(path => TrimPrefix(path, pathPrefix))
-				.ToList();
+				.Select(path => TrimPrefix(path, pathPrefix));
 		}
 
 		private static string TrimPrefix(string text, string prefix)
 		{
-			return text.Substring(text.IndexOf(prefix) + prefix.Length + 1);
+			return text[(text.IndexOf(prefix) + prefix.Length + 1)..];
 		}
 
-		private List<string> GetDeletedDirs(List<string> filesToDeleteRelativePaths, string pathPrefix)
+		private static List<string> GetDeletedDirs(IEnumerable<string> filesToDeleteRelativePaths, string pathPrefix)
 		{
 			return filesToDeleteRelativePaths.Select(path => Path.Combine(pathPrefix, path))
 				.Where(path => Directory.Exists(path) &&

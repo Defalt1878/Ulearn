@@ -30,7 +30,7 @@ namespace Ulearn.Web.Api.Controllers.Runner
 
 		public async Task ProcessResult(UserExerciseSubmission submission, RunningResults result)
 		{
-			if (result.StyleErrors == null || result.StyleErrors.Count == 0)
+			if (result.StyleErrors is null || result.StyleErrors.Count == 0)
 				return;
 
 			if (result.Verdict != Verdict.Ok)
@@ -42,11 +42,10 @@ namespace Ulearn.Web.Api.Controllers.Runner
 
 			var exerciseSlide = courseStorage.FindCourse(submission.CourseId)
 				?.FindSlideByIdNotSafe(submission.SlideId) as ExerciseSlide;
-			if (exerciseSlide == null)
+			if (exerciseSlide is null)
 				return;
 
-			if (ulearnBotUserId == null)
-				ulearnBotUserId = await usersRepo.GetUlearnBotUserId();
+			ulearnBotUserId ??= await usersRepo.GetUlearnBotUserId();
 
 			var exerciseMetricId = RunnerSetResultController.GetExerciseMetricId(submission.CourseId, exerciseSlide);
 
@@ -55,8 +54,7 @@ namespace Ulearn.Web.Api.Controllers.Runner
 
 		public async Task<List<ExerciseCodeReview>> CreateStyleErrorsReviewsForSubmission(UserExerciseSubmission submission, List<StyleError> styleErrors, string exerciseMetricId)
 		{
-			if (ulearnBotUserId == null)
-				ulearnBotUserId = await usersRepo.GetUlearnBotUserId();
+			ulearnBotUserId ??= await usersRepo.GetUlearnBotUserId();
 
 			metricSender.SendCount($"exercise.{exerciseMetricId}.StyleViolation");
 
@@ -80,6 +78,7 @@ namespace Ulearn.Web.Api.Controllers.Runner
 				metricSender.SendCount($"exercise.{exerciseMetricId}.style_error");
 				metricSender.SendCount($"exercise.{exerciseMetricId}.style_error.{errorName}");
 			}
+
 			return result;
 		}
 	}

@@ -12,7 +12,6 @@ using JetBrains.Annotations;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Routing;
-using Vostok.Logging.Abstractions;
 using Ulearn.Common.Extensions;
 using Ulearn.Core;
 using Ulearn.Core.Courses;
@@ -23,22 +22,20 @@ using Ulearn.Core.Courses.Slides.Quizzes;
 using Ulearn.Web.Api.Controllers.Groups;
 using Ulearn.Web.Api.Models.Common;
 using Ulearn.Web.Api.Models.Responses.Notifications;
+using Vostok.Logging.Abstractions;
 
 namespace Ulearn.Web.Api.Controllers
 {
+	// ReSharper disable once CommentTypo
 	/* See https://docs.microsoft.com/en-us/aspnet/core/web-api/index?view=aspnetcore-2.1#annotate-class-with-apicontrollerattribute
-	   for detailed description of ApiControllerAttribute */
+	for detailed description of ApiControllerAttribute */
 	[ApiController]
 	[Produces("application/json")]
 	public class BaseController : Controller
 	{
-		protected static ILog log => LogProvider.Get().ForContext(typeof(BaseController));
 		protected readonly ICourseStorage courseStorage;
 		protected readonly UlearnDb db;
 		protected readonly IUsersRepo usersRepo;
-
-		protected string UserId => User.GetUserId();
-		protected bool IsAuthenticated => User.Identity.IsAuthenticated;
 
 		public BaseController(ICourseStorage courseStorage, UlearnDb db, IUsersRepo usersRepo)
 		{
@@ -46,6 +43,11 @@ namespace Ulearn.Web.Api.Controllers
 			this.db = db;
 			this.usersRepo = usersRepo;
 		}
+
+		protected static ILog Log => LogProvider.Get().ForContext(typeof(BaseController));
+
+		protected string UserId => User.GetUserId();
+		protected bool IsAuthenticated => User.Identity is { IsAuthenticated: true };
 
 		public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
 		{
@@ -56,15 +58,12 @@ namespace Ulearn.Web.Api.Controllers
 
 		private void DisableEfChangesTrackingForGetRequests(ActionContext context)
 		{
-			/* Disable change tracking in EF Core for GET requests due to performance issues */
-			/* TODO (andgein): we need a way to enable change tracking for some GET requests in future */
+			// Disable change tracking in EF Core for GET requests due to performance issues 
 			var isRequestSafe = context.HttpContext.Request.Method == "GET"; // Maybe for HEAD and OPTION requests too?
 			db.ChangeTracker.AutoDetectChangesEnabled = !isRequestSafe;
 
 			if (isRequestSafe)
-			{
-				log.Debug("Выключаю автоматическое отслеживание изменений в EF Core: db.ChangeTracker.AutoDetectChangesEnabled = false");
-			}
+				Log.Debug("Выключаю автоматическое отслеживание изменений в EF Core: db.ChangeTracker.AutoDetectChangesEnabled = false");
 		}
 
 		protected async Task<bool> IsSystemAdministratorAsync()
@@ -84,13 +83,13 @@ namespace Ulearn.Web.Api.Controllers
 				LastName = user.LastName ?? "",
 				VisibleName = user.VisibleName,
 				AvatarUrl = user.AvatarUrl,
-				Gender = user.Gender,
+				Gender = user.Gender
 			};
 		}
 
-		protected NotificationCommentInfo BuildNotificationCommentInfo(Comment comment)
+		protected static NotificationCommentInfo BuildNotificationCommentInfo(Comment comment)
 		{
-			if (comment == null)
+			if (comment is null)
 				return null;
 
 			return new NotificationCommentInfo
@@ -100,7 +99,7 @@ namespace Ulearn.Web.Api.Controllers
 				SlideId = comment.SlideId,
 				PublishTime = comment.PublishTime,
 				Author = BuildShortUserInfo(comment.Author),
-				Text = comment.Text,
+				Text = comment.Text
 			};
 		}
 
@@ -116,10 +115,10 @@ namespace Ulearn.Web.Api.Controllers
 			};
 		}
 
-		public static async Task<Func<Slide, int>> BuildGetSlideMaxScoreFunc(IUserSolutionsRepo solutionsRepo, IUserQuizzesRepo userQuizzesRepo, IVisitsRepo visitsRepo, IGroupsRepo groupsRepo,
+		protected static async Task<Func<Slide, int>> BuildGetSlideMaxScoreFunc(IUserSolutionsRepo solutionsRepo, IUserQuizzesRepo userQuizzesRepo, IVisitsRepo visitsRepo, IGroupsRepo groupsRepo,
 			Course course, string userId)
 		{
-			if (userId == null)
+			if (userId is null)
 				return GetMaxScoreForGuest;
 			var solvedSlidesIds = await GetSolvedSlides(solutionsRepo, userQuizzesRepo, course, userId);
 			var slidesWithUsersManualChecking = (await visitsRepo.GetSlidesWithUsersManualChecking(course.Id, userId)).ToImmutableHashSet();
@@ -128,20 +127,20 @@ namespace Ulearn.Web.Api.Controllers
 		}
 
 		[NotNull]
-		public static async Task<Func<Slide, string>> BuildGetGitEditLinkFunc(string userId, Course course,
+		protected static async Task<Func<Slide, string>> BuildGetGitEditLinkFunc(string userId, Course course,
 			ICourseRolesRepo courseRolesRepo, ICoursesRepo coursesRepo)
 		{
 			var courseRole = await courseRolesRepo.GetRole(userId, course.Id);
 			var canEditGit = courseRole <= CourseRoleType.CourseAdmin;
 			if (!canEditGit)
-				return s => null;
+				return _ => null;
 			var publishedCourseVersion = await coursesRepo.GetPublishedCourseVersion(course.Id);
-			if (publishedCourseVersion == null)
-				return s => null;
+			if (publishedCourseVersion is null)
+				return _ => null;
 			var repoUrl = publishedCourseVersion.RepoUrl;
 			var pathToCourseXml = publishedCourseVersion.PathToCourseXml;
-			if (repoUrl == null || pathToCourseXml == null)
-				return s => null;
+			if (repoUrl is null || pathToCourseXml is null)
+				return _ => null;
 			var branch = (await coursesRepo.GetCourseRepoSettings(course.Id))?.Branch ?? "master";
 			return slide =>
 			{
@@ -150,13 +149,13 @@ namespace Ulearn.Web.Api.Controllers
 			};
 		}
 
-		public static Func<Slide, int> BuildGetSlideMaxScoreFunc(Course course, SingleGroup group)
+		protected static Func<Slide, int> BuildGetSlideMaxScoreFunc(Course course, SingleGroup group)
 		{
 			var enabledManualCheckingForGroup = course.Settings.IsManualCheckingEnabled || group.IsManualCheckingEnabled;
 			return s => GetMaxScoreForUsersSlide(s, false, false, enabledManualCheckingForGroup);
 		}
 
-		public static async Task<HashSet<Guid>> GetSolvedSlides(IUserSolutionsRepo solutionsRepo, IUserQuizzesRepo userQuizzesRepo, Course course, string userId)
+		private static async Task<HashSet<Guid>> GetSolvedSlides(IUserSolutionsRepo solutionsRepo, IUserQuizzesRepo userQuizzesRepo, Course course, string userId)
 		{
 			var solvedSlides = await solutionsRepo.GetIdOfPassedSlides(course.Id, userId);
 			solvedSlides.UnionWith(await userQuizzesRepo.GetPassedSlideIdsAsync(course.Id, userId));
@@ -165,7 +164,7 @@ namespace Ulearn.Web.Api.Controllers
 
 		public static int GetMaxScoreForUsersSlide(Slide slide, bool isSolved, bool hasManualChecking, bool enabledManualCheckingForUser)
 		{
-			var isExerciseOrQuiz = slide is ExerciseSlide || slide is QuizSlide;
+			var isExerciseOrQuiz = slide is ExerciseSlide or QuizSlide;
 
 			if (!isExerciseOrQuiz)
 				return slide.MaxScore;
@@ -174,28 +173,24 @@ namespace Ulearn.Web.Api.Controllers
 				return hasManualChecking ? slide.MaxScore : GetMaxScoreWithoutManualChecking(slide);
 			return enabledManualCheckingForUser ? slide.MaxScore : GetMaxScoreWithoutManualChecking(slide);
 		}
-		
+
 		private static int GetMaxScoreForGuest(Slide slide)
 		{
-			var isExerciseOrQuiz = slide is ExerciseSlide || slide is QuizSlide;
+			var isExerciseOrQuiz = slide is ExerciseSlide or QuizSlide;
 
-			if (!isExerciseOrQuiz)
-				return slide.MaxScore;
-
-			return GetMaxScoreWithoutManualChecking(slide);
+			return isExerciseOrQuiz
+				? GetMaxScoreWithoutManualChecking(slide)
+				: slide.MaxScore;
 		}
 
-		public static int GetMaxScoreWithoutManualChecking(Slide slide)
+		private static int GetMaxScoreWithoutManualChecking(Slide slide)
 		{
-			switch (slide)
+			return slide switch
 			{
-				case ExerciseSlide exerciseSlide:
-					return exerciseSlide.Scoring.PassedTestsScore;
-				case QuizSlide quizSlide:
-					return quizSlide.ManualChecking ? 0 : quizSlide.MaxScore;
-				default:
-					return slide.MaxScore;
-			}
+				ExerciseSlide exerciseSlide => exerciseSlide.Scoring.PassedTestsScore,
+				QuizSlide quizSlide => quizSlide.ManualChecking ? 0 : quizSlide.MaxScore,
+				_ => slide.MaxScore
+			};
 		}
 	}
 }

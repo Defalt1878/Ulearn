@@ -27,10 +27,10 @@ namespace Ulearn.Web.Api.Controllers.Groups;
 [Route("/super-group")]
 public class SuperGroupController : BaseGroupController
 {
-	private readonly SuperGroupManager superGroupHelper;
-	private readonly IGroupsRepo groupsRepo;
 	private readonly IGroupAccessesRepo groupAccessesRepo;
 	private readonly IGroupMembersRepo groupMembersRepo;
+	private readonly IGroupsRepo groupsRepo;
+	private readonly SuperGroupManager superGroupHelper;
 	private readonly IUnitsRepo unitsRepo;
 
 	public SuperGroupController(
@@ -56,7 +56,7 @@ public class SuperGroupController : BaseGroupController
 		var groupId = (int)context.ActionArguments["groupId"];
 
 		var group = await groupsRepo.FindGroupByIdAsync(groupId).ConfigureAwait(false);
-		if (group == null)
+		if (group is null)
 		{
 			context.Result = NotFound(new ErrorResponse($"Auto-group with id {groupId} not found"));
 			return;
@@ -99,16 +99,16 @@ public class SuperGroupController : BaseGroupController
 		{
 			return new SuperGroupSheetExtractionResult
 			{
-				Groups = new(),
-				ValidatingResults = new List<ValidatingResult> { new InvalidSheetStructure { RawsIndexes = formatException.RawsIndexes } },
+				Groups = new Dictionary<string, SuperGroupItemInfo>(),
+				ValidatingResults = new List<ValidatingResult> { new InvalidSheetStructure { RawsIndexes = formatException.RawsIndexes } }
 			};
 		}
 		catch (Exception e)
 		{
 			errorMessage = e.Message;
 		}
-		
-		log.Warn($"Error while getting spread sheet from {spreadsheetUrl}, {errorMessage}");
+
+		Log.Warn($"Error while getting spread sheet from {spreadsheetUrl}, {errorMessage}");
 		return BadRequest(errorMessage);
 	}
 
@@ -123,7 +123,7 @@ public class SuperGroupController : BaseGroupController
 		var createdGroups = await groupsRepo.FindGroupsBySuperGroupIdAsync(groupId);
 		var createdGroupsIds = createdGroups.Select(g => g.Id).ToHashSet();
 		var course = courseStorage.FindCourse(superGroup.CourseId);
-		if (course == null)
+		if (course is null)
 			return NotFound($"Course '{superGroup.CourseId}' not found");
 
 		var scoringGroups = course.Settings.Scoring.Groups.Values.ToList();
@@ -136,7 +136,7 @@ public class SuperGroupController : BaseGroupController
 		{
 			Scores = scoringGroups
 				.Select(scoringGroup => BuildGroupScoringGroupInfo(scoringGroup, scoringGroupsCanBeSetInSomeUnit, enabledScoringGroups, createdGroups.Count))
-				.ToList(),
+				.ToList()
 		};
 	}
 
@@ -155,7 +155,7 @@ public class SuperGroupController : BaseGroupController
 		var createdGroups = await groupsRepo.FindGroupsBySuperGroupIdAsync(groupId);
 		var createdGroupsIds = createdGroups.Select(g => g.Id).ToHashSet();
 		var course = courseStorage.FindCourse(superGroup.CourseId);
-		if (course == null)
+		if (course is null)
 			return NotFound(new ErrorResponse("Group or course not found"));
 
 		var courseScoringGroupIds = course.Settings.Scoring.Groups.Values.Select(g => g.Id).ToList();
@@ -218,7 +218,7 @@ public class SuperGroupController : BaseGroupController
 	public async Task<ActionResult<Dictionary<string, SupperGroupUpdateItem>>> UpdateGroups([FromQuery] int groupId, [FromBody] UpdateGroupsRequestParameters parameters)
 	{
 		if (parameters.GroupsToUpdate.Count == 0)
-			return BadRequest($"There is no groups to update");
+			return BadRequest("There is no groups to update");
 
 		var updateInfoByGroupName = new Dictionary<string, SupperGroupUpdateItem>();
 
@@ -229,7 +229,7 @@ public class SuperGroupController : BaseGroupController
 		var createdGroupsByName = createdGroups
 			.ToDictionary(g => g.Name);
 
-		foreach (var (groupName, status) in parameters.GroupsToUpdate.Where(g => g.Value == SuperGroupItemActions.ShouldBeCreated))
+		foreach (var (groupName, _) in parameters.GroupsToUpdate.Where(g => g.Value == SuperGroupItemActions.ShouldBeCreated))
 		{
 			if (!createdGroupsByName.TryGetValue(groupName, out var group))
 				group = await groupsRepo.CreateSingleGroupAsync(
@@ -241,7 +241,7 @@ public class SuperGroupController : BaseGroupController
 			updateInfoByGroupName.Add(groupName, new SupperGroupUpdateItem { GroupId = group.Id, GroupName = groupName });
 		}
 
-		foreach (var (groupName, status) in parameters.GroupsToUpdate.Where(g => g.Value == SuperGroupItemActions.ShouldBeDeleted))
+		foreach (var (groupName, _) in parameters.GroupsToUpdate.Where(g => g.Value == SuperGroupItemActions.ShouldBeDeleted))
 		{
 			if (!createdGroupsByName.TryGetValue(groupName, out var groupToDelete) || groupToDelete.NotDeletedMembers.Count != 0)
 				continue;
@@ -260,7 +260,7 @@ public class SuperGroupController : BaseGroupController
 	public async Task<ActionResult<SuperGroupMoveUserResponse>> ResortStudents([FromQuery] int groupId, [FromBody] Dictionary<string, MoveStudentInfo> moves)
 	{
 		var superGroup = await groupsRepo.FindGroupByIdAsync<SuperGroup>(groupId);
-		if (superGroup.DistributionTableLink == null)
+		if (superGroup.DistributionTableLink is null)
 			return BadRequest("Auto-group doesn't have a correct link to google sheet table");
 
 		var createdGroups = await groupsRepo.FindGroupsBySuperGroupIdAsync(superGroup.Id);
@@ -380,12 +380,12 @@ public class SuperGroupController : BaseGroupController
 				g => g.Key,
 				g =>
 				{
-					var groupId = g.FirstOrDefault().Id;
+					var groupId = g.First().Id;
 					return new SuperGroupItemInfo
 					{
 						NeededAction = SuperGroupItemActions.ShouldBeDeleted,
 						JoinedStudents = GetJoinedStudents(groupId),
-						GroupId = groupId,
+						GroupId = groupId
 					};
 				}
 			);
@@ -406,11 +406,11 @@ public class SuperGroupController : BaseGroupController
 							: SuperGroupItemActions.ShouldBeCreated,
 						StudentNames = g.Select(pair => pair.studentName).ToList(),
 						JoinedStudents = isGroupCreated ? GetJoinedStudents(createdGroupsDictionary[g.Key].Id) : null,
-						GroupId = groupId,
+						GroupId = groupId
 					};
 				});
 
-		var groupNamesByStudent = superGroupHelper.GetGroupsByUserName(spreadSheetGroups);
+		var groupNamesByStudent = SuperGroupManager.GetGroupsByUserName(spreadSheetGroups);
 		var neededMoves = await GetMovesInSuperGroup(createdGroups, spreadSheetGroups);
 		var validatingResults = new List<ValidatingResult>();
 
@@ -425,7 +425,7 @@ public class SuperGroupController : BaseGroupController
 			Groups = studentsByGroupName
 				.Concat(shouldBeDeletedGroupsDictionary)
 				.ToDictionary(x => x.Key, x => x.Value),
-			ValidatingResults = validatingResults,
+			ValidatingResults = validatingResults
 		};
 	}
 
@@ -459,7 +459,7 @@ public class SuperGroupController : BaseGroupController
 				|| group.Name == pair.groupName)
 				continue;
 
-			studentNamesByGroupsName[pair.studentName] = new() { FromGroupName = group.Name, ToGroupName = pair.groupName };
+			studentNamesByGroupsName[pair.studentName] = new MoveStudentInfo { FromGroupName = group.Name, ToGroupName = pair.groupName };
 		}
 
 		return studentNamesByGroupsName;
@@ -477,7 +477,7 @@ public class SuperGroupController : BaseGroupController
 			IsManualCheckingEnabled = isManualCheckingNull ? null : groupsSettings[0].IsManualCheckingEnabled,
 			IsManualCheckingEnabledForOldSolutions = isManualCheckingNullForOldSolutions ? null : groupsSettings[0].IsManualCheckingEnabledForOldSolutions,
 			DefaultProhibitFurtherReview = nullProhibitFurtherReview ? null : groupsSettings[0].DefaultProhibitFutherReview,
-			CanStudentsSeeGroupProgress = canStudentsSeeGroupProgressIsNull ? null : groupsSettings[0].CanUsersSeeGroupProgress,
+			CanStudentsSeeGroupProgress = canStudentsSeeGroupProgressIsNull ? null : groupsSettings[0].CanUsersSeeGroupProgress
 		};
 	}
 }

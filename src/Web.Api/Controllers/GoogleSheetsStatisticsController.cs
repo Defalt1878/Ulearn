@@ -23,16 +23,15 @@ using Ulearn.Web.Api.Models.Responses;
 using Ulearn.Web.Api.Utils;
 using Web.Api.Configuration;
 
-
 namespace Ulearn.Web.Api.Controllers
 {
-	[Route("/course-statistics/export/to-google-sheets")]
+	[Route("/course-statistics/export/to-google-sheets/tasks")]
 	public class GoogleSheetsStatisticsController : BaseController
 	{
-		private readonly ICourseRolesRepo courseRolesRepo;
-		private readonly IGroupAccessesRepo groupAccessesRepo;
-		private readonly IGoogleSheetExportTasksRepo googleSheetExportTasksRepo;
 		private readonly UlearnConfiguration configuration;
+		private readonly ICourseRolesRepo courseRolesRepo;
+		private readonly IGoogleSheetExportTasksRepo googleSheetExportTasksRepo;
+		private readonly IGroupAccessesRepo groupAccessesRepo;
 		private readonly StatisticModelUtils statisticModelUtils;
 
 		public GoogleSheetsStatisticsController(ICourseStorage courseStorage, UlearnDb db,
@@ -70,9 +69,9 @@ namespace Ulearn.Web.Api.Controllers
 
 			if (context.ActionArguments.TryGetValue("taskId", out var taskIdObj))
 			{
-				var taskId = (int)taskIdObj;
+				var taskId = (int) taskIdObj!;
 				var task = await googleSheetExportTasksRepo.GetTaskById(taskId);
-				if (task == null)
+				if (task is null)
 				{
 					context.HttpContext.Response.StatusCode = (int)HttpStatusCode.NotFound;
 					context.Result = new JsonResult(new ErrorResponse($"Task with id {taskId} not found"));
@@ -100,7 +99,7 @@ namespace Ulearn.Web.Api.Controllers
 		}
 
 
-		[HttpGet("tasks")]
+		[HttpGet]
 		[Authorize(Policy = "Instructors")]
 		public async Task<ActionResult<GoogleSheetsExportTaskListResponse>> GetAllCourseTasks([FromQuery] string courseId)
 		{
@@ -133,7 +132,7 @@ namespace Ulearn.Web.Api.Controllers
 			};
 		}
 
-		[HttpGet("tasks/{taskId}")]
+		[HttpGet("{taskId:int}")]
 		[Authorize]
 		public async Task<ActionResult<GoogleSheetsExportTaskResponse>> GetTaskById([FromRoute] int taskId)
 		{
@@ -151,17 +150,17 @@ namespace Ulearn.Web.Api.Controllers
 				SpreadsheetId = task.SpreadsheetId,
 				ListId = task.ListId,
 				LastUpdateDate = task.LastUpdateDate,
-				LastUpdateErrorMessage = task.LastUpdateErrorMessage,
+				LastUpdateErrorMessage = task.LastUpdateErrorMessage
 			};
 			return result;
 		}
 
-		[HttpPost("tasks")]
+		[HttpPost]
 		[Authorize]
 		public async Task<ActionResult<GoogleSheetsExportTaskResponse>> AddNewTask([FromBody] GoogleSheetsCreateTaskParams param)
 		{
 			if (!await HasAccessToGroups(param.CourseId, param.GroupsIds))
-				return Forbid($"You don't have access to selected groups");
+				return Forbid("You don't have access to selected groups");
 
 			var id = await googleSheetExportTasksRepo.AddTask(param.CourseId, UserId, param.IsVisibleForStudents,
 				param.RefreshStartDate, param.RefreshEndDate, param.RefreshTimeInMinutes, param.GroupsIds,
@@ -184,7 +183,7 @@ namespace Ulearn.Web.Api.Controllers
 			return result;
 		}
 
-		[HttpPost("tasks/{taskId}")]
+		[HttpPost("{taskId:int}")]
 		[Authorize]
 		public async Task<ActionResult> ExportTaskNow([FromRoute] int taskId)
 		{
@@ -195,7 +194,7 @@ namespace Ulearn.Web.Api.Controllers
 				CourseId = task.CourseId,
 				ListId = task.ListId,
 				GroupsIds = task.Groups.Select(g => g.GroupId.ToString()).ToList(),
-				SpreadsheetId = task.SpreadsheetId,
+				SpreadsheetId = task.SpreadsheetId
 			};
 
 			string exceptionMessage = null;
@@ -216,16 +215,16 @@ namespace Ulearn.Web.Api.Controllers
 			{
 				exceptionMessage = e.ToString();
 			}
-			
+
 			await googleSheetExportTasksRepo.SaveTaskUploadResult(task, utcNow, exceptionMessage);
 
-			if (exceptionMessage != null)
+			if (exceptionMessage is not null)
 				return BadRequest(exceptionMessage);
 
 			return Ok($"Task with id {taskId} successfully exported to google sheet");
 		}
 
-		[HttpPatch("tasks/{taskId}")]
+		[HttpPatch("{taskId:int}")]
 		[Authorize]
 		public async Task<ActionResult> UpdateTask([FromBody] GoogleSheetsExportTaskUpdateParams param, [FromRoute] int taskId)
 		{
@@ -239,7 +238,7 @@ namespace Ulearn.Web.Api.Controllers
 			return Ok($"Task {taskId} successfully updated");
 		}
 
-		[HttpDelete("tasks/{taskId}")]
+		[HttpDelete("{taskId:int}")]
 		[Authorize]
 		public async Task<ActionResult> DeleteTask([FromRoute] int taskId)
 		{

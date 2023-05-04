@@ -22,10 +22,10 @@ namespace Ulearn.Web.Api.Models.Common
 
 		[DataMember]
 		public List<ShortSlideInfo> Slides { get; set; }
-		
+
 		[DataMember]
 		public List<UnitScoringGroupInfo> AdditionalScores { get; set; }
-		
+
 		[DataMember]
 		public AdditionalContent AdditionalContentInfo { get; set; }
 	}

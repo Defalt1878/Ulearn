@@ -19,8 +19,8 @@ namespace Ulearn.Web.Api.Controllers.Users
 	[Route("/users")]
 	public class UsersController : BaseController
 	{
-		private readonly IUserSearcher userSearcher;
 		private readonly ICourseRolesRepo courseRolesRepo;
+		private readonly IUserSearcher userSearcher;
 
 		public UsersController(ICourseStorage courseStorage, UlearnDb db,
 			IUsersRepo usersRepo, IUserSearcher userSearcher, ICourseRolesRepo courseRolesRepo)
@@ -31,7 +31,7 @@ namespace Ulearn.Web.Api.Controllers.Users
 		}
 
 		/// <summary>
-		/// Поиск пользователей
+		///     Поиск пользователей
 		/// </summary>
 		[HttpGet]
 		public async Task<ActionResult<UsersSearchResponse>> Search([FromQuery] UsersSearchParameters parameters)
@@ -62,11 +62,8 @@ namespace Ulearn.Web.Api.Controllers.Users
 					return StatusCode((int)HttpStatusCode.Unauthorized, new ErrorResponse("Only system administrator can search by course role without specified courseId"));
 			}
 
-			if (parameters.LmsRoleType.HasValue)
-			{
-				if (!isSystemAdministrator)
-					return StatusCode((int)HttpStatusCode.Unauthorized, new ErrorResponse("Only system administrator can search by lms role"));
-			}
+			if (parameters.LmsRoleType.HasValue && !isSystemAdministrator)
+				return StatusCode((int)HttpStatusCode.Unauthorized, new ErrorResponse("Only system administrator can search by lms role"));
 
 			var request = new UserSearchRequest
 			{
@@ -74,14 +71,14 @@ namespace Ulearn.Web.Api.Controllers.Users
 				Words = words,
 				CourseId = parameters.CourseId,
 				MinCourseRoleType = parameters.CourseRoleType,
-				LmsRole = parameters.LmsRoleType,
+				LmsRole = parameters.LmsRoleType
 			};
 
 			/* Start the search!
-			 * First of all we will try to find `strict` users: users with strict match for pattern. These users will be at first place in the response.
-			 */
+			* First of all we will try to find `strict` users: users with strict match for pattern. These users will be at first place in the response.
+			*/
 
-			var strictUsers = await userSearcher.SearchUsersAsync(request, strict: true, offset: 0, count: parameters.Offset + parameters.Count).ConfigureAwait(false);
+			var strictUsers = await userSearcher.SearchUsersAsync(request, true, 0, parameters.Offset + parameters.Count).ConfigureAwait(false);
 
 			var users = strictUsers.ToList();
 
@@ -99,18 +96,18 @@ namespace Ulearn.Web.Api.Controllers.Users
 					users.Clear();
 
 				/*
-				 *  (strict users) (non-strict users)
-				 *  0     1    2    3    4    5    6
-				 *             ^              ^
-				 *             offset         offset+count
-				 */
-				var nonStrictUsers = await userSearcher.SearchUsersAsync(request, strict: false, offset: parameters.Offset - strictUsers.Count, count: parameters.Count - users.Count).ConfigureAwait(false);
+				*  (strict users) (non-strict users)
+				*  0     1    2    3    4    5    6
+				*             ^              ^
+				*             offset         offset+count
+				*/
+				var nonStrictUsers = await userSearcher.SearchUsersAsync(request, false, parameters.Offset - strictUsers.Count, parameters.Count - users.Count).ConfigureAwait(false);
 
 				/* Add all non-strict users if there is no this user in strict users list */
 				foreach (var user in nonStrictUsers)
 				{
 					var alreadyExistUser = strictUsers.FirstOrDefault(u => u.User.Id == user.User.Id);
-					if (alreadyExistUser != null)
+					if (alreadyExistUser is not null)
 						alreadyExistUser.Fields.UnionWith(user.Fields);
 					else
 						users.Add(user);
@@ -124,14 +121,14 @@ namespace Ulearn.Web.Api.Controllers.Users
 				Users = users.Select(u => new FoundUserResponse
 				{
 					User = BuildShortUserInfo(u.User,
-						discloseLogin: u.Fields.Contains(SearchField.Login) || currentUserIsInstructor && instructors.Contains(u.User.Id),
-						discloseEmail: u.Fields.Contains(SearchField.Email)),
-					Fields = u.Fields.ToList(),
+						u.Fields.Contains(SearchField.Login) || (currentUserIsInstructor && instructors.Contains(u.User.Id)),
+						u.Fields.Contains(SearchField.Email)),
+					Fields = u.Fields.ToList()
 				}).ToList(),
 				Pagination = new PaginationResponse
 				{
 					Offset = parameters.Offset,
-					Count = users.Count,
+					Count = users.Count
 				}
 			};
 		}
@@ -145,14 +142,14 @@ namespace Ulearn.Web.Api.Controllers.Users
 				return BuildShortUserInfo(currentUser, true, true);
 
 			var user = await usersRepo.FindUserById(userId);
-			
-			if(user == null)
+
+			if (user is null)
 				return StatusCode((int)HttpStatusCode.NotFound, $"No user with id {userId} found");
-			
+
 			var isSystemAdministrator = usersRepo.IsSystemAdministrator(currentUser);
 
-			return isSystemAdministrator 
-				? BuildShortUserInfo(user, true, true) 
+			return isSystemAdministrator
+				? BuildShortUserInfo(user, true, true)
 				: BuildShortUserInfo(user, true);
 		}
 	}

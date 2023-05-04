@@ -3,5 +3,5 @@
 public enum SuperGroupItemActions
 {
 	ShouldBeCreated,
-	ShouldBeDeleted,
+	ShouldBeDeleted
 }

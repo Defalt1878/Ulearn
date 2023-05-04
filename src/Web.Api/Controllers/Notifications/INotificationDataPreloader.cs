@@ -6,6 +6,6 @@ namespace Ulearn.Web.Api.Controllers.Notifications
 {
 	public interface INotificationDataPreloader
 	{
-		Task<NotificationDataStorage> LoadAsync(List<Notification> notifications);
+		Task<NotificationDataStorage> LoadAsync(IEnumerable<Notification> notifications);
 	}
 }

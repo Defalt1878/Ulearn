@@ -8,6 +8,8 @@ using Ulearn.Core.Courses;
 using Ulearn.Core.Courses.Slides;
 using Ulearn.Core.Courses.Slides.Exercises;
 using Ulearn.Core.Courses.Units;
+// ReSharper disable UnusedAutoPropertyAccessor.Global
+// ReSharper disable PropertyCanBeMadeInitOnly.Global
 
 namespace Ulearn.Web.Api.Models.Internal
 {
@@ -61,10 +63,10 @@ namespace Ulearn.Web.Api.Models.Internal
 				.ToSortedDictionary();
 		}
 
-		public int GetMaxScoreForUnitByScoringGroup(Unit unit, ScoringGroup scoringGroup)
+		public static int GetMaxScoreForUnitByScoringGroup(Unit unit, ScoringGroup scoringGroup)
 		{
 			var unitScoringGroup = unit.Scoring.Groups.Values.FirstOrDefault(g => g.Id == scoringGroup.Id);
-			var maxAdditionalScore = unitScoringGroup != null && unitScoringGroup.CanBeSetByInstructor ? unitScoringGroup.MaxAdditionalScore : 0;
+			var maxAdditionalScore = unitScoringGroup is not null && unitScoringGroup.CanBeSetByInstructor ? unitScoringGroup.MaxAdditionalScore : 0;
 			return unit.GetSlides(false).Where(s => s.ScoringGroup == scoringGroup.Id).Sum(s => s.MaxScore) + maxAdditionalScore;
 		}
 
@@ -90,7 +92,7 @@ namespace Ulearn.Web.Api.Models.Internal
 		/* Option "only full scores" acts only on exercise slides.
 			If user scores 4 out of 5 points for quiz, it's okay to be scored in course statistics with enabled "only full scores" option.
 			Potentially bug: if user is not a member of group with enabled code-review, his slide's max score may vary from slide.MaxScore */
-		public int GetOnlyFullScore(int score, Slide slide)
+		public static int GetOnlyFullScore(int score, Slide slide)
 		{
 			var isExercise = slide is ExerciseSlide;
 			if (!isExercise)
@@ -98,7 +100,7 @@ namespace Ulearn.Web.Api.Models.Internal
 			return score == slide.MaxScore ? score : 0;
 		}
 	}
-	
+
 	public class UnitStatisticUserInfo
 	{
 		public UnitStatisticUserInfo(string userId, string userName, string email, string firstName, string lastName)

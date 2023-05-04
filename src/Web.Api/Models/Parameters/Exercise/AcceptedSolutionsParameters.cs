@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Ulearn.Common.Api.Models.Parameters;
 using Ulearn.Common.Api.Models.Validations;
+// ReSharper disable UnusedAutoPropertyAccessor.Global
 
 namespace Ulearn.Web.Api.Models.Parameters.Exercise
 {

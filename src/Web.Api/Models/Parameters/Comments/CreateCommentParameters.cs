@@ -18,7 +18,7 @@ namespace Ulearn.Web.Api.Models.Parameters.Comments
 		public string Text { get; set; }
 
 		/// <summary>
-		/// Id комментария, на который это ответ
+		///     Id комментария, на который это ответ
 		/// </summary>
 		[DataMember]
 		public int? ParentCommentId { get; set; }

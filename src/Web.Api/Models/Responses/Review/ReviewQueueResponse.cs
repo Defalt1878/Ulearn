@@ -26,9 +26,9 @@ namespace Ulearn.Web.Api.Models.Responses.Review
 						IsLocked = c.IsLocked,
 						Type = c is ManualExerciseChecking
 							? QueueItemType.Exercise
-							: QueueItemType.Quiz,
+							: QueueItemType.Quiz
 					})
-					.ToList(),
+					.ToList()
 			};
 		}
 	}
@@ -38,7 +38,7 @@ namespace Ulearn.Web.Api.Models.Responses.Review
 	{
 		[DataMember]
 		public int SubmissionId { get; set; } // ExerciseSubmission id or QuizSubmission id
-		
+
 		[DataMember]
 		public Guid SlideId { get; set; }
 
@@ -55,6 +55,6 @@ namespace Ulearn.Web.Api.Models.Responses.Review
 	public enum QueueItemType
 	{
 		Exercise,
-		Quiz,
+		Quiz
 	}
 }

@@ -18,8 +18,8 @@ namespace Ulearn.Web.Api.Controllers.DeadLines
 	[Route("/dead-lines")]
 	public class DeadLinesController : BaseController
 	{
-		private IDeadLinesRepo deadLinesRepo;
-		private ICourseRolesRepo courseRolesRepo;
+		private readonly ICourseRolesRepo courseRolesRepo;
+		private readonly IDeadLinesRepo deadLinesRepo;
 
 		public DeadLinesController(
 			ICourseStorage courseStorage,
@@ -99,16 +99,14 @@ namespace Ulearn.Web.Api.Controllers.DeadLines
 		{
 			var deadLine = await deadLinesRepo.GetDeadLineById(deadLineId);
 
-			if (deadLine == null)
-			{
+			if (deadLine is null)
 				return NotFound($"Dead line with id {deadLineId} was not found");
-			}
 
 			var isInstructor = await courseRolesRepo.HasUserAccessToCourse(UserId, deadLine.CourseId, CourseRoleType.Tester);
 			if (!isInstructor)
 				return Forbid($"You do not have an access to update dead lines in course {deadLine.CourseId}");
 
-			if (userIds != null && userIds.Distinct().ToList().Count != userIds.Count)
+			if (userIds is not null && userIds.Distinct().ToList().Count != userIds.Count)
 				return BadRequest("User ids should contain only uniq ids");
 
 			deadLine.UnitId = unitId;
@@ -128,10 +126,8 @@ namespace Ulearn.Web.Api.Controllers.DeadLines
 		public async Task<ActionResult> DeleteDeadLine([FromRoute] Guid deadLineId)
 		{
 			var deadLine = await deadLinesRepo.GetDeadLineById(deadLineId);
-			if (deadLine == null)
-			{
+			if (deadLine is null)
 				return NotFound($"Dead line with id {deadLineId} was not found");
-			}
 
 			var isInstructor = await courseRolesRepo.HasUserAccessToCourse(UserId, deadLine.CourseId, CourseRoleType.Tester);
 			if (!isInstructor)

@@ -7,13 +7,13 @@ namespace Ulearn.Web.Api.Utils
 {
 	public class ExcelWorksheetBuilder : ISheetBuilder
 	{
-		private readonly ExcelWorksheet worksheet;
-		private int currentRow;
-		private int currentColumn;
 		private readonly List<Action<ExcelStyle>> styleRules = new();
-		private bool isLastStyleRuleForOneCellOnly = false;
+		private readonly ExcelWorksheet worksheet;
 
 		public int ColumnsCount;
+		private int currentColumn;
+		private int currentRow;
+		private bool isLastStyleRuleForOneCellOnly;
 
 		public ExcelWorksheetBuilder(ExcelWorksheet worksheet)
 		{

@@ -4,8 +4,8 @@ using Database.Repos;
 using Database.Repos.Users;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Filters;
-using Vostok.Logging.Abstractions;
 using Ulearn.Common.Extensions;
+using Vostok.Logging.Abstractions;
 
 namespace Ulearn.Web.Api.Authorization
 {
@@ -21,10 +21,9 @@ namespace Ulearn.Web.Api.Authorization
 
 	public class CourseAccessAuthorizationHandler : BaseCourseAuthorizationHandler<CourseAccessRequirement>
 	{
-		private readonly ICoursesRepo coursesRepo;
 		private readonly ICourseRolesRepo courseRolesRepo;
+		private readonly ICoursesRepo coursesRepo;
 		private readonly IUsersRepo usersRepo;
-		private static ILog log => LogProvider.Get().ForContext(typeof(CourseAccessAuthorizationHandler));
 
 		public CourseAccessAuthorizationHandler(ICoursesRepo coursesRepo, ICourseRolesRepo courseRolesRepo, IUsersRepo usersRepo)
 		{
@@ -33,12 +32,14 @@ namespace Ulearn.Web.Api.Authorization
 			this.usersRepo = usersRepo;
 		}
 
+		private static ILog Log => LogProvider.Get().ForContext(typeof(CourseAccessAuthorizationHandler));
+
 		protected override async Task HandleRequirementAsync(AuthorizationHandlerContext context, CourseAccessRequirement requirement)
 		{
 			/* Get MVC context. See https://docs.microsoft.com/en-US/aspnet/core/security/authorization/policies#accessing-mvc-request-context-in-handlers */
 			if (!(context.Resource is AuthorizationFilterContext mvcContext))
 			{
-				log.Error("Can't get MVC context in CourseRoleAuthenticationHandler");
+				Log.Error("Can't get MVC context in CourseRoleAuthenticationHandler");
 				context.Fail();
 				return;
 			}
@@ -50,7 +51,7 @@ namespace Ulearn.Web.Api.Authorization
 				return;
 			}
 
-			if (!context.User.Identity.IsAuthenticated)
+			if (context.User.Identity is not { IsAuthenticated: true })
 			{
 				context.Fail();
 				return;
@@ -58,7 +59,7 @@ namespace Ulearn.Web.Api.Authorization
 
 			var userId = context.User.GetUserId();
 			var user = await usersRepo.FindUserById(userId).ConfigureAwait(false);
-			if (user == null)
+			if (user is null)
 			{
 				context.Fail();
 				return;

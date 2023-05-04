@@ -7,28 +7,28 @@
 		<ErrorOnDuplicatePublishOutputFiles>false</ErrorOnDuplicatePublishOutputFiles>
 	</PropertyGroup>
 	<ItemGroup>
-		<PackageReference Include="AngleSharp" Version="0.17.1" />
-		<PackageReference Include="Community.AspNetCore.ExceptionHandling.Mvc" Version="2.2.0" />
-		<PackageReference Include="EntityFrameworkProfiler.Appender" Version="6.0.6033" />
-		<PackageReference Include="EPPlus" Version="6.0.5" />
-		<PackageReference Include="LtiLibrary.Core" Version="1.6.2" />
-		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="6.0.6" />
-		<PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="6.0.6" />
-		<PackageReference Include="Microsoft.Extensions.Identity.Core" Version="6.0.6" />
-		<PackageReference Include="System.Collections.Immutable" Version="6.0.0" />
+		<PackageReference Include="AngleSharp" Version="0.17.1"/>
+		<PackageReference Include="Community.AspNetCore.ExceptionHandling.Mvc" Version="2.2.0"/>
+		<PackageReference Include="EntityFrameworkProfiler.Appender" Version="6.0.6033"/>
+		<PackageReference Include="EPPlus" Version="6.0.5"/>
+		<PackageReference Include="LtiLibrary.Core" Version="1.6.2"/>
+		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="6.0.6"/>
+		<PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="6.0.6"/>
+		<PackageReference Include="Microsoft.Extensions.Identity.Core" Version="6.0.6"/>
+		<PackageReference Include="System.Collections.Immutable" Version="6.0.0"/>
 	</ItemGroup>
 	<ItemGroup>
-		<DotNetCliToolReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Tools" Version="2.0.0" />
+		<DotNetCliToolReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Tools" Version="2.0.0"/>
 	</ItemGroup>
 	<ItemGroup>
-		<ProjectReference Include="..\AntiPlagiarism.Api\AntiPlagiarism.Api.csproj" />
-		<ProjectReference Include="..\Common.Api.Application\Common.Api.Application.csproj" />
-		<ProjectReference Include="..\Common.Api\Common.Api.csproj" />
-		<ProjectReference Include="..\Common\Common.csproj" />
-		<ProjectReference Include="..\Core\Core.csproj" />
-		<ProjectReference Include="..\Database.Core\Database.Core.csproj" />
-		<ProjectReference Include="..\VideoAnnotations.Api\VideoAnnotations.Api.csproj" />
-		<ProjectReference Include="..\XQueue\XQueue.csproj" />
+		<ProjectReference Include="..\AntiPlagiarism.Api\AntiPlagiarism.Api.csproj"/>
+		<ProjectReference Include="..\Common.Api.Application\Common.Api.Application.csproj"/>
+		<ProjectReference Include="..\Common.Api\Common.Api.csproj"/>
+		<ProjectReference Include="..\Common\Common.csproj"/>
+		<ProjectReference Include="..\Core\Core.csproj"/>
+		<ProjectReference Include="..\Database.Core\Database.Core.csproj"/>
+		<ProjectReference Include="..\VideoAnnotations.Api\VideoAnnotations.Api.csproj"/>
+		<ProjectReference Include="..\XQueue\XQueue.csproj"/>
 	</ItemGroup>
 	<ItemGroup>
 		<Reference Include="Microsoft.Threading.Tasks, Version=1.0.12.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
@@ -48,43 +48,43 @@
 		<Content Include="deploy\Web.Api.Task.xml">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</Content>
-		<Content Remove="Configuration\**" />
-		<None Remove="Hunspellx64.dll" />
+		<Content Remove="Configuration\**"/>
+		<None Remove="Hunspellx64.dll"/>
 		<Content Include="Hunspellx64.dll">
-		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
-		<None Remove="Hunspellx86.dll" />
+		<None Remove="Hunspellx86.dll"/>
 		<Content Include="Hunspellx86.dll">
-		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
-		<None Remove="Help.zip" />
+		<None Remove="Help.zip"/>
 		<Content Include="Help.zip">
-		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
-		<None Remove="course-loading-error.zip" />
+		<None Remove="course-loading-error.zip"/>
 		<Content Include="course-loading-error.zip">
-		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
 	</ItemGroup>
 	<ItemGroup>
-	  <Compile Remove="Configuration\**" />
+		<Compile Remove="Configuration\**"/>
 	</ItemGroup>
 	<ItemGroup>
-	  <EmbeddedResource Remove="Configuration\**" />
+		<EmbeddedResource Remove="Configuration\**"/>
 	</ItemGroup>
 	<ItemGroup>
-	  <None Remove="Configuration\**" />
+		<None Remove="Configuration\**"/>
 	</ItemGroup>
 	<ItemGroup>
-	  <_ContentIncludedByDefault Remove="packages\web.config" />
-	  <_ContentIncludedByDefault Remove="packages\appsettings.json" />
-	  <_ContentIncludedByDefault Remove="packages\appsettings.local.json" />
-	  <_ContentIncludedByDefault Remove="packages\Common.deps.json" />
-	  <_ContentIncludedByDefault Remove="packages\Common.runtimeconfig.json" />
-	  <_ContentIncludedByDefault Remove="packages\Core.deps.json" />
-	  <_ContentIncludedByDefault Remove="packages\Core.runtimeconfig.json" />
-	  <_ContentIncludedByDefault Remove="packages\Web.Api.deps.json" />
-	  <_ContentIncludedByDefault Remove="packages\Web.Api.runtimeconfig.json" />
+		<_ContentIncludedByDefault Remove="packages\web.config"/>
+		<_ContentIncludedByDefault Remove="packages\appsettings.json"/>
+		<_ContentIncludedByDefault Remove="packages\appsettings.local.json"/>
+		<_ContentIncludedByDefault Remove="packages\Common.deps.json"/>
+		<_ContentIncludedByDefault Remove="packages\Common.runtimeconfig.json"/>
+		<_ContentIncludedByDefault Remove="packages\Core.deps.json"/>
+		<_ContentIncludedByDefault Remove="packages\Core.runtimeconfig.json"/>
+		<_ContentIncludedByDefault Remove="packages\Web.Api.deps.json"/>
+		<_ContentIncludedByDefault Remove="packages\Web.Api.runtimeconfig.json"/>
 	</ItemGroup>
 
 

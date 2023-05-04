@@ -7,14 +7,13 @@ namespace Ulearn.Web.Api.Utils
 	public class GoogleSheetBuilder : ISheetBuilder
 	{
 		private readonly GoogleSheetModel googleSheetModel;
-		private int currentRow;
-
-		private int currentColumn;
 
 		// private readonly List<Action<ExcelStyle>> styleRules = new List<Action<ExcelStyle>>();
-		private bool isLastStyleRuleForOneCellOnly = false;
 
 		public int ColumnsCount;
+
+		private int currentColumn;
+		private int currentRow;
 
 		public GoogleSheetBuilder(GoogleSheetModel googleSheetModel)
 		{
@@ -30,9 +29,7 @@ namespace Ulearn.Web.Api.Utils
 				return;
 			googleSheetModel.AddCell(currentRow, value);
 			for (var i = 1; i < colspan; i++)
-			{
 				googleSheetModel.AddCell(currentRow, "");
-			}
 
 			currentColumn += colspan;
 			ColumnsCount = Math.Max(ColumnsCount, currentColumn);

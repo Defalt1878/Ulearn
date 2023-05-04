@@ -9,11 +9,10 @@ namespace Ulearn.Web.Api.Utils.Courses
 {
 	public class TempCourseRemover
 	{
-		private static ILog log => LogProvider.Get().ForContext(typeof(TempCourseRemover));
-
-		private readonly UlearnDb db;
 		private readonly IMasterCourseManager courseManager;
 		private readonly ICourseStorageUpdater courseStorageUpdater;
+
+		private readonly UlearnDb db;
 
 		public TempCourseRemover(UlearnDb db, IMasterCourseManager courseManager, ICourseStorageUpdater courseStorageUpdater)
 		{
@@ -22,26 +21,28 @@ namespace Ulearn.Web.Api.Utils.Courses
 			this.courseStorageUpdater = courseStorageUpdater;
 		}
 
-// Скрипт получения списка таблиц, где есть колока CourseId
-/*
-select t.table_schema,
-       t.table_name
-from information_schema.tables t
-inner join information_schema.columns c on c.table_name = t.table_name 
-                                and c.table_schema = t.table_schema
-where c.column_name = 'CourseId'
-      and t.table_schema not in ('information_schema', 'pg_catalog')
-      and t.table_type = 'BASE TABLE'
-order by t.table_name;
-*/
+		private static ILog Log => LogProvider.Get().ForContext(typeof(TempCourseRemover));
+
+		// Скрипт получения списка таблиц, где есть колонка CourseId
+		/*
+		select t.table_schema,
+				t.table_name
+		from information_schema.tables t
+		inner join information_schema.columns c on c.table_name = t.table_name 
+										and c.table_schema = t.table_schema
+		where c.column_name = 'CourseId'
+			and t.table_schema not in ('information_schema', 'pg_catalog')
+			and t.table_type = 'BASE TABLE'
+		order by t.table_name;
+		*/
 
 		// TODO не протестировано, что удаление работает в таком порядке.
 		public async Task RemoveTempCourseWithAllData(string baseCourseId, string userId)
 		{
 			var tempCourseId = courseManager.GetTempCourseId(baseCourseId, userId);
-			log.Info($"Удаляю временный курс {tempCourseId} со всеми данными");
+			Log.Info($"Удаляю временный курс {tempCourseId} со всеми данными");
 
-			using (var transaction = db.Database.BeginTransaction())
+			await using (var transaction = await db.Database.BeginTransactionAsync())
 			{
 				db.AcceptedSolutionsPromotes.RemoveRange(db.AcceptedSolutionsPromotes.Where(e => e.CourseId == tempCourseId));
 				db.AdditionalScores.RemoveRange(db.AdditionalScores.Where(e => e.CourseId == tempCourseId));
@@ -82,7 +83,7 @@ order by t.table_name;
 				await transaction.CommitAsync();
 			}
 
-			log.Info($"Удалил данные временного курса {tempCourseId} из базы, жду 30 сек перед чисткой СourseStorage");
+			Log.Info($"Удалил данные временного курса {tempCourseId} из базы, жду 30 сек перед чисткой CourseStorage");
 
 			await Task.Delay(TimeSpan.FromSeconds(30)); // Жду, чтобы завершилось возможно идущее обновление временных курсов.
 
@@ -90,8 +91,8 @@ order by t.table_name;
 
 			db.TempCourseErrors.RemoveRange(db.TempCourseErrors.Where(e => e.CourseId == tempCourseId));
 			db.TempCourses.RemoveRange(db.TempCourses.Where(e => e.CourseId == tempCourseId));
- 
-			log.Info($"Временный курс {tempCourseId} удален со всеми данными");
+
+			Log.Info($"Временный курс {tempCourseId} удален со всеми данными");
 		}
 	}
 }

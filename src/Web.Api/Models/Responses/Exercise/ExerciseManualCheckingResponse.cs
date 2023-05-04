@@ -3,6 +3,8 @@ using System.Runtime.Serialization;
 using Database.Models;
 using JetBrains.Annotations;
 
+// ReSharper disable NotNullOrRequiredMemberIsNotInitialized
+
 namespace Ulearn.Web.Api.Models.Responses.Exercise
 {
 	[DataContract]
@@ -16,14 +18,14 @@ namespace Ulearn.Web.Api.Models.Responses.Exercise
 		public List<ReviewInfo> Reviews;
 
 		[CanBeNull]
-		public static ExerciseManualCheckingResponse Build([CanBeNull]ManualExerciseChecking manualExerciseChecking, [NotNull]List<ReviewInfo> reviewInfos)
+		public static ExerciseManualCheckingResponse Build([CanBeNull] ManualExerciseChecking manualExerciseChecking, [NotNull] List<ReviewInfo> reviewInfos)
 		{
-			if (manualExerciseChecking == null)
+			if (manualExerciseChecking is null)
 				return null;
 			return new ExerciseManualCheckingResponse
 			{
 				Percent = manualExerciseChecking.Percent,
-				Reviews = reviewInfos,
+				Reviews = reviewInfos
 			};
 		}
 	}

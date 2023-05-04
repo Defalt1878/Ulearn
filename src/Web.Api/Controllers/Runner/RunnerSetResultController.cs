@@ -23,14 +23,13 @@ namespace Ulearn.Web.Api.Controllers.Runner
 {
 	public class RunnerSetResultController : BaseController
 	{
-		private readonly IUserSolutionsRepo userSolutionsRepo;
-		private readonly ISlideCheckingsRepo slideCheckingsRepo;
-		private readonly IGroupsRepo groupsRepo;
-		private readonly IVisitsRepo visitsRepo;
-		private readonly MetricSender metricSender;
 		private readonly WebApiConfiguration configuration;
+		private readonly IGroupsRepo groupsRepo;
+		private readonly MetricSender metricSender;
 		private readonly List<IResultObserver> resultObservers;
-		private static ILog log => LogProvider.Get().ForContext(typeof(RunnerSetResultController));
+		private readonly ISlideCheckingsRepo slideCheckingsRepo;
+		private readonly IUserSolutionsRepo userSolutionsRepo;
+		private readonly IVisitsRepo visitsRepo;
 
 		public RunnerSetResultController(ICourseStorage courseStorage, UlearnDb db, IOptions<WebApiConfiguration> options,
 			IUsersRepo usersRepo, IUserSolutionsRepo userSolutionsRepo, ISlideCheckingsRepo slideCheckingsRepo,
@@ -46,7 +45,7 @@ namespace Ulearn.Web.Api.Controllers.Runner
 				ltiResultObserver,
 				sandboxErrorsResultObserver,
 				antiPlagiarismResultObserver,
-				styleErrorsResultObserver,
+				styleErrorsResultObserver
 			};
 			this.userSolutionsRepo = userSolutionsRepo;
 			this.slideCheckingsRepo = slideCheckingsRepo;
@@ -54,9 +53,11 @@ namespace Ulearn.Web.Api.Controllers.Runner
 			this.visitsRepo = visitsRepo;
 			this.metricSender = metricSender;
 		}
-		
+
+		private new static ILog Log => LogProvider.Get().ForContext(typeof(RunnerSetResultController));
+
 		/// <summary>
-		/// Записать результат проверки решений задач
+		///     Записать результат проверки решений задач
 		/// </summary>
 		[HttpPost("/runner/set-result")]
 		public async Task<ActionResult> SetResults([FromQuery] string token, [FromQuery] string agent, [FromBody] List<RunningResults> results)
@@ -65,13 +66,13 @@ namespace Ulearn.Web.Api.Controllers.Runner
 			{
 				var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
 				var errorStr = $"Не могу принять от RunCsJob результаты проверки решений, ошибки: {string.Join(", ", errors)}";
-				log.Error(errorStr);
+				Log.Error(errorStr);
 				return StatusCode((int)HttpStatusCode.Forbidden, new ErrorResponse(errorStr));
 			}
 
 			if (configuration.RunnerToken != token)
 				return StatusCode((int)HttpStatusCode.Forbidden, new ErrorResponse("Invalid token"));
-			log.Info($"Получил от RunCsJob результаты проверки решений: [{string.Join(", ", results.Select(r => r.Id))}] от агента {agent}");
+			Log.Info($"Получил от RunCsJob результаты проверки решений: [{string.Join(", ", results.Select(r => r.Id))}] от агента {agent}");
 
 			foreach (var result in results)
 				await FuncUtils.TrySeveralTimesAsync(() => userSolutionsRepo.SaveResult(result,
@@ -103,7 +104,7 @@ namespace Ulearn.Web.Api.Controllers.Runner
 			var courseId = submissionNoTracking.CourseId;
 			var course = courseStorage.GetCourse(courseId);
 			var exerciseSlide = course.FindSlideByIdNotSafe(submissionNoTracking.SlideId) as ExerciseSlide; // SlideId проверен в вызывающем методе 
-			if (exerciseSlide == null)
+			if (exerciseSlide is null)
 				return false;
 			var exerciseMetricId = GetExerciseMetricId(courseId, exerciseSlide);
 			var automaticCheckingNoTracking = submissionNoTracking.AutomaticChecking;
@@ -123,11 +124,11 @@ namespace Ulearn.Web.Api.Controllers.Runner
 
 			await visitsRepo.UpdateScoreForVisit(courseId, exerciseSlide, userId);
 
-			if (automaticCheckingNoTracking != null)
-			{
-				var verdictForMetric = automaticCheckingNoTracking.GetVerdict().Replace(" ", "");
-				metricSender.SendCount($"exercise.{exerciseMetricId}.{verdictForMetric}");
-			}
+			if (automaticCheckingNoTracking is null)
+				return sendToReview;
+		
+			var verdictForMetric = automaticCheckingNoTracking.GetVerdict().Replace(" ", "");
+			metricSender.SendCount($"exercise.{exerciseMetricId}.{verdictForMetric}");
 
 			return sendToReview;
 		}
@@ -136,8 +137,8 @@ namespace Ulearn.Web.Api.Controllers.Runner
 		{
 			var slideTitleForMetric = exerciseSlide.LatinTitle.Replace(".", "_").ToLower(CultureInfo.InvariantCulture);
 			if (slideTitleForMetric.Length > 25)
-				slideTitleForMetric = slideTitleForMetric.Substring(0, 25);
-			return $"{courseId.ToLower(CultureInfo.InvariantCulture)}.{exerciseSlide.Id.ToString("N").Substring(32 - 25)}.{slideTitleForMetric}";
+				slideTitleForMetric = slideTitleForMetric[..25];
+			return $"{courseId.ToLower(CultureInfo.InvariantCulture)}.{exerciseSlide.Id.ToString("N")[(32 - 25)..]}.{slideTitleForMetric}";
 		}
 
 		private async Task SendResultToObservers(UserExerciseSubmission submission, RunningResults result)

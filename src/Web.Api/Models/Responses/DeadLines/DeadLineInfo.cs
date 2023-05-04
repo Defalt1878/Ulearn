@@ -26,7 +26,7 @@ namespace Ulearn.Web.Api.Models.Responses.DeadLines
 
 		[DataMember]
 		public DeadLineSlideType SlideType { get; set; }
-		
+
 		[DataMember]
 		[CanBeNull]
 		public string SlideValue { get; set; }
@@ -50,7 +50,7 @@ namespace Ulearn.Web.Api.Models.Responses.DeadLines
 				SlideType = deadLine.SlideType,
 				SlideValue = deadLine.SlideValue,
 				UserIds = deadLine.UserIds,
-				ScorePercent = deadLine.ScorePercent,
+				ScorePercent = deadLine.ScorePercent
 			};
 		}
 	}

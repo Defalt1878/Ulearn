@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Runtime.Serialization;
-using Database.Models;
 using JetBrains.Annotations;
 using Ulearn.Core.Courses.Slides;
 
@@ -20,7 +18,7 @@ namespace Ulearn.Web.Api.Models.Common
 		public bool Hide { get; set; }
 
 		/// <summary>
-		/// Человекочитаемый фрагмент url для слайда
+		///     Человекочитаемый фрагмент url для слайда
 		/// </summary>
 		[DataMember]
 		public string Slug { get; set; }
@@ -39,7 +37,7 @@ namespace Ulearn.Web.Api.Models.Common
 		public string ApiUrl { get; set; }
 
 		/// <summary>
-		/// Количество вопросов в quiz
+		///     Количество вопросов в quiz
 		/// </summary>
 		[DataMember]
 		public int QuestionsCount { get; set; }

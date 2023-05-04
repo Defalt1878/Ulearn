@@ -4,6 +4,7 @@ using System.Linq;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Caching.Memory;
 using Newtonsoft.Json.Serialization;
+// ReSharper disable PropertyCanBeMadeInitOnly.Global
 
 namespace Ulearn.Web.Api.Models
 {
@@ -28,7 +29,7 @@ namespace Ulearn.Web.Api.Models
 		public string GetValidNamingStrategyHeader()
 		{
 			var httpContext = options.HttpContextAccessorProvider().HttpContext;
-			var namingStrategyHeader = httpContext.Request.Headers[options.HeaderName].FirstOrDefault()?.ToLower();
+			var namingStrategyHeader = httpContext!.Request.Headers[options.HeaderName].FirstOrDefault()?.ToLower();
 
 			if (string.IsNullOrEmpty(namingStrategyHeader) || !options.NamingStrategies.ContainsKey(namingStrategyHeader))
 				return string.Empty;
@@ -62,7 +63,7 @@ namespace Ulearn.Web.Api.Models
 
 		public override JsonContract ResolveContract(Type type)
 		{
-			if (type == null)
+			if (type is null)
 				throw new ArgumentNullException(nameof(type));
 
 			var cacheKey = apiHeaderJsonNamingStrategy.GetValidNamingStrategyHeader() + type;

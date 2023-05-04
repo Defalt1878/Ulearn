@@ -29,16 +29,22 @@ namespace Ulearn.Web.Api.Models.Responses.Users
 	{
 		[DataMember]
 		public int Score { get; set; }
+
 		[DataMember]
 		public int UsedAttempts { get; set; }
+
 		[DataMember]
 		public bool WaitingForManualChecking { get; set; }
+
 		[DataMember]
 		public bool ProhibitFurtherManualChecking { get; set; }
+
 		[DataMember]
 		public bool Visited { get; set; }
+
 		[DataMember]
 		public DateTime? Timestamp { get; set; }
+
 		[DataMember]
 		public bool IsSkipped { get; set; }
 	}

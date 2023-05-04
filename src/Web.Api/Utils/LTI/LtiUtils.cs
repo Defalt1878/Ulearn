@@ -1,28 +1,28 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Database.Repos;
-using Vostok.Logging.Abstractions;
 using LtiLibrary.Core.Outcomes.v1;
 using Newtonsoft.Json;
 using Ulearn.Core.Courses.Slides;
 using Ulearn.Core.Model;
 using Ulearn.Web.Api.Controllers;
+using Vostok.Logging.Abstractions;
 
 namespace Ulearn.Web.Api.Utils.LTI
 {
 	public static class LtiUtils
 	{
-		private static ILog log => LogProvider.Get().ForContext(typeof(LtiUtils));
+		private static ILog Log => LogProvider.Get().ForContext(typeof(LtiUtils));
 
 		public static async Task SubmitScore(Slide slide, string userId, int score,
 			string ltiRequestJson, ILtiConsumersRepo consumersRepo)
 		{
 			var ltiRequest = JsonConvert.DeserializeObject<LtiRequest>(ltiRequestJson);
-			log.Info($"Нашёл Lti запрос с ConsumerKey = {ltiRequest.ConsumerKey}, ищу secret для этого consumer-а");
+			Log.Info($"Нашёл Lti запрос с ConsumerKey = {ltiRequest.ConsumerKey}, ищу secret для этого consumer-а");
 
 			var consumerSecret = (await consumersRepo.Find(ltiRequest.ConsumerKey)).Secret;
 
-			log.Info($"Надо отправить результаты слайда {slide.Id} пользователя {userId} по LTI. Нашёл LtiRequest: {ltiRequestJson}");
+			Log.Info($"Надо отправить результаты слайда {slide.Id} пользователя {userId} по LTI. Нашёл LtiRequest: {ltiRequestJson}");
 			UriBuilder uri;
 			try
 			{
@@ -30,7 +30,7 @@ namespace Ulearn.Web.Api.Utils.LTI
 			}
 			catch (Exception e)
 			{
-				log.Error(e, $"Неверный адрес отправки результатов по LTI: {ltiRequest.LisOutcomeServiceUrl}");
+				Log.Error(e, $"Неверный адрес отправки результатов по LTI: {ltiRequest.LisOutcomeServiceUrl}");
 				throw;
 			}
 
@@ -43,7 +43,7 @@ namespace Ulearn.Web.Api.Utils.LTI
 
 			var maxScore = BaseController.GetMaxScoreForUsersSlide(slide, true, false, false);
 			var outputScore = score / (double)maxScore;
-			log.Info($"Отправляю результаты на {ltiRequest.LisOutcomeServiceUrl}: {score} из {maxScore} ({outputScore})");
+			Log.Info($"Отправляю результаты на {ltiRequest.LisOutcomeServiceUrl}: {score} из {maxScore} ({outputScore})");
 
 			/* Sometimes score is bigger then slide's MaxScore, i.e. in case of manual checking */
 			if (score > maxScore)

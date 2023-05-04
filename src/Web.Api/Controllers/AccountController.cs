@@ -11,7 +11,6 @@ using Database.Repos;
 using Database.Repos.Groups;
 using Database.Repos.SystemAccessesRepo;
 using Database.Repos.Users;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -30,14 +29,14 @@ namespace Ulearn.Web.Api.Controllers
 	[Route("/account")]
 	public class AccountController : BaseController
 	{
-		private readonly UlearnUserManager userManager;
-		private readonly SignInManager<ApplicationUser> signInManager;
+		private readonly WebApiConfiguration configuration;
 		private readonly ICourseRolesRepo courseRolesRepo;
 		private readonly ICoursesRepo coursesRepo;
-		private readonly ISystemAccessesRepo systemAccessesRepo;
 		private readonly IGroupMembersRepo groupMembersRepo;
-		private readonly WebApiConfiguration configuration;
+		private readonly SignInManager<ApplicationUser> signInManager;
+		private readonly ISystemAccessesRepo systemAccessesRepo;
 		private readonly IUnitsRepo unitsRepo;
+		private readonly UlearnUserManager userManager;
 
 		public AccountController(IOptions<WebApiConfiguration> options, ICourseStorage courseStorage, UlearnDb db,
 			UlearnUserManager userManager, SignInManager<ApplicationUser> signInManager,
@@ -52,11 +51,11 @@ namespace Ulearn.Web.Api.Controllers
 			this.systemAccessesRepo = systemAccessesRepo;
 			this.groupMembersRepo = groupMembersRepo;
 			this.unitsRepo = unitsRepo;
-			this.configuration = options.Value;
+			configuration = options.Value;
 		}
 
 		/// <summary>
-		/// Информация о текущем пользователе 
+		///     Информация о текущем пользователе
 		/// </summary>
 		[HttpGet]
 		[Authorize]
@@ -67,9 +66,9 @@ namespace Ulearn.Web.Api.Controllers
 			return new GetMeResponse
 			{
 				IsAuthenticated = true,
-				User = BuildShortUserInfo(user, discloseLogin: true),
+				User = BuildShortUserInfo(user, true),
 				AccountProblems = await GetAccountProblems(user).ConfigureAwait(false),
-				SystemAccesses = systemAccesses.Select(a => a.AccessType).ToList(),
+				SystemAccesses = systemAccesses.Select(a => a.AccessType).ToList()
 			};
 		}
 
@@ -101,7 +100,7 @@ namespace Ulearn.Web.Api.Controllers
 		}
 
 		/// <summary>
-		/// Получить JWT-токен по кукам 
+		///     Получить JWT-токен по кукам
 		/// </summary>
 		[HttpPost("token")]
 		[Authorize(AuthenticationSchemes = "Identity.Application" /* = IdentityConstants.ApplicationScheme */)]
@@ -113,7 +112,7 @@ namespace Ulearn.Web.Api.Controllers
 		}
 
 		/// <summary>
-		/// Получить ключ на пользователя на заданныей срок в днях
+		///     Получить ключ на пользователя на заданный срок в днях
 		/// </summary>
 		[HttpPost("api-token")]
 		[Authorize]
@@ -143,18 +142,18 @@ namespace Ulearn.Web.Api.Controllers
 			var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
 			return new TokenResponse
 			{
-				Token = tokenString,
+				Token = tokenString
 			};
 		}
 
 		/// <summary>
-		/// Получить JWT-токен по логину-паролю
+		///     Получить JWT-токен по логину-паролю
 		/// </summary>
 		[HttpPost("login")]
 		public async Task<ActionResult<TokenResponse>> Login([FromBody] LoginPasswordParameters loginPassword)
 		{
 			var appUser = await db.Users.FirstOrDefaultAsync(u => u.UserName == loginPassword.Login && !u.IsDeleted);
-			if (appUser == null)
+			if (appUser is null)
 				return Forbid();
 			var result = await userManager.CheckPasswordAsync(appUser, loginPassword.Password);
 			if (!result)
@@ -167,19 +166,19 @@ namespace Ulearn.Web.Api.Controllers
 			var token = new JwtSecurityToken(
 				configuration.Web.Authentication.Jwt.Issuer,
 				configuration.Web.Authentication.Jwt.Audience,
-				new[] { new Claim("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier", appUser.Id), },
+				new[] { new Claim("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier", appUser.Id) },
 				expires: expires,
 				signingCredentials: signingCredentials
 			);
 			var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
 			return new TokenResponse
 			{
-				Token = tokenString,
+				Token = tokenString
 			};
 		}
 
 		/// <summary>
-		/// Список ролей («курс-админ», «преподаватель», «тестер») текущего пользователя
+		///     Список ролей («курс-админ», «преподаватель», «тестер») текущего пользователя
 		/// </summary>
 		[HttpGet("roles")]
 		[Authorize]
@@ -208,7 +207,7 @@ namespace Ulearn.Web.Api.Controllers
 				CourseRoles = rolesByCourse.Select(kvp => new CourseRoleResponse
 				{
 					CourseId = kvp.Key,
-					Role = kvp.Value,
+					Role = kvp.Value
 				}).ToList(),
 				CourseAccesses = courseAccessesByCourseId,
 				GroupsAsStudent = groupsWhereIAmStudent.Where(g => g.CanUsersSeeGroupProgress).Select(BuildShortGroupInfo).ToList()
@@ -216,14 +215,13 @@ namespace Ulearn.Web.Api.Controllers
 		}
 
 		/// <summary>
-		/// Выход
+		///     Выход
 		/// </summary>
 		[HttpPost("logout")]
 		[Authorize]
 		public async Task<ActionResult<LogoutResponse>> Logout()
 		{
 			await signInManager.SignOutAsync().ConfigureAwait(false);
-			//await HttpContext.SignOutAsync().ConfigureAwait(false);
 
 			return new LogoutResponse
 			{

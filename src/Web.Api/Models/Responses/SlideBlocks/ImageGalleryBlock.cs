@@ -9,13 +9,6 @@ namespace Ulearn.Web.Api.Models.Responses.SlideBlocks
 	[DisplayName("imageGallery")]
 	public class ImageGalleryBlockResponse : IApiSlideBlock
 	{
-		[DefaultValue(false)]
-		[DataMember(Name = "hide", EmitDefaultValue = false)]
-		public bool Hide { get; set; }
-
-		[DataMember(Name = "imageUrls")]
-		public string[] ImageUrls { get; set; }
-
 		public ImageGalleryBlockResponse(ImageGalleryBlock imageGalleryBlock, string baseUrlApi, string courseId, string unitPathRelativeToCourse)
 		{
 			Hide = imageGalleryBlock.Hide;
@@ -25,5 +18,12 @@ namespace Ulearn.Web.Api.Models.Responses.SlideBlocks
 		public ImageGalleryBlockResponse()
 		{
 		}
+
+		[DataMember(Name = "imageUrls")]
+		public string[] ImageUrls { get; set; }
+
+		[DefaultValue(false)]
+		[DataMember(Name = "hide", EmitDefaultValue = false)]
+		public bool Hide { get; set; }
 	}
 }

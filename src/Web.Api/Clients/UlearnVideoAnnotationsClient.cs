@@ -35,7 +35,7 @@ namespace Ulearn.Web.Api.Clients
 			if (string.IsNullOrEmpty(videoAnnotationsGoogleDoc))
 				return null;
 			var client = instance;
-			if (client == null)
+			if (client is null)
 				return null;
 			try
 			{
@@ -46,7 +46,7 @@ namespace Ulearn.Web.Api.Clients
 				});
 				return annotationsResponse.Annotation;
 			}
-			catch (ApiClientException e)
+			catch (ApiClientException)
 			{
 				return null;
 			}

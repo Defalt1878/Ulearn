@@ -7,15 +7,15 @@ namespace Ulearn.Web.Api.Models.Responses.Flashcards
 	public class FlashcardsUnitInfo
 	{
 		[DataMember]
-		public string UnitTitle;
-
-		[DataMember]
-		public bool Unlocked;
-
-		[DataMember]
 		public int CardsCount;
 
 		[DataMember]
 		public Guid UnitId;
+
+		[DataMember]
+		public string UnitTitle;
+
+		[DataMember]
+		public bool Unlocked;
 	}
 }

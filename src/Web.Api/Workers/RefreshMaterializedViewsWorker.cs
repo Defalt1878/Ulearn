@@ -11,12 +11,13 @@ namespace Ulearn.Web.Api.Workers
 	public class RefreshMaterializedViewsWorker : VostokScheduledApplication
 	{
 		private readonly IServiceScopeFactory serviceScopeFactory;
-		private static ILog log => LogProvider.Get().ForContext(typeof(RefreshMaterializedViewsWorker));
 
 		public RefreshMaterializedViewsWorker(IServiceScopeFactory serviceScopeFactory)
 		{
 			this.serviceScopeFactory = serviceScopeFactory;
 		}
+
+		private static ILog Log => LogProvider.Get().ForContext(typeof(RefreshMaterializedViewsWorker));
 
 		public override void Setup(IScheduledActionsBuilder builder, IVostokHostingEnvironment environment)
 		{
@@ -28,13 +29,14 @@ namespace Ulearn.Web.Api.Workers
 
 		private async Task RefreshExerciseStatisticsMaterializedViews()
 		{
-			log.Info("RefreshExerciseStatisticsMaterializedViews");
+			Log.Info("RefreshExerciseStatisticsMaterializedViews");
 			using (var scope = serviceScopeFactory.CreateScope())
 			{
 				var slideCheckingsRepo = scope.ServiceProvider.GetService<ISlideCheckingsRepo>();
 				await slideCheckingsRepo!.RefreshExerciseStatisticsMaterializedViews();
 			}
-			log.Info("End RefreshExerciseStatisticsMaterializedViews");
+
+			Log.Info("End RefreshExerciseStatisticsMaterializedViews");
 		}
 	}
 }

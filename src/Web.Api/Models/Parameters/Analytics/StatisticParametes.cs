@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
-
+// ReSharper disable PropertyCanBeMadeInitOnly.Global
 
 namespace Ulearn.Web.Api.Models.Parameters.Analytics
 {
@@ -9,11 +9,9 @@ namespace Ulearn.Web.Api.Models.Parameters.Analytics
 		[FromQuery(Name = "courseId")]
 		public string CourseId { get; set; }
 	}
-	
-	
+
 	public class CourseStatisticsParams : StatisticsParams
 	{
-
 		[FromQuery(Name = "groupsIds")]
 		public List<string> GroupsIds { get; set; }
 

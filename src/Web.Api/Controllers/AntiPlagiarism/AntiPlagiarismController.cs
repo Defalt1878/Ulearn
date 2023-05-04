@@ -21,9 +21,11 @@ namespace Ulearn.Web.Api.Controllers.AntiPlagiarism
 	[Route("/antiplagiarism")]
 	public class AntiPlagiarismController : BaseController
 	{
-		private readonly IUserSolutionsRepo userSolutionsRepo;
+		private static readonly ConcurrentDictionary<Tuple<Guid, Guid>, Tuple<DateTime, GetAuthorPlagiarismsResponse>> plagiarismsCache = new();
+		private static readonly TimeSpan cacheLifeTime = TimeSpan.FromMinutes(10);
 		private readonly IAntiPlagiarismClient antiPlagiarismClient;
-		
+		private readonly IUserSolutionsRepo userSolutionsRepo;
+
 		public AntiPlagiarismController(
 			ICourseStorage courseStorage,
 			UlearnDb db,
@@ -48,7 +50,7 @@ namespace Ulearn.Web.Api.Controllers.AntiPlagiarism
 			if (!slide.Exercise.CheckForPlagiarism)
 				return new AntiPlagiarismInfoResponse
 				{
-					Status = "notChecked",
+					Status = "notChecked"
 				};
 
 			var antiPlagiarismsResult = await GetAuthorPlagiarismsAsync(submission);
@@ -57,35 +59,27 @@ namespace Ulearn.Web.Api.Controllers.AntiPlagiarism
 			{
 				Status = "checked",
 				SuspicionLevel = SuspicionLevel.None,
-				SuspiciousAuthorsCount = 0,
+				SuspiciousAuthorsCount = 0
 			};
 			var faintSuspicionAuthorsIds = new HashSet<Guid>();
 			var strongSuspicionAuthorsIds = new HashSet<Guid>();
 			foreach (var researchedSubmission in antiPlagiarismsResult.ResearchedSubmissions)
-			{
-				foreach (var plagiarism in researchedSubmission.Plagiarisms)
+			foreach (var plagiarism in researchedSubmission.Plagiarisms)
+				if (plagiarism.Weight >= antiPlagiarismsResult.SuspicionLevels.StrongSuspicion)
 				{
-					if (plagiarism.Weight >= antiPlagiarismsResult.SuspicionLevels.StrongSuspicion)
-					{
-						strongSuspicionAuthorsIds.Add(plagiarism.SubmissionInfo.AuthorId);
-						info.SuspicionLevel = SuspicionLevel.Strong;
-					}
-					else if (plagiarism.Weight >= antiPlagiarismsResult.SuspicionLevels.FaintSuspicion && info.SuspicionLevel != SuspicionLevel.Strong)
-					{
-						faintSuspicionAuthorsIds.Add(plagiarism.SubmissionInfo.AuthorId);
-						info.SuspicionLevel = SuspicionLevel.Faint;
-					}
+					strongSuspicionAuthorsIds.Add(plagiarism.SubmissionInfo.AuthorId);
+					info.SuspicionLevel = SuspicionLevel.Strong;
 				}
-			}
+				else if (plagiarism.Weight >= antiPlagiarismsResult.SuspicionLevels.FaintSuspicion && info.SuspicionLevel != SuspicionLevel.Strong)
+				{
+					faintSuspicionAuthorsIds.Add(plagiarism.SubmissionInfo.AuthorId);
+					info.SuspicionLevel = SuspicionLevel.Faint;
+				}
 
 			info.SuspiciousAuthorsCount = info.SuspicionLevel == SuspicionLevel.Faint ? faintSuspicionAuthorsIds.Count : strongSuspicionAuthorsIds.Count;
 
 			return info;
 		}
-		
-
-		private static readonly ConcurrentDictionary<Tuple<Guid, Guid>, Tuple<DateTime, GetAuthorPlagiarismsResponse>> plagiarismsCache = new();
-		private static readonly TimeSpan cacheLifeTime = TimeSpan.FromMinutes(10);
 
 		private async Task<GetAuthorPlagiarismsResponse> GetAuthorPlagiarismsAsync(UserExerciseSubmission submission)
 		{
@@ -102,11 +96,11 @@ namespace Ulearn.Web.Api.Controllers.AntiPlagiarism
 				TaskId = taskId,
 				Language = submission.Language
 			});
-			
+
 			plagiarismsCache.AddOrUpdate(cacheKey,
-				key => Tuple.Create(DateTime.Now, value),
-				(key, old) => Tuple.Create(DateTime.Now, value));
-			
+				_ => Tuple.Create(DateTime.Now, value),
+				(_, _) => Tuple.Create(DateTime.Now, value));
+
 			return value;
 		}
 

@@ -26,22 +26,19 @@ namespace Ulearn.Web.Api.Controllers.Slides
 {
 	public class SlideRenderer
 	{
-		private readonly IUlearnVideoAnnotationsClient videoAnnotationsClient;
-		private readonly IUserSolutionsRepo solutionsRepo;
 		private readonly ICourseRolesRepo courseRolesRepo;
-		private readonly ISlideCheckingsRepo slideCheckingsRepo;
-		private readonly ISelfCheckupsRepo selfCheckupsRepo;
-		private readonly IUserSolutionsRepo userSolutionsRepo;
 		private readonly MetricSender metricSender;
+		private readonly ISelfCheckupsRepo selfCheckupsRepo;
+		private readonly ISlideCheckingsRepo slideCheckingsRepo;
+		private readonly IUserSolutionsRepo userSolutionsRepo;
+		private readonly IUlearnVideoAnnotationsClient videoAnnotationsClient;
 
 		public SlideRenderer(IUlearnVideoAnnotationsClient videoAnnotationsClient,
-			IUserSolutionsRepo solutionsRepo,
 			MetricSender metricSender,
 			ISlideCheckingsRepo slideCheckingsRepo, ICourseRolesRepo courseRolesRepo,
 			ISelfCheckupsRepo selfCheckupsRepo, IUserSolutionsRepo userSolutionsRepo)
 		{
 			this.videoAnnotationsClient = videoAnnotationsClient;
-			this.solutionsRepo = solutionsRepo;
 			this.slideCheckingsRepo = slideCheckingsRepo;
 			this.courseRolesRepo = courseRolesRepo;
 			this.selfCheckupsRepo = selfCheckupsRepo;
@@ -54,7 +51,7 @@ namespace Ulearn.Web.Api.Controllers.Slides
 			return BuildShortSlideInfo<ShortSlideInfo>(courseId, slide, getSlideMaxScoreFunc, getGitEditLink, urlHelper);
 		}
 
-		private T BuildShortSlideInfo<T>(string courseId, Slide slide, Func<Slide, int> getSlideMaxScoreFunc, Func<Slide, string> getGitEditLink, IUrlHelper urlHelper)
+		private static T BuildShortSlideInfo<T>(string courseId, Slide slide, Func<Slide, int> getSlideMaxScoreFunc, Func<Slide, string> getGitEditLink, IUrlHelper urlHelper)
 			where T : ShortSlideInfo, new()
 		{
 			return new T
@@ -63,7 +60,7 @@ namespace Ulearn.Web.Api.Controllers.Slides
 				Title = slide.Title,
 				Hide = slide.Hide,
 				Slug = slide.Url,
-				ApiUrl = urlHelper.Action("SlideInfo", "Slides", new { courseId = courseId, slideId = slide.Id }),
+				ApiUrl = urlHelper.Action("SlideInfo", "Slides", new { courseId, slideId = slide.Id }),
 				MaxScore = getSlideMaxScoreFunc(slide),
 				ScoringGroup = slide.ScoringGroup,
 				Type = GetSlideType(slide),
@@ -74,24 +71,20 @@ namespace Ulearn.Web.Api.Controllers.Slides
 				AdditionalContentInfo = new AdditionalContent
 				{
 					IsAdditionalContent = slide.IsExtraContent,
-					PublicationDate = null,
+					PublicationDate = null
 				}
 			};
 		}
 
 		private static SlideType GetSlideType(Slide slide)
 		{
-			switch (slide)
+			return slide switch
 			{
-				case ExerciseSlide _:
-					return SlideType.Exercise;
-				case QuizSlide _:
-					return SlideType.Quiz;
-				case FlashcardSlide _:
-					return SlideType.Flashcards;
-				default:
-					return SlideType.Lesson;
-			}
+				ExerciseSlide _ => SlideType.Exercise,
+				QuizSlide _ => SlideType.Quiz,
+				FlashcardSlide _ => SlideType.Flashcards,
+				_ => SlideType.Lesson
+			};
 		}
 
 		public async Task<ApiSlideInfo> BuildSlideInfo(SlideRenderContext slideRenderContext, Func<Slide, int> getSlideMaxScoreFunc, Func<Slide, string> getGitEditLink)
@@ -108,36 +101,40 @@ namespace Ulearn.Web.Api.Controllers.Slides
 		public async Task<IEnumerable<IApiSlideBlock>> ToApiSlideBlocks(SlideBlock slideBlock, SlideRenderContext context)
 		{
 			if (context.RemoveHiddenBlocks && slideBlock.Hide)
-				return new IApiSlideBlock[] { };
-			var apiSlideBlocks = (IEnumerable<IApiSlideBlock>)await RenderBlock((dynamic)slideBlock, context);
+				return Array.Empty<IApiSlideBlock>();
+			var apiSlideBlocks = await RenderBlock(slideBlock, context);
 			if (context.RemoveHiddenBlocks)
 				apiSlideBlocks = apiSlideBlocks.Where(b => !b.Hide);
 			return apiSlideBlocks;
 		}
 
-		private async Task<IEnumerable<IApiSlideBlock>> RenderBlock(SlideBlock b, SlideRenderContext context)
+		private async Task<IEnumerable<IApiSlideBlock>> RenderBlock(SlideBlock slideBlock, SlideRenderContext context)
 		{
-			return Enumerable.Empty<IApiSlideBlock>();
-		}
-
-		private async Task<IEnumerable<IApiSlideBlock>> RenderBlock(CodeBlock b, SlideRenderContext context)
-		{
-			return new[] { new CodeBlockResponse(b) };
-		}
-
-		private async Task<IEnumerable<IApiSlideBlock>> RenderBlock(HtmlBlock b, SlideRenderContext context)
-		{
-			return new[] { new HtmlBlockResponse(b, false, context.BaseUrlApi) };
-		}
-
-		private async Task<IEnumerable<IApiSlideBlock>> RenderBlock(ImageGalleryBlock b, SlideRenderContext context)
-		{
-			return new[] { new ImageGalleryBlockResponse(b, context.BaseUrlApi, context.CourseId, context.Slide.Unit.UnitDirectoryRelativeToCourse) };
-		}
-
-		private async Task<IEnumerable<IApiSlideBlock>> RenderBlock(TexBlock b, SlideRenderContext context)
-		{
-			return new[] { new TexBlockResponse(b) };
+			return slideBlock switch
+			{
+				CodeBlock block => new[]
+				{
+					new CodeBlockResponse(block)
+				},
+				HtmlBlock block => new[]
+				{
+					new HtmlBlockResponse(block, false, context.BaseUrlApi)
+				},
+				ImageGalleryBlock block => new[]
+				{
+					new ImageGalleryBlockResponse(block, context.BaseUrlApi, context.CourseId, context.Slide.Unit.UnitDirectoryRelativeToCourse)
+				},
+				TexBlock block => new[]
+				{
+					new TexBlockResponse(block)
+				},
+				SpoilerBlock block => await RenderBlock(block, context),
+				MarkdownBlock block => RenderBlock(block, context),
+				YoutubeBlock block => await RenderBlock(block, context),
+				SelfCheckupsBlock block => await RenderBlock(block, context),
+				AbstractExerciseBlock block => await RenderBlock(block, context),
+				_ => Enumerable.Empty<IApiSlideBlock>()
+			};
 		}
 
 		private async Task<IEnumerable<IApiSlideBlock>> RenderBlock(SpoilerBlock sb, SlideRenderContext context)
@@ -150,7 +147,7 @@ namespace Ulearn.Web.Api.Controllers.Slides
 			return new[] { new SpoilerBlockResponse(sb, innerBlocks) };
 		}
 
-		private static async Task<IEnumerable<IApiSlideBlock>> RenderBlock(MarkdownBlock mb, SlideRenderContext context)
+		private static IEnumerable<IApiSlideBlock> RenderBlock(MarkdownBlock mb, SlideRenderContext context)
 		{
 			var renderedMarkdown = mb.RenderMarkdown(context.Slide, new MarkdownRenderContext(context.BaseUrlApi, context.BaseUrlWeb, context.CourseId, context.Slide.Unit.UnitDirectoryRelativeToCourse));
 			var parsedBlocks = ParseBlocksFromMarkdown(renderedMarkdown);
@@ -215,12 +212,12 @@ namespace Ulearn.Web.Api.Controllers.Slides
 						.GetAllSubmissionsByUserAllInclude(context.CourseId, context.Slide.Id, context.UserId)
 						.OrderByDescending(s => s.Timestamp)
 						.ToListAsync())
-					.FirstOrDefault(s => s.ManualChecking != null && s.ManualChecking.Reviews.Count > 0);
-				if (lastSubmissionWithReview != null)
+					.FirstOrDefault(s => s.ManualChecking is not null && s.ManualChecking.Reviews.Count > 0);
+				if (lastSubmissionWithReview is not null)
 					slideCheckups = slideCheckups
 						.Prepend(new ExerciseSelfCheckup(lastSubmissionWithReview.Id))
 						.ToList();
-				metricSender.SendCount($"exercise.selfCheckups.show", slideCheckups.Count);
+				metricSender.SendCount("exercise.selfCheckups.show", slideCheckups.Count);
 				metricSender.SendCount($"exercise.selfCheckups.show.{context.CourseId}", slideCheckups.Count);
 				selfCheckups = SelfCheckupBlockResponse.BuildCheckups(slideCheckups, checkups);
 			}
@@ -230,7 +227,7 @@ namespace Ulearn.Web.Api.Controllers.Slides
 				CanSeeCheckerLogs = isCourseAdmin,
 				AttemptsStatistics = exerciseAttemptsStatistics,
 				Checkups = selfCheckups,
-				markdownRenderContext = new(context.BaseUrlApi, context.BaseUrlWeb, context.CourseId, context.Slide.Unit.UnitDirectoryRelativeToCourse)
+				markdownRenderContext = new MarkdownRenderContext(context.BaseUrlApi, context.BaseUrlWeb, context.CourseId, context.Slide.Unit.UnitDirectoryRelativeToCourse)
 			};
 			return new[] { new ExerciseBlockResponse(b, exerciseSlideRendererContext) };
 		}
@@ -239,41 +236,51 @@ namespace Ulearn.Web.Api.Controllers.Slides
 		{
 			var parser = new HtmlParser();
 			var document = parser.ParseDocument(renderedMarkdown);
-			var rootElements = document.Body.Children;
+			var rootElements = document.Body!.Children;
 			var blocks = new List<IApiSlideBlock>();
 			foreach (var element in rootElements)
 			{
 				var tagName = element.TagName.ToLower();
-				if (tagName == "textarea")
+				switch (tagName)
 				{
-					var langStr = element.GetAttribute("data-lang");
-					var lang = (Language)Enum.Parse(typeof(Language), langStr, true);
-					var code = element.TextContent;
-					blocks.Add(new CodeBlockResponse { Code = code, Language = lang });
-				}
-				else if (tagName == "img")
-				{
-					var href = element.GetAttribute("href");
-					blocks.Add(new ImageGalleryBlockResponse { ImageUrls = new[] { href } });
-				}
-				else if (tagName == "p"
-						&& element.Children.Length == 1
-						&& string.Equals(element.Children[0].TagName, "img", StringComparison.OrdinalIgnoreCase)
-						&& string.IsNullOrWhiteSpace(element.TextContent))
-				{
-					var href = element.Children[0].GetAttribute("src");
-					blocks.Add(new ImageGalleryBlockResponse { ImageUrls = new[] { href } });
-				}
-				else
-				{
-					var htmlContent = element.OuterHtml;
-					if (blocks.Count > 0 && blocks.Last() is HtmlBlockResponse last)
+					case "textarea":
 					{
-						htmlContent = last.Content + "\n" + htmlContent;
-						blocks[blocks.Count - 1] = new HtmlBlockResponse { Content = htmlContent, FromMarkdown = true };
+						var langStr = element.GetAttribute("data-lang");
+						Language? lang = langStr is null ? null : Enum.Parse<Language>(langStr, true);
+						var code = element.TextContent;
+						blocks.Add(new CodeBlockResponse { Code = code, Language = lang });
+						break;
 					}
-					else
-						blocks.Add(new HtmlBlockResponse { Content = htmlContent, FromMarkdown = true });
+					case "img":
+					{
+						var href = element.GetAttribute("href");
+						blocks.Add(new ImageGalleryBlockResponse { ImageUrls = new[] { href } });
+						break;
+					}
+					case "p" 
+						when element.Children.Length == 1 
+							&& string.Equals(element.Children[0].TagName, "img", StringComparison.OrdinalIgnoreCase) 
+							&& string.IsNullOrWhiteSpace(element.TextContent):
+					{
+						var href = element.Children[0].GetAttribute("src");
+						blocks.Add(new ImageGalleryBlockResponse { ImageUrls = new[] { href } });
+						break;
+					}
+					default:
+					{
+						var htmlContent = element.OuterHtml;
+						if (blocks.Count > 0 && blocks.Last() is HtmlBlockResponse last)
+						{
+							htmlContent = last.Content + "\n" + htmlContent;
+							blocks[^1] = new HtmlBlockResponse { Content = htmlContent, FromMarkdown = true };
+						}
+						else
+						{
+							blocks.Add(new HtmlBlockResponse { Content = htmlContent, FromMarkdown = true });
+						}
+
+						break;
+					}
 				}
 			}
 

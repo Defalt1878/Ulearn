@@ -9,16 +9,6 @@ namespace Ulearn.Web.Api.Models.Responses.SlideBlocks
 	[DisplayName("code")]
 	public class CodeBlockResponse : IApiSlideBlock
 	{
-		[DefaultValue(false)]
-		[DataMember(Name = "hide", EmitDefaultValue = false)]
-		public bool Hide { get; set; }
-
-		[DataMember(Name = "code")]
-		public string Code { get; set; }
-
-		[DataMember(Name = "language")]
-		public Language? Language { get; set; }
-
 		public CodeBlockResponse(CodeBlock codeBlock)
 		{
 			Hide = codeBlock.Hide;
@@ -29,5 +19,15 @@ namespace Ulearn.Web.Api.Models.Responses.SlideBlocks
 		public CodeBlockResponse()
 		{
 		}
+
+		[DataMember(Name = "code")]
+		public string Code { get; set; }
+
+		[DataMember(Name = "language")]
+		public Language? Language { get; set; }
+
+		[DefaultValue(false)]
+		[DataMember(Name = "hide", EmitDefaultValue = false)]
+		public bool Hide { get; set; }
 	}
 }
