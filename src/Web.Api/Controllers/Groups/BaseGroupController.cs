@@ -12,125 +12,124 @@ using Ulearn.Core.Courses.Units;
 using Ulearn.Web.Api.Models.Responses.Groups;
 using GroupSettings = Ulearn.Web.Api.Models.Responses.Groups.GroupSettings;
 
-namespace Ulearn.Web.Api.Controllers.Groups
+namespace Ulearn.Web.Api.Controllers.Groups;
+
+public abstract class BaseGroupController : BaseController
 {
-	public abstract class BaseGroupController : BaseController
+	protected BaseGroupController(ICourseStorage courseStorage, UlearnDb db, IUsersRepo usersRepo)
+		: base(courseStorage, db, usersRepo)
 	{
-		protected BaseGroupController(ICourseStorage courseStorage, UlearnDb db, IUsersRepo usersRepo)
-			: base(courseStorage, db, usersRepo)
+	}
+
+	protected GroupSettings BuildGroupInfo(
+		GroupBase group,
+		int? membersCount = null,
+		IEnumerable<GroupAccess> accesses = null,
+		bool addGroupApiUrl = false,
+		bool? isLinkEnabled = null,
+		bool? isUserMemberOfGroup = null,
+		[CanBeNull] string superGroupName = null
+	)
+	{
+		if (group is null)
+			throw new ArgumentNullException(nameof(group));
+
+		var isManualCheckingEnabled = (bool?)null;
+		var isManualCheckingEnabledForOldSolutions = (bool?)null;
+		var defaultProhibitFurtherReview = (bool?)null;
+		var canUsersSeeGroupProgress = (bool?)null;
+		var superGroupId = (int?)null;
+
+		var distributionTableLink = (string)null;
+
+		if (group is SingleGroup singleGroup)
 		{
+			isManualCheckingEnabled = singleGroup.IsManualCheckingEnabled;
+			isManualCheckingEnabledForOldSolutions = singleGroup.IsManualCheckingEnabledForOldSolutions;
+			defaultProhibitFurtherReview = singleGroup.DefaultProhibitFutherReview;
+			canUsersSeeGroupProgress = singleGroup.CanUsersSeeGroupProgress;
+			superGroupId = singleGroup.SuperGroupId;
 		}
 
-		protected GroupSettings BuildGroupInfo(
-			GroupBase group,
-			int? membersCount = null,
-			IEnumerable<GroupAccess> accesses = null,
-			bool addGroupApiUrl = false,
-			bool? isLinkEnabled = null,
-			bool? isUserMemberOfGroup = null,
-			[CanBeNull] string superGroupName = null
-		)
+		if (group is SuperGroup superGroup)
+			distributionTableLink = superGroup.DistributionTableLink;
+
+		var course = courseStorage.GetCourse(group.CourseId);
+
+		if (course is null)
+			throw new ArgumentException(nameof(group.CourseId));
+
+		return new GroupSettings
 		{
-			if (group is null)
-				throw new ArgumentNullException(nameof(group));
+			Id = group.Id,
+			CourseTitle = course.Title,
+			CourseId = course.Id,
+			GroupType = group.GroupType,
+			CreateTime = group.CreateTime,
+			Name = group.Name,
+			Owner = BuildShortUserInfo(group.Owner),
+			InviteHash = group.InviteHash,
+			IsInviteLinkEnabled = isLinkEnabled ?? group.IsInviteLinkEnabled,
+			IsArchived = group.IsArchived,
+			AreYouStudent = isUserMemberOfGroup,
 
-			var isManualCheckingEnabled = (bool?)null;
-			var isManualCheckingEnabledForOldSolutions = (bool?)null;
-			var defaultProhibitFurtherReview = (bool?)null;
-			var canUsersSeeGroupProgress = (bool?)null;
-			var superGroupId = (int?)null;
+			IsManualCheckingEnabled = isManualCheckingEnabled,
+			IsManualCheckingEnabledForOldSolutions = isManualCheckingEnabledForOldSolutions,
+			DefaultProhibitFurtherReview = defaultProhibitFurtherReview,
+			CanStudentsSeeGroupProgress = canUsersSeeGroupProgress,
 
-			var distributionTableLink = (string)null;
+			StudentsCount = membersCount,
+			Accesses = accesses?.Select(BuildGroupAccessesInfo).ToList(),
 
-			if (group is SingleGroup singleGroup)
-			{
-				isManualCheckingEnabled = singleGroup.IsManualCheckingEnabled;
-				isManualCheckingEnabledForOldSolutions = singleGroup.IsManualCheckingEnabledForOldSolutions;
-				defaultProhibitFurtherReview = singleGroup.DefaultProhibitFutherReview;
-				canUsersSeeGroupProgress = singleGroup.CanUsersSeeGroupProgress;
-				superGroupId = singleGroup.SuperGroupId;
-			}
+			ApiUrl = addGroupApiUrl ? Url.Action(new UrlActionContext { Action = nameof(GroupController.Group), Controller = "Group", Values = new { groupId = group.Id } }) : null,
+			SuperGroupId = superGroupId,
+			SuperGroupName = superGroupName,
+			DistributionTableLink = distributionTableLink
+		};
+	}
 
-			if (group is SuperGroup superGroup)
-				distributionTableLink = superGroup.DistributionTableLink;
+	protected GroupAccessesInfo BuildGroupAccessesInfo(GroupAccess access)
+	{
+		if (access is null)
+			throw new ArgumentNullException(nameof(access));
 
-			var course = courseStorage.GetCourse(group.CourseId);
-
-			if (course is null)
-				throw new ArgumentException(nameof(group.CourseId));
-
-			return new GroupSettings
-			{
-				Id = group.Id,
-				CourseTitle = course.Title,
-				CourseId = course.Id,
-				GroupType = group.GroupType,
-				CreateTime = group.CreateTime,
-				Name = group.Name,
-				Owner = BuildShortUserInfo(group.Owner),
-				InviteHash = group.InviteHash,
-				IsInviteLinkEnabled = isLinkEnabled ?? group.IsInviteLinkEnabled,
-				IsArchived = group.IsArchived,
-				AreYouStudent = isUserMemberOfGroup,
-
-				IsManualCheckingEnabled = isManualCheckingEnabled,
-				IsManualCheckingEnabledForOldSolutions = isManualCheckingEnabledForOldSolutions,
-				DefaultProhibitFurtherReview = defaultProhibitFurtherReview,
-				CanStudentsSeeGroupProgress = canUsersSeeGroupProgress,
-
-				StudentsCount = membersCount,
-				Accesses = accesses?.Select(BuildGroupAccessesInfo).ToList(),
-
-				ApiUrl = addGroupApiUrl ? Url.Action(new UrlActionContext { Action = nameof(GroupController.Group), Controller = "Group", Values = new { groupId = group.Id } }) : null,
-				SuperGroupId = superGroupId,
-				SuperGroupName = superGroupName,
-				DistributionTableLink = distributionTableLink
-			};
-		}
-
-		protected GroupAccessesInfo BuildGroupAccessesInfo(GroupAccess access)
+		return new GroupAccessesInfo
 		{
-			if (access is null)
-				throw new ArgumentNullException(nameof(access));
+			User = BuildShortUserInfo(access.User),
+			AccessType = access.AccessType,
+			GrantedBy = BuildShortUserInfo(access.GrantedBy),
+			GrantTime = access.GrantTime
+		};
+	}
 
-			return new GroupAccessesInfo
-			{
-				User = BuildShortUserInfo(access.User),
-				AccessType = access.AccessType,
-				GrantedBy = BuildShortUserInfo(access.GrantedBy),
-				GrantTime = access.GrantTime
-			};
-		}
+	protected static List<ScoringGroup> GetScoringGroupsCanBeSetInSomeUnit(IEnumerable<Unit> units)
+	{
+		return units
+			.SelectMany(u => u.Scoring.Groups.Values)
+			.Where(g => g.CanBeSetByInstructor && !g.EnabledForEveryone)
+			.DistinctBy(g => g.Id)
+			.ToList();
+	}
 
-		protected static List<ScoringGroup> GetScoringGroupsCanBeSetInSomeUnit(IEnumerable<Unit> units)
+	protected static GroupScoringGroupInfo BuildGroupScoringGroupInfo(ScoringGroup scoringGroup, List<ScoringGroup> scoringGroupsCanBeSetInSomeUnit, List<EnabledAdditionalScoringGroup> enabledScoringGroups, int groupsCount = 1)
+	{
+		var canBeSetByInstructorInSomeUnit = scoringGroupsCanBeSetInSomeUnit.Select(g => g.Id).Contains(scoringGroup.Id);
+		var isEnabledManuallyCount = enabledScoringGroups
+			.Select(g => g.ScoringGroupId)
+			.Where(sg => sg == scoringGroup.Id)
+			.ToList()
+			.Count;
+		return new GroupScoringGroupInfo(scoringGroup)
 		{
-			return units
-				.SelectMany(u => u.Scoring.Groups.Values)
-				.Where(g => g.CanBeSetByInstructor && !g.EnabledForEveryone)
-				.DistinctBy(g => g.Id)
-				.ToList();
-		}
-
-		protected static GroupScoringGroupInfo BuildGroupScoringGroupInfo(ScoringGroup scoringGroup, List<ScoringGroup> scoringGroupsCanBeSetInSomeUnit, List<EnabledAdditionalScoringGroup> enabledScoringGroups, int groupsCount = 1)
-		{
-			var canBeSetByInstructorInSomeUnit = scoringGroupsCanBeSetInSomeUnit.Select(g => g.Id).Contains(scoringGroup.Id);
-			var isEnabledManuallyCount = enabledScoringGroups
-				.Select(g => g.ScoringGroupId)
-				.Where(sg => sg == scoringGroup.Id)
-				.ToList()
-				.Count;
-			return new GroupScoringGroupInfo(scoringGroup)
-			{
-				AreAdditionalScoresEnabledForAllGroups = scoringGroup.EnabledForEveryone,
-				CanInstructorSetAdditionalScoreInSomeUnit = canBeSetByInstructorInSomeUnit,
-				AreAdditionalScoresEnabledInThisGroup = scoringGroup.EnabledForEveryone || !canBeSetByInstructorInSomeUnit
-					? null
-					: isEnabledManuallyCount == groupsCount
-						? true //enabled for all groups
-						: isEnabledManuallyCount == 0
-							? false //disabled for all groups
-							: null //uncertain
-			};
-		}
+			AreAdditionalScoresEnabledForAllGroups = scoringGroup.EnabledForEveryone,
+			CanInstructorSetAdditionalScoreInSomeUnit = canBeSetByInstructorInSomeUnit,
+			AreAdditionalScoresEnabledInThisGroup = scoringGroup.EnabledForEveryone || !canBeSetByInstructorInSomeUnit
+				? null
+				: isEnabledManuallyCount == groupsCount
+					? true //enabled for all groups
+					: isEnabledManuallyCount == 0
+						? false //disabled for all groups
+						: null //uncertain
+		};
 	}
 }

@@ -15,93 +15,92 @@ using Ulearn.Core.Courses.Slides.Exercises;
 using Ulearn.Web.Api.Authorization;
 using Ulearn.Web.Api.Models.Responses.CodeReviewStatistics;
 
-namespace Ulearn.Web.Api.Controllers
+namespace Ulearn.Web.Api.Controllers;
+
+[Route("/codereview-statistics")]
+public class CodeReviewStatisticsController : BaseController
 {
-	[Route("/codereview-statistics")]
-	public class CodeReviewStatisticsController : BaseController
+	private readonly ICourseRolesRepo courseRolesRepo;
+	private readonly IGroupMembersRepo groupMembersRepo;
+	private readonly IGroupsRepo groupsRepo;
+	private readonly ISlideCheckingsRepo slideCheckingsRepo;
+
+	public CodeReviewStatisticsController(ICourseStorage courseStorage,
+		ISlideCheckingsRepo slideCheckingsRepo,
+		IUsersRepo usersRepo,
+		IGroupsRepo groupsRepo,
+		IGroupMembersRepo groupMembersRepo,
+		ICourseRolesRepo courseRolesRepo,
+		UlearnDb db)
+		: base(courseStorage, db, usersRepo)
 	{
-		private readonly ICourseRolesRepo courseRolesRepo;
-		private readonly IGroupMembersRepo groupMembersRepo;
-		private readonly IGroupsRepo groupsRepo;
-		private readonly ISlideCheckingsRepo slideCheckingsRepo;
+		this.slideCheckingsRepo = slideCheckingsRepo;
+		this.groupsRepo = groupsRepo;
+		this.groupMembersRepo = groupMembersRepo;
+		this.courseRolesRepo = courseRolesRepo;
+	}
 
-		public CodeReviewStatisticsController(ICourseStorage courseStorage,
-			ISlideCheckingsRepo slideCheckingsRepo,
-			IUsersRepo usersRepo,
-			IGroupsRepo groupsRepo,
-			IGroupMembersRepo groupMembersRepo,
-			ICourseRolesRepo courseRolesRepo,
-			UlearnDb db)
-			: base(courseStorage, db, usersRepo)
+	/// <summary>
+	///     Статистика по выполненным ревью для каждого преподавателя в курсе
+	/// </summary>
+	[HttpGet]
+	[CourseAccessAuthorize(CourseAccessType.ApiViewCodeReviewStatistics)]
+	public async Task<ActionResult<CodeReviewInstructorsStatisticsResponse>> InstructorsStatistics([FromQuery] [BindRequired] string courseId,
+		int count = 10000, DateTime? from = null, DateTime? to = null)
+	{
+		var course = courseStorage.FindCourse(courseId);
+		if (course is null)
+			return NotFound();
+
+		from ??= DateTime.MinValue;
+		to ??= DateTime.MaxValue;
+
+		count = Math.Min(count, 10000);
+
+		var instructorIds = await courseRolesRepo.GetListOfUsersWithCourseRole(CourseRoleType.Instructor, course.Id, false).ConfigureAwait(false);
+		var instructors = await usersRepo.GetUsersByIds(instructorIds).ConfigureAwait(false);
+
+		var exerciseSlides = course.GetSlidesNotSafe().OfType<ExerciseSlide>().ToList();
+
+		var allSlideCheckings = await slideCheckingsRepo.GetManualCheckingQueueFilterQuery<ManualExerciseChecking>(new ManualCheckingQueueFilterOptions
 		{
-			this.slideCheckingsRepo = slideCheckingsRepo;
-			this.groupsRepo = groupsRepo;
-			this.groupMembersRepo = groupMembersRepo;
-			this.courseRolesRepo = courseRolesRepo;
-		}
+			CourseId = course.Id,
+			Count = count,
+			OnlyChecked = null,
+			From = from.Value,
+			To = to.Value
+		}).ToListAsync();
 
-		/// <summary>
-		///     Статистика по выполненным ревью для каждого преподавателя в курсе
-		/// </summary>
-		[HttpGet]
-		[CourseAccessAuthorize(CourseAccessType.ApiViewCodeReviewStatistics)]
-		public async Task<ActionResult<CodeReviewInstructorsStatisticsResponse>> InstructorsStatistics([FromQuery] [BindRequired] string courseId,
-			int count = 10000, DateTime? from = null, DateTime? to = null)
+		var result = new CodeReviewInstructorsStatisticsResponse
 		{
-			var course = courseStorage.FindCourse(courseId);
-			if (course is null)
-				return NotFound();
-
-			from ??= DateTime.MinValue;
-			to ??= DateTime.MaxValue;
-
-			count = Math.Min(count, 10000);
-
-			var instructorIds = await courseRolesRepo.GetListOfUsersWithCourseRole(CourseRoleType.Instructor, course.Id, false).ConfigureAwait(false);
-			var instructors = await usersRepo.GetUsersByIds(instructorIds).ConfigureAwait(false);
-
-			var exerciseSlides = course.GetSlidesNotSafe().OfType<ExerciseSlide>().ToList();
-
-			var allSlideCheckings = await slideCheckingsRepo.GetManualCheckingQueueFilterQuery<ManualExerciseChecking>(new ManualCheckingQueueFilterOptions
+			AnalyzedCodeReviewsCount = allSlideCheckings.Count,
+			Instructors = new List<CodeReviewInstructorStatistics>()
+		};
+		foreach (var instructor in instructors)
+		{
+			var checkingsCheckedByInstructor = allSlideCheckings.Where(c => c.IsChecked && (c.LockedById == instructor.Id || c.Reviews.Any(r => r.AuthorId == instructor.Id))).ToList();
+			var instructorGroups = await groupsRepo.GetMyGroupsFilterAccessibleToUserAsync(course.Id, instructor.Id).ConfigureAwait(false);
+			var instructorGroupMemberIds = (await groupMembersRepo.GetGroupsMembersAsync(instructorGroups.Select(g => g.Id).ToList()).ConfigureAwait(false)).Select(m => m.UserId);
+			var checkingQueue = allSlideCheckings.Where(c => !c.IsChecked && instructorGroupMemberIds.Contains(c.UserId)).ToList();
+			var comments = checkingsCheckedByInstructor.SelectMany(c => c.NotDeletedReviews).ToList();
+			var instructorStatistics = new CodeReviewInstructorStatistics
 			{
-				CourseId = course.Id,
-				Count = count,
-				OnlyChecked = null,
-				From = from.Value,
-				To = to.Value
-			}).ToListAsync();
-
-			var result = new CodeReviewInstructorsStatisticsResponse
-			{
-				AnalyzedCodeReviewsCount = allSlideCheckings.Count,
-				Instructors = new List<CodeReviewInstructorStatistics>()
+				Instructor = BuildShortUserInfo(instructor, true),
+				Exercises = exerciseSlides.Select(
+						slide => new CodeReviewExerciseStatistics
+						{
+							SlideId = slide.Id,
+							ReviewedSubmissionsCount = checkingsCheckedByInstructor.Count(c => c.SlideId == slide.Id),
+							QueueSize = checkingQueue.Count(c => c.SlideId == slide.Id),
+							CommentsCount = comments.Count(c => c.ExerciseChecking.SlideId == slide.Id)
+						}
+					)
+					.Where(s => s.ReviewedSubmissionsCount + s.QueueSize + s.CommentsCount > 0) // Ignore empty (zeros) records
+					.ToList()
 			};
-			foreach (var instructor in instructors)
-			{
-				var checkingsCheckedByInstructor = allSlideCheckings.Where(c => c.IsChecked && (c.LockedById == instructor.Id || c.Reviews.Any(r => r.AuthorId == instructor.Id))).ToList();
-				var instructorGroups = await groupsRepo.GetMyGroupsFilterAccessibleToUserAsync(course.Id, instructor.Id).ConfigureAwait(false);
-				var instructorGroupMemberIds = (await groupMembersRepo.GetGroupsMembersAsync(instructorGroups.Select(g => g.Id).ToList()).ConfigureAwait(false)).Select(m => m.UserId);
-				var checkingQueue = allSlideCheckings.Where(c => !c.IsChecked && instructorGroupMemberIds.Contains(c.UserId)).ToList();
-				var comments = checkingsCheckedByInstructor.SelectMany(c => c.NotDeletedReviews).ToList();
-				var instructorStatistics = new CodeReviewInstructorStatistics
-				{
-					Instructor = BuildShortUserInfo(instructor, true),
-					Exercises = exerciseSlides.Select(
-							slide => new CodeReviewExerciseStatistics
-							{
-								SlideId = slide.Id,
-								ReviewedSubmissionsCount = checkingsCheckedByInstructor.Count(c => c.SlideId == slide.Id),
-								QueueSize = checkingQueue.Count(c => c.SlideId == slide.Id),
-								CommentsCount = comments.Count(c => c.ExerciseChecking.SlideId == slide.Id)
-							}
-						)
-						.Where(s => s.ReviewedSubmissionsCount + s.QueueSize + s.CommentsCount > 0) // Ignore empty (zeros) records
-						.ToList()
-				};
-				result.Instructors.Add(instructorStatistics);
-			}
-
-			return result;
+			result.Instructors.Add(instructorStatistics);
 		}
+
+		return result;
 	}
 }

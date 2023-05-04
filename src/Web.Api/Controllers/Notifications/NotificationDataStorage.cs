@@ -1,10 +1,9 @@
 ﻿using System.Collections.Generic;
 using Database.Models.Comments;
 
-namespace Ulearn.Web.Api.Controllers.Notifications
+namespace Ulearn.Web.Api.Controllers.Notifications;
+
+public class NotificationDataStorage
 {
-	public class NotificationDataStorage
-	{
-		public Dictionary<int, Comment> CommentsByIds;
-	}
+	public Dictionary<int, Comment> CommentsByIds;
 }

@@ -6,37 +6,36 @@ using Vostok.Applications.Scheduled;
 using Vostok.Hosting.Abstractions;
 using Vostok.Logging.Abstractions;
 
-namespace Ulearn.Web.Api.Workers
+namespace Ulearn.Web.Api.Workers;
+
+public class RefreshMaterializedViewsWorker : VostokScheduledApplication
 {
-	public class RefreshMaterializedViewsWorker : VostokScheduledApplication
+	private readonly IServiceScopeFactory serviceScopeFactory;
+
+	public RefreshMaterializedViewsWorker(IServiceScopeFactory serviceScopeFactory)
 	{
-		private readonly IServiceScopeFactory serviceScopeFactory;
+		this.serviceScopeFactory = serviceScopeFactory;
+	}
 
-		public RefreshMaterializedViewsWorker(IServiceScopeFactory serviceScopeFactory)
+	private static ILog Log => LogProvider.Get().ForContext(typeof(RefreshMaterializedViewsWorker));
+
+	public override void Setup(IScheduledActionsBuilder builder, IVostokHostingEnvironment environment)
+	{
+		var scheduler = Scheduler.Multi(Scheduler.Periodical(TimeSpan.FromMinutes(10)), Scheduler.OnDemand(out var runRefreshExerciseStatisticsMaterializedViews));
+		builder.Schedule("RefreshExerciseStatisticsMaterializedView", scheduler, RefreshExerciseStatisticsMaterializedViews);
+
+		runRefreshExerciseStatisticsMaterializedViews();
+	}
+
+	private async Task RefreshExerciseStatisticsMaterializedViews()
+	{
+		Log.Info("RefreshExerciseStatisticsMaterializedViews");
+		using (var scope = serviceScopeFactory.CreateScope())
 		{
-			this.serviceScopeFactory = serviceScopeFactory;
+			var slideCheckingsRepo = scope.ServiceProvider.GetService<ISlideCheckingsRepo>();
+			await slideCheckingsRepo!.RefreshExerciseStatisticsMaterializedViews();
 		}
 
-		private static ILog Log => LogProvider.Get().ForContext(typeof(RefreshMaterializedViewsWorker));
-
-		public override void Setup(IScheduledActionsBuilder builder, IVostokHostingEnvironment environment)
-		{
-			var scheduler = Scheduler.Multi(Scheduler.Periodical(TimeSpan.FromMinutes(10)), Scheduler.OnDemand(out var runRefreshExerciseStatisticsMaterializedViews));
-			builder.Schedule("RefreshExerciseStatisticsMaterializedView", scheduler, RefreshExerciseStatisticsMaterializedViews);
-
-			runRefreshExerciseStatisticsMaterializedViews();
-		}
-
-		private async Task RefreshExerciseStatisticsMaterializedViews()
-		{
-			Log.Info("RefreshExerciseStatisticsMaterializedViews");
-			using (var scope = serviceScopeFactory.CreateScope())
-			{
-				var slideCheckingsRepo = scope.ServiceProvider.GetService<ISlideCheckingsRepo>();
-				await slideCheckingsRepo!.RefreshExerciseStatisticsMaterializedViews();
-			}
-
-			Log.Info("End RefreshExerciseStatisticsMaterializedViews");
-		}
+		Log.Info("End RefreshExerciseStatisticsMaterializedViews");
 	}
 }

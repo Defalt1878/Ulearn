@@ -1,11 +1,10 @@
 using System.Runtime.Serialization;
 
-namespace Ulearn.Web.Api.Models.Parameters.Groups
+namespace Ulearn.Web.Api.Models.Parameters.Groups;
+
+[DataContract]
+public class ChangeOwnerParameters
 {
-	[DataContract]
-	public class ChangeOwnerParameters
-	{
-		[DataMember(IsRequired = true)]
-		public string OwnerId { get; set; }
-	}
+	[DataMember(IsRequired = true)]
+	public string OwnerId { get; set; }
 }

@@ -11,62 +11,61 @@ using Ulearn.Core.Courses.Manager;
 using Ulearn.Web.Api.Models.Parameters.Comments;
 using Ulearn.Web.Api.Models.Responses.Comments;
 
-namespace Ulearn.Web.Api.Controllers.Comments
+namespace Ulearn.Web.Api.Controllers.Comments;
+
+[Route("/comment-policies")]
+public class CommentPoliciesController : BaseCommentController
 {
-	[Route("/comment-policies")]
-	public class CommentPoliciesController : BaseCommentController
+	private readonly ICommentPoliciesRepo commentPoliciesRepo;
+
+	public CommentPoliciesController(ICourseStorage courseStorage, UlearnDb db, IUsersRepo usersRepo,
+		ICommentsRepo commentsRepo, ICommentLikesRepo commentLikesRepo, ICoursesRepo coursesRepo, ICourseRolesRepo courseRolesRepo, INotificationsRepo notificationsRepo,
+		IAdditionalContentPublicationsRepo additionalContentPublicationsRepo,
+		ICommentPoliciesRepo commentPoliciesRepo, IGroupMembersRepo groupMembersRepo, IGroupAccessesRepo groupAccessesRepo, IVisitsRepo visitsRepo, IUnitsRepo unitsRepo)
+		: base(courseStorage, db, usersRepo, commentsRepo, commentLikesRepo, coursesRepo, courseRolesRepo, additionalContentPublicationsRepo, notificationsRepo, groupMembersRepo, groupAccessesRepo, visitsRepo, unitsRepo)
 	{
-		private readonly ICommentPoliciesRepo commentPoliciesRepo;
+		this.commentPoliciesRepo = commentPoliciesRepo;
+	}
 
-		public CommentPoliciesController(ICourseStorage courseStorage, UlearnDb db, IUsersRepo usersRepo,
-			ICommentsRepo commentsRepo, ICommentLikesRepo commentLikesRepo, ICoursesRepo coursesRepo, ICourseRolesRepo courseRolesRepo, INotificationsRepo notificationsRepo,
-			IAdditionalContentPublicationsRepo additionalContentPublicationsRepo,
-			ICommentPoliciesRepo commentPoliciesRepo, IGroupMembersRepo groupMembersRepo, IGroupAccessesRepo groupAccessesRepo, IVisitsRepo visitsRepo, IUnitsRepo unitsRepo)
-			: base(courseStorage, db, usersRepo, commentsRepo, commentLikesRepo, coursesRepo, courseRolesRepo, additionalContentPublicationsRepo, notificationsRepo, groupMembersRepo, groupAccessesRepo, visitsRepo, unitsRepo)
+	/// <summary>
+	///     Политика комментариев в курсе
+	/// </summary>
+	[HttpGet]
+	public async Task<ActionResult<CommentPolicyResponse>> Policy([FromQuery] string courseId)
+	{
+		if (courseId is null || !courseStorage.HasCourse(courseId))
+			return NotFound(new ErrorResponse($"Course '{courseId}' not found"));
+
+		var policy = await commentPoliciesRepo.GetCommentsPolicyAsync(courseId).ConfigureAwait(false);
+		return new CommentPolicyResponse
 		{
-			this.commentPoliciesRepo = commentPoliciesRepo;
-		}
+			AreCommentsEnabled = policy.IsCommentsEnabled,
+			ModerationPolicy = policy.ModerationPolicy,
+			OnlyInstructorsCanReply = policy.OnlyInstructorsCanReply
+		};
+	}
 
-		/// <summary>
-		///     Политика комментариев в курсе
-		/// </summary>
-		[HttpGet]
-		public async Task<ActionResult<CommentPolicyResponse>> Policy([FromQuery] string courseId)
-		{
-			if (courseId is null || !courseStorage.HasCourse(courseId))
-				return NotFound(new ErrorResponse($"Course '{courseId}' not found"));
+	/// <summary>
+	///     Изменить политику комментариев в курсе
+	/// </summary>
+	[HttpPatch]
+	[Authorize(Policy = "CourseAdmins")]
+	public async Task<IActionResult> UpdatePolicy([FromQuery] string courseId, [FromBody] UpdatePolicyParameters parameters)
+	{
+		if (courseId is null || !courseStorage.HasCourse(courseId))
+			return NotFound(new ErrorResponse($"Course '{courseId}' not found"));
 
-			var policy = await commentPoliciesRepo.GetCommentsPolicyAsync(courseId).ConfigureAwait(false);
-			return new CommentPolicyResponse
-			{
-				AreCommentsEnabled = policy.IsCommentsEnabled,
-				ModerationPolicy = policy.ModerationPolicy,
-				OnlyInstructorsCanReply = policy.OnlyInstructorsCanReply
-			};
-		}
+		var policy = await commentPoliciesRepo.GetCommentsPolicyAsync(courseId).ConfigureAwait(false);
 
-		/// <summary>
-		///     Изменить политику комментариев в курсе
-		/// </summary>
-		[HttpPatch]
-		[Authorize(Policy = "CourseAdmins")]
-		public async Task<IActionResult> UpdatePolicy([FromQuery] string courseId, [FromBody] UpdatePolicyParameters parameters)
-		{
-			if (courseId is null || !courseStorage.HasCourse(courseId))
-				return NotFound(new ErrorResponse($"Course '{courseId}' not found"));
+		if (parameters.AreCommentsEnabled.HasValue)
+			policy.IsCommentsEnabled = parameters.AreCommentsEnabled.Value;
+		if (parameters.ModerationPolicy.HasValue)
+			policy.ModerationPolicy = parameters.ModerationPolicy.Value;
+		if (parameters.OnlyInstructorsCanReply.HasValue)
+			policy.OnlyInstructorsCanReply = parameters.OnlyInstructorsCanReply.Value;
 
-			var policy = await commentPoliciesRepo.GetCommentsPolicyAsync(courseId).ConfigureAwait(false);
+		await commentPoliciesRepo.SaveCommentsPolicyAsync(policy).ConfigureAwait(false);
 
-			if (parameters.AreCommentsEnabled.HasValue)
-				policy.IsCommentsEnabled = parameters.AreCommentsEnabled.Value;
-			if (parameters.ModerationPolicy.HasValue)
-				policy.ModerationPolicy = parameters.ModerationPolicy.Value;
-			if (parameters.OnlyInstructorsCanReply.HasValue)
-				policy.OnlyInstructorsCanReply = parameters.OnlyInstructorsCanReply.Value;
-
-			await commentPoliciesRepo.SaveCommentsPolicyAsync(policy).ConfigureAwait(false);
-
-			return Ok(new SuccessResponseWithMessage($"Comment policy for {courseId} successfully updated"));
-		}
+		return Ok(new SuccessResponseWithMessage($"Comment policy for {courseId} successfully updated"));
 	}
 }

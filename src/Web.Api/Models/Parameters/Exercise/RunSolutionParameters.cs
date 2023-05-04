@@ -1,11 +1,10 @@
 ﻿using System.Runtime.Serialization;
 
-namespace Ulearn.Web.Api.Models.Parameters.Exercise
+namespace Ulearn.Web.Api.Models.Parameters.Exercise;
+
+[DataContract]
+public class RunSolutionParameters
 {
-	[DataContract]
-	public class RunSolutionParameters
-	{
-		[DataMember(IsRequired = true)]
-		public string Solution { get; set; }
-	}
+	[DataMember(IsRequired = true)]
+	public string Solution { get; set; }
 }

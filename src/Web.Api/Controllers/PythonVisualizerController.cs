@@ -13,78 +13,77 @@ using Ulearn.Web.Api.Models.Parameters.Exercise;
 using Vostok.Clusterclient.Core.Model;
 using Vostok.Logging.Abstractions;
 
-namespace Ulearn.Web.Api.Controllers
+namespace Ulearn.Web.Api.Controllers;
+
+[Route("/python-visualizer")]
+public class PythonVisualizerController : BaseController
 {
-	[Route("/python-visualizer")]
-	public class PythonVisualizerController : BaseController
+	private readonly ErrorsBot errorsBot;
+	private readonly IPythonVisualizerClient pythonVisualizerClient;
+
+	public PythonVisualizerController(ICourseStorage courseStorage, UlearnDb db, IUsersRepo usersRepo, ErrorsBot errorsBot,
+		IPythonVisualizerClient pythonVisualizerClient)
+		: base(courseStorage, db, usersRepo)
 	{
-		private readonly ErrorsBot errorsBot;
-		private readonly IPythonVisualizerClient pythonVisualizerClient;
+		this.pythonVisualizerClient = pythonVisualizerClient;
+		this.errorsBot = errorsBot;
+	}
 
-		public PythonVisualizerController(ICourseStorage courseStorage, UlearnDb db, IUsersRepo usersRepo, ErrorsBot errorsBot,
-			IPythonVisualizerClient pythonVisualizerClient)
-			: base(courseStorage, db, usersRepo)
-		{
-			this.pythonVisualizerClient = pythonVisualizerClient;
-			this.errorsBot = errorsBot;
-		}
+	private new static ILog Log => LogProvider.Get().ForContext(typeof(PythonVisualizerController));
 
-		private new static ILog Log => LogProvider.Get().ForContext(typeof(PythonVisualizerController));
-
-		/// <summary>
-		///     Получить результат отладки кода на python
-		/// </summary>
-		[Authorize]
-		[HttpPost("run")]
-		public async Task<ActionResult> Run([FromBody] PythonVisualizerRunParameters parameters)
-		{
-			var response = await pythonVisualizerClient.GetResult(parameters);
-			if (response is null)
-				return StatusCode((int)HttpStatusCode.InternalServerError);
-			if (response.Code == ResponseCode.RequestTimeout)
-			{
-				Log.Error("Python Visualizer request timed out, posting data to errors bot");
-				await errorsBot.PostToChannelAsync($"Визуализатор питона не смог обработать запрос для code=[{parameters.Code}] input=[{parameters.InputData}]");
-			}
-
-			if (response.Code != ResponseCode.Ok)
-				return StatusCode((int)response.Code);
-			if (response.HasStream)
-				return new FileStreamResult(response.Stream, "application/json");
-			if (response.HasContent)
-				return new FileContentResult(response.Content.ToArray(), "application/json");
+	/// <summary>
+	///     Получить результат отладки кода на python
+	/// </summary>
+	[Authorize]
+	[HttpPost("run")]
+	public async Task<ActionResult> Run([FromBody] PythonVisualizerRunParameters parameters)
+	{
+		var response = await pythonVisualizerClient.GetResult(parameters);
+		if (response is null)
 			return StatusCode((int)HttpStatusCode.InternalServerError);
+		if (response.Code == ResponseCode.RequestTimeout)
+		{
+			Log.Error("Python Visualizer request timed out, posting data to errors bot");
+			await errorsBot.PostToChannelAsync($"Визуализатор питона не смог обработать запрос для code=[{parameters.Code}] input=[{parameters.InputData}]");
 		}
+
+		if (response.Code != ResponseCode.Ok)
+			return StatusCode((int)response.Code);
+		if (response.HasStream)
+			return new FileStreamResult(response.Stream, "application/json");
+		if (response.HasContent)
+			return new FileContentResult(response.Content.ToArray(), "application/json");
+		return StatusCode((int)HttpStatusCode.InternalServerError);
+	}
+}
+
+public interface IPythonVisualizerClient
+{
+	Task<Response> GetResult(PythonVisualizerRunParameters parameters);
+}
+
+public class PythonVisualizerClient : BaseApiClient, IPythonVisualizerClient
+{
+	private static readonly TimeSpan defaultTimeout = TimeSpan.FromSeconds(30);
+	private readonly string endpointUrl;
+
+	public PythonVisualizerClient(string endpointUrl)
+		: base(new ApiClientSettings(endpointUrl)
+		{
+			ServiceName = "ulearn.python-visualizer",
+			DefaultTimeout = defaultTimeout
+		})
+	{
+		this.endpointUrl = endpointUrl;
 	}
 
-	public interface IPythonVisualizerClient
+	public async Task<Response> GetResult(PythonVisualizerRunParameters parameters)
 	{
-		Task<Response> GetResult(PythonVisualizerRunParameters parameters);
-	}
-
-	public class PythonVisualizerClient : BaseApiClient, IPythonVisualizerClient
-	{
-		private static readonly TimeSpan defaultTimeout = TimeSpan.FromSeconds(30);
-		private readonly string endpointUrl;
-
-		public PythonVisualizerClient(string endpointUrl)
-			: base(new ApiClientSettings(endpointUrl)
-			{
-				ServiceName = "ulearn.python-visualizer",
-				DefaultTimeout = defaultTimeout
-			})
-		{
-			this.endpointUrl = endpointUrl;
-		}
-
-		public async Task<Response> GetResult(PythonVisualizerRunParameters parameters)
-		{
-			var builder = new UriBuilder(endpointUrl + "run");
-			var json = JsonConvert.SerializeObject(parameters);
-			var request = Request.Post(builder.Uri)
-				.WithHeader("Content-Type", "application/json")
-				.WithContent(json);
-			return (await MakeRequestAsync(request)).Response;
-		}
+		var builder = new UriBuilder(endpointUrl + "run");
+		var json = JsonConvert.SerializeObject(parameters);
+		var request = Request.Post(builder.Uri)
+			.WithHeader("Content-Type", "application/json")
+			.WithContent(json);
+		return (await MakeRequestAsync(request)).Response;
 	}
 }

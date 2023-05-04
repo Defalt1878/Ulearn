@@ -7,49 +7,48 @@ using Ulearn.VideoAnnotations.Api.Models.Parameters.Annotations;
 using Ulearn.VideoAnnotations.Api.Models.Responses.Annotations;
 using Web.Api.Configuration;
 
-namespace Ulearn.Web.Api.Clients
+namespace Ulearn.Web.Api.Clients;
+
+public interface IUlearnVideoAnnotationsClient
 {
-	public interface IUlearnVideoAnnotationsClient
+	Task<Annotation> GetVideoAnnotations(string videoAnnotationsGoogleDoc, string videoId);
+}
+
+public class UlearnVideoAnnotationsClient : IUlearnVideoAnnotationsClient
+{
+	[CanBeNull]
+	private readonly VideoAnnotationsClient instance;
+
+	public UlearnVideoAnnotationsClient(IOptions<WebApiConfiguration> options)
 	{
-		Task<Annotation> GetVideoAnnotations(string videoAnnotationsGoogleDoc, string videoId);
+		var videoAnnotationsClientConfiguration = options.Value.VideoAnnotationsClient;
+		instance = string.IsNullOrEmpty(videoAnnotationsClientConfiguration?.Endpoint)
+			? null
+			: new VideoAnnotationsClient(
+				videoAnnotationsClientConfiguration.Endpoint
+			);
 	}
 
-	public class UlearnVideoAnnotationsClient : IUlearnVideoAnnotationsClient
+	[ItemCanBeNull]
+	public async Task<Annotation> GetVideoAnnotations(string videoAnnotationsGoogleDoc, string videoId)
 	{
-		[CanBeNull]
-		private readonly VideoAnnotationsClient instance;
-
-		public UlearnVideoAnnotationsClient(IOptions<WebApiConfiguration> options)
+		if (string.IsNullOrEmpty(videoAnnotationsGoogleDoc))
+			return null;
+		var client = instance;
+		if (client is null)
+			return null;
+		try
 		{
-			var videoAnnotationsClientConfiguration = options.Value.VideoAnnotationsClient;
-			instance = string.IsNullOrEmpty(videoAnnotationsClientConfiguration?.Endpoint)
-				? null
-				: new VideoAnnotationsClient(
-					videoAnnotationsClientConfiguration.Endpoint
-				);
+			var annotationsResponse = await client.GetAnnotationsAsync(new AnnotationsParameters
+			{
+				GoogleDocId = videoAnnotationsGoogleDoc,
+				VideoId = videoId
+			});
+			return annotationsResponse.Annotation;
 		}
-
-		[ItemCanBeNull]
-		public async Task<Annotation> GetVideoAnnotations(string videoAnnotationsGoogleDoc, string videoId)
+		catch (ApiClientException)
 		{
-			if (string.IsNullOrEmpty(videoAnnotationsGoogleDoc))
-				return null;
-			var client = instance;
-			if (client is null)
-				return null;
-			try
-			{
-				var annotationsResponse = await client.GetAnnotationsAsync(new AnnotationsParameters
-				{
-					GoogleDocId = videoAnnotationsGoogleDoc,
-					VideoId = videoId
-				});
-				return annotationsResponse.Annotation;
-			}
-			catch (ApiClientException)
-			{
-				return null;
-			}
+			return null;
 		}
 	}
 }

@@ -1,17 +1,16 @@
 using System.Collections.Generic;
 using System.Runtime.Serialization;
 
-namespace Ulearn.Web.Api.Models.Responses.Flashcards
-{
-	[DataContract]
-	public class UserFlashcardStatisticResponse
-	{
-		[DataMember]
-		public List<UserFlashcardStatistics> UsersFlashcardsStatistics;
+namespace Ulearn.Web.Api.Models.Responses.Flashcards;
 
-		public UserFlashcardStatisticResponse()
-		{
-			UsersFlashcardsStatistics = new List<UserFlashcardStatistics>();
-		}
+[DataContract]
+public class UserFlashcardStatisticResponse
+{
+	[DataMember]
+	public List<UserFlashcardStatistics> UsersFlashcardsStatistics;
+
+	public UserFlashcardStatisticResponse()
+	{
+		UsersFlashcardsStatistics = new List<UserFlashcardStatistics>();
 	}
 }

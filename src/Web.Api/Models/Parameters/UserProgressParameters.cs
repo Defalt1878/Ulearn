@@ -2,13 +2,12 @@
 using System.Runtime.Serialization;
 using JetBrains.Annotations;
 
-namespace Ulearn.Web.Api.Models.Parameters
+namespace Ulearn.Web.Api.Models.Parameters;
+
+[DataContract]
+public class UserProgressParameters
 {
-	[DataContract]
-	public class UserProgressParameters
-	{
-		[DataMember]
-		[CanBeNull]
-		public List<string> UserIds { get; set; }
-	}
+	[DataMember]
+	[CanBeNull]
+	public List<string> UserIds { get; set; }
 }

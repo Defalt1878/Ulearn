@@ -1,7 +1,6 @@
-﻿namespace Ulearn.Web.Api.Models.Responses.SlideBlocks
+﻿namespace Ulearn.Web.Api.Models.Responses.SlideBlocks;
+
+public interface IApiSlideBlock
 {
-	public interface IApiSlideBlock
-	{
-		bool Hide { get; set; }
-	}
+	bool Hide { get; set; }
 }

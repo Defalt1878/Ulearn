@@ -13,85 +13,84 @@ using Ulearn.Core.Courses;
 using Ulearn.Core.Courses.Manager;
 using Ulearn.Web.Api.Models.Responses.Flashcards;
 
-namespace Ulearn.Web.Api.Controllers
+namespace Ulearn.Web.Api.Controllers;
+
+[Route("/flashcard-user-statistics")]
+public class FlashcardUserStatisticsController : BaseController
 {
-	[Route("/flashcard-user-statistics")]
-	public class FlashcardUserStatisticsController : BaseController
+	private readonly IGroupAccessesRepo groupAccessesRepo;
+	private readonly IUnitsRepo unitsRepo;
+	private readonly IUsersFlashcardsVisitsRepo usersFlashcardsVisitsRepo;
+
+	public FlashcardUserStatisticsController(ICourseStorage courseStorage, UlearnDb db,
+		IUsersRepo usersRepo, IGroupAccessesRepo groupAccessesRepo, IUsersFlashcardsVisitsRepo usersFlashcardsVisitsRepo,
+		IUnitsRepo unitsRepo)
+		: base(courseStorage, db, usersRepo)
 	{
-		private readonly IGroupAccessesRepo groupAccessesRepo;
-		private readonly IUnitsRepo unitsRepo;
-		private readonly IUsersFlashcardsVisitsRepo usersFlashcardsVisitsRepo;
+		this.groupAccessesRepo = groupAccessesRepo;
+		this.usersFlashcardsVisitsRepo = usersFlashcardsVisitsRepo;
+		this.unitsRepo = unitsRepo;
+	}
 
-		public FlashcardUserStatisticsController(ICourseStorage courseStorage, UlearnDb db,
-			IUsersRepo usersRepo, IGroupAccessesRepo groupAccessesRepo, IUsersFlashcardsVisitsRepo usersFlashcardsVisitsRepo,
-			IUnitsRepo unitsRepo)
-			: base(courseStorage, db, usersRepo)
+	[HttpGet]
+	public async Task<ActionResult<UserFlashcardStatisticResponse>> UserFlashcardStatistics([FromQuery] [BindRequired] string courseId)
+	{
+		var course = courseStorage.FindCourse(courseId);
+		if (course is null)
+			return NotFound();
+		var groups = (await groupAccessesRepo.GetAvailableForUserGroupsAsync(course.Id, UserId, true, true, false, GroupQueryType.SingleGroup)).AsGroups().ToArray();
+		if (groups.Length == 0)
+			return BadRequest("You don't have access to any group in course");
+
+		var result = new UserFlashcardStatisticResponse();
+		foreach (var group in groups)
+		foreach (var member in group.Members)
 		{
-			this.groupAccessesRepo = groupAccessesRepo;
-			this.usersFlashcardsVisitsRepo = usersFlashcardsVisitsRepo;
-			this.unitsRepo = unitsRepo;
+			var userStat = await GetUserFlashcardStatistics(member, group, course);
+			result.UsersFlashcardsStatistics.Add(userStat);
 		}
 
-		[HttpGet]
-		public async Task<ActionResult<UserFlashcardStatisticResponse>> UserFlashcardStatistics([FromQuery] [BindRequired] string courseId)
+		return result;
+	}
+
+	private async Task<UserFlashcardStatistics> GetUserFlashcardStatistics(GroupMember member, SingleGroup group, Course course)
+	{
+		var userStat = new UserFlashcardStatistics
 		{
-			var course = courseStorage.FindCourse(courseId);
-			if (course is null)
-				return NotFound();
-			var groups = (await groupAccessesRepo.GetAvailableForUserGroupsAsync(course.Id, UserId, true, true, false, GroupQueryType.SingleGroup)).AsGroups().ToArray();
-			if (groups.Length == 0)
-				return BadRequest("You don't have access to any group in course");
+			UserId = member.UserId,
+			UserName = member.User.VisibleNameWithLastNameFirst,
+			GroupId = group.Id,
+			GroupName = group.Name
+		};
+		var userVisits = await usersFlashcardsVisitsRepo.GetUserFlashcardsVisitsAsync(member.UserId, course.Id);
 
-			var result = new UserFlashcardStatisticResponse();
-			foreach (var group in groups)
-			foreach (var member in group.Members)
-			{
-				var userStat = await GetUserFlashcardStatistics(member, group, course);
-				result.UsersFlashcardsStatistics.Add(userStat);
-			}
+		var visitsByUnits = userVisits.GroupBy(x => x.UnitId).ToDictionary(x => x.Key);
 
-			return result;
-		}
-
-		private async Task<UserFlashcardStatistics> GetUserFlashcardStatistics(GroupMember member, SingleGroup group, Course course)
+		var visibleUnitsIds = await unitsRepo.GetVisibleUnitIds(course, UserId);
+		foreach (var unit in course.GetUnits(visibleUnitsIds))
 		{
-			var userStat = new UserFlashcardStatistics
+			var unitStat = new UnitUserStatistic { UnitId = unit.Id, UnitTitle = unit.Title, TotalFlashcardsCount = unit.Flashcards.Count };
+			if (visitsByUnits.TryGetValue(unit.Id, out var unitGroup))
 			{
-				UserId = member.UserId,
-				UserName = member.User.VisibleNameWithLastNameFirst,
-				GroupId = group.Id,
-				GroupName = group.Name
-			};
-			var userVisits = await usersFlashcardsVisitsRepo.GetUserFlashcardsVisitsAsync(member.UserId, course.Id);
+				var rate5FlashcardsIds = new HashSet<string>();
+				var uniqueFlashcardsIds = new HashSet<string>();
 
-			var visitsByUnits = userVisits.GroupBy(x => x.UnitId).ToDictionary(x => x.Key);
-
-			var visibleUnitsIds = await unitsRepo.GetVisibleUnitIds(course, UserId);
-			foreach (var unit in course.GetUnits(visibleUnitsIds))
-			{
-				var unitStat = new UnitUserStatistic { UnitId = unit.Id, UnitTitle = unit.Title, TotalFlashcardsCount = unit.Flashcards.Count };
-				if (visitsByUnits.TryGetValue(unit.Id, out var unitGroup))
+				foreach (var visit in unitGroup)
 				{
-					var rate5FlashcardsIds = new HashSet<string>();
-					var uniqueFlashcardsIds = new HashSet<string>();
+					if (visit.Rate == Rate.Rate5)
+						rate5FlashcardsIds.Add(visit.FlashcardId);
 
-					foreach (var visit in unitGroup)
-					{
-						if (visit.Rate == Rate.Rate5)
-							rate5FlashcardsIds.Add(visit.FlashcardId);
-
-						uniqueFlashcardsIds.Add(visit.FlashcardId);
-					}
-
-					unitStat.Rate5Count = rate5FlashcardsIds.Count;
-					unitStat.UniqueFlashcardVisits = uniqueFlashcardsIds.Count;
-					unitStat.TotalFlashcardVisits = unitGroup.Count();
+					uniqueFlashcardsIds.Add(visit.FlashcardId);
 				}
 
-				userStat.UnitUserStatistics.Add(unitStat);
+				unitStat.Rate5Count = rate5FlashcardsIds.Count;
+				unitStat.UniqueFlashcardVisits = uniqueFlashcardsIds.Count;
+				unitStat.TotalFlashcardVisits = unitGroup.Count();
 			}
 
-			return userStat;
+			userStat.UnitUserStatistics.Add(unitStat);
 		}
+
+		return userStat;
 	}
 }

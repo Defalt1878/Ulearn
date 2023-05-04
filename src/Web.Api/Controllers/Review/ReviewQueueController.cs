@@ -15,106 +15,105 @@ using Ulearn.Core.Courses.Manager;
 using Ulearn.Web.Api.Models.Responses.Review;
 using Ulearn.Web.Api.Utils;
 
-namespace Ulearn.Web.Api.Controllers.Review
+namespace Ulearn.Web.Api.Controllers.Review;
+
+[Authorize(Policy = "Instructors")]
+[Route("review-queue/{courseId}")]
+public class ReviewQueueController : BaseController
 {
-	[Authorize(Policy = "Instructors")]
-	[Route("review-queue/{courseId}")]
-	public class ReviewQueueController : BaseController
+	private readonly ControllerUtils controllerUtils;
+	private readonly ISlideCheckingsRepo slideCheckingsRepo;
+
+	public ReviewQueueController(
+		ICourseStorage courseStorage,
+		UlearnDb db,
+		IUsersRepo usersRepo,
+		ControllerUtils controllerUtils,
+		ISlideCheckingsRepo slideCheckingsRepo)
+		: base(courseStorage, db, usersRepo)
 	{
-		private readonly ControllerUtils controllerUtils;
-		private readonly ISlideCheckingsRepo slideCheckingsRepo;
+		this.slideCheckingsRepo = slideCheckingsRepo;
+		this.controllerUtils = controllerUtils;
+	}
 
-		public ReviewQueueController(
-			ICourseStorage courseStorage,
-			UlearnDb db,
-			IUsersRepo usersRepo,
-			ControllerUtils controllerUtils,
-			ISlideCheckingsRepo slideCheckingsRepo)
-			: base(courseStorage, db, usersRepo)
+	public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
+	{
+		var courseId = (string)context.ActionArguments["courseId"];
+
+		if (!courseStorage.HasCourse(courseId))
 		{
-			this.slideCheckingsRepo = slideCheckingsRepo;
-			this.controllerUtils = controllerUtils;
+			context.HttpContext.Response.StatusCode = (int)HttpStatusCode.NotFound;
+			context.Result = new JsonResult(new ErrorResponse($"Course {courseId} not found"));
+			return;
 		}
 
-		public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
-		{
-			var courseId = (string)context.ActionArguments["courseId"];
+		await base.OnActionExecutionAsync(context, next);
+	}
 
-			if (!courseStorage.HasCourse(courseId))
-			{
-				context.HttpContext.Response.StatusCode = (int)HttpStatusCode.NotFound;
-				context.Result = new JsonResult(new ErrorResponse($"Course {courseId} not found"));
-				return;
-			}
+	[HttpGet]
+	public async Task<ReviewQueueResponse> GetReviewQueueInfo(
+		[FromRoute] string courseId,
+		[FromQuery] string groupsIds = null,
+		[FromQuery] bool done = false,
+		[FromQuery] string userId = "",
+		[FromQuery] Guid? slideId = null
+	)
+	{
+		const int maxShownQueueSize = 500;
+		var groupsIdsList = groupsIds is not null ? groupsIds.Split(',').ToList() : new List<string>();
+		var filterOptions = await GetManualCheckingFilterOptionsByGroup(courseId, groupsIdsList);
 
-			await base.OnActionExecutionAsync(context, next);
-		}
+		if (!string.IsNullOrEmpty(userId))
+			filterOptions.UserIds = new List<string> { userId };
+		if (slideId.HasValue)
+			filterOptions.SlidesIds = new List<Guid> { slideId.Value };
 
-		[HttpGet]
-		public async Task<ReviewQueueResponse> GetReviewQueueInfo(
-			[FromRoute] string courseId,
-			[FromQuery] string groupsIds = null,
-			[FromQuery] bool done = false,
-			[FromQuery] string userId = "",
-			[FromQuery] Guid? slideId = null
-		)
-		{
-			const int maxShownQueueSize = 500;
-			var groupsIdsList = groupsIds is not null ? groupsIds.Split(',').ToList() : new List<string>();
-			var filterOptions = await GetManualCheckingFilterOptionsByGroup(courseId, groupsIdsList);
+		filterOptions.Count = maxShownQueueSize + 1;
+		filterOptions.OnlyChecked = done;
 
-			if (!string.IsNullOrEmpty(userId))
-				filterOptions.UserIds = new List<string> { userId };
-			if (slideId.HasValue)
-				filterOptions.SlidesIds = new List<Guid> { slideId.Value };
+		var checkings = await GetMergedCheckingQueue(filterOptions);
 
-			filterOptions.Count = maxShownQueueSize + 1;
-			filterOptions.OnlyChecked = done;
+		return ReviewQueueResponse.Build(checkings);
+	}
 
-			var checkings = await GetMergedCheckingQueue(filterOptions);
+	[HttpPost("{submissionId:int}")]
+	public async Task<ActionResult> LockSubmission([FromRoute] string courseId, [FromRoute] int submissionId, [FromQuery] QueueItemType type)
+	{
+		AbstractManualSlideChecking checking =
+			type == QueueItemType.Exercise
+				? await slideCheckingsRepo.FindManualCheckingById<ManualExerciseChecking>(submissionId)
+				: await slideCheckingsRepo.FindManualCheckingById<ManualQuizChecking>(submissionId);
 
-			return ReviewQueueResponse.Build(checkings);
-		}
+		if (checking is null)
+			return NotFound(new ErrorResponse($"Submission {submissionId} not found"));
 
-		[HttpPost("{submissionId:int}")]
-		public async Task<ActionResult> LockSubmission([FromRoute] string courseId, [FromRoute] int submissionId, [FromQuery] QueueItemType type)
-		{
-			AbstractManualSlideChecking checking =
-				type == QueueItemType.Exercise
-					? await slideCheckingsRepo.FindManualCheckingById<ManualExerciseChecking>(submissionId)
-					: await slideCheckingsRepo.FindManualCheckingById<ManualQuizChecking>(submissionId);
+		await slideCheckingsRepo.LockManualChecking(checking, UserId);
+		return Ok($"Submission {submissionId} locked by you for 30 minutes");
+	}
 
-			if (checking is null)
-				return NotFound(new ErrorResponse($"Submission {submissionId} not found"));
+	private async Task<ManualCheckingQueueFilterOptions> GetManualCheckingFilterOptionsByGroup(string courseId, List<string> groupsIds)
+	{
+		return await controllerUtils
+			.GetFilterOptionsByGroup<ManualCheckingQueueFilterOptions>(UserId, courseId, groupsIds);
+	}
 
-			await slideCheckingsRepo.LockManualChecking(checking, UserId);
-			return Ok($"Submission {submissionId} locked by you for 30 minutes");
-		}
+	private async Task<List<AbstractManualSlideChecking>> GetMergedCheckingQueue(ManualCheckingQueueFilterOptions filterOptions)
+	{
+		var result = (await slideCheckingsRepo
+				.GetManualCheckingQueue<ManualExerciseChecking>(filterOptions))
+			.Cast<AbstractManualSlideChecking>()
+			.ToList();
 
-		private async Task<ManualCheckingQueueFilterOptions> GetManualCheckingFilterOptionsByGroup(string courseId, List<string> groupsIds)
-		{
-			return await controllerUtils
-				.GetFilterOptionsByGroup<ManualCheckingQueueFilterOptions>(UserId, courseId, groupsIds);
-		}
+		result.AddRange(await slideCheckingsRepo.GetManualCheckingQueue<ManualQuizChecking>(filterOptions));
 
-		private async Task<List<AbstractManualSlideChecking>> GetMergedCheckingQueue(ManualCheckingQueueFilterOptions filterOptions)
-		{
-			var result = (await slideCheckingsRepo
-					.GetManualCheckingQueue<ManualExerciseChecking>(filterOptions))
-				.Cast<AbstractManualSlideChecking>()
-				.ToList();
-
-			result.AddRange(await slideCheckingsRepo.GetManualCheckingQueue<ManualQuizChecking>(filterOptions));
-
+		result = result
+			.OrderByDescending(c => c.Timestamp)
+			.ToList();
+		if (filterOptions.Count > 0)
 			result = result
-				.OrderByDescending(c => c.Timestamp)
+				.Take(filterOptions.Count)
 				.ToList();
-			if (filterOptions.Count > 0)
-				result = result
-					.Take(filterOptions.Count)
-					.ToList();
 
-			return result;
-		}
+		return result;
 	}
 }
