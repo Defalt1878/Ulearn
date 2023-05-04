@@ -174,14 +174,15 @@ public class TempCourseOnDiskUpdater
 		}
 	}
 
-	private static IEnumerable<string> GetFilesInDirectoriesToDelete(IEnumerable<string> filesToDeleteRelativePaths, string pathPrefix)
+	private static List<string> GetFilesInDirectoriesToDelete(IEnumerable<string> filesToDeleteRelativePaths, string pathPrefix)
 	{
 		return filesToDeleteRelativePaths
 			.Select(path => Path.Combine(pathPrefix, path))
 			.Where(Directory.Exists)
 			.SelectMany(dir => Directory
 				.EnumerateFiles(dir, "*.*", SearchOption.AllDirectories))
-			.Select(path => TrimPrefix(path, pathPrefix));
+			.Select(path => TrimPrefix(path, pathPrefix))
+			.ToList();
 	}
 
 	private static string TrimPrefix(string text, string prefix)
