@@ -13,7 +13,7 @@ namespace AntiPlagiarism.Api.Models.Parameters
 	{
 		[DataMember(Name = "taskId", IsRequired = true)]
 		public Guid TaskId { get; set; }
-		
+
 		[DataMember(Name = "language", IsRequired = true)]
 		public Language Language { get; set; }
 

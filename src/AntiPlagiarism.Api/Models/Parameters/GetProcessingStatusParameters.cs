@@ -1,7 +1,6 @@
 ﻿using System.Runtime.Serialization;
 using AntiPlagiarism.Api.ModelBinders;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace AntiPlagiarism.Api.Models.Parameters
 {

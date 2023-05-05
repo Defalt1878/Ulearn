@@ -15,12 +15,12 @@ namespace AntiPlagiarism.Api.Models.Results
 	public class MostSimilarSubmissions
 	{
 		[DataMember(Name = "submissionIds")]
-		public string SubmissionId  { get; set; }
+		public string SubmissionId { get; set; }
 
 		[DataMember(Name = "similarSubmissionId")]
 		public string SimilarSubmissionId { get; set; }
 
 		[DataMember(Name = "weight")]
-		public double Weight  { get; set; }
+		public double Weight { get; set; }
 	}
 }

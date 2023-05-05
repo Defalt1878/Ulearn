@@ -9,7 +9,7 @@ namespace AntiPlagiarism.Api.ModelBinders
 {
 	public class JsonModelBinder : IModelBinder
 	{
-		private static ILog log => LogProvider.Get().ForContext(typeof(JsonModelBinder));
+		private static ILog Log => LogProvider.Get().ForContext(typeof(JsonModelBinder));
 
 		public async Task BindModelAsync(ModelBindingContext bindingContext)
 		{
@@ -38,9 +38,9 @@ namespace AntiPlagiarism.Api.ModelBinders
 			{
 				model = JsonConvert.DeserializeObject(incomingData, bindingContext.ModelType);
 			}
-			catch (Exception e) when (e is JsonSerializationException || e is JsonReaderException)
+			catch (Exception e) when (e is JsonSerializationException or JsonReaderException)
 			{
-				log.Warn($"Can't deserialize json request: {e.Message}");
+				Log.Warn($"Can't deserialize json request: {e.Message}");
 				bindingContext.ModelState.TryAddModelError(bindingContext.ModelName, e.Message);
 				return;
 			}

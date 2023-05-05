@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Specialized;
 using System.Net.Http;
 using System.Threading.Tasks;
 using AntiPlagiarism.Api.Models.Parameters;
@@ -31,21 +30,6 @@ namespace AntiPlagiarism.Api
 			var builder = new UriBuilder(url);
 			var queryString = WebUtils.ParseQueryString(builder.Query);
 			queryString["token"] = token;
-			builder.Query = queryString.ToQueryString();
-			return builder.Uri;
-		}
-
-		private static Uri BuildUrl(string baseUrl, string token, NameValueCollection parameters = null)
-		{
-			if (parameters == null)
-				parameters = new NameValueCollection();
-
-			var builder = new UriBuilder(baseUrl);
-			var queryString = WebUtils.ParseQueryString(builder.Query);
-			queryString["token"] = token;
-			foreach (var parameterName in parameters.AllKeys)
-				queryString[parameterName] = parameters[parameterName];
-
 			builder.Query = queryString.ToQueryString();
 			return builder.Uri;
 		}

@@ -11,7 +11,7 @@ namespace AntiPlagiarism.Api.Models.Results
 	{
 		[DataMember(Name = "taskIds")]
 		public List<Guid> TaskIds { get; set; }
-		
+
 		public Language Language { get; set; }
 
 		[DataMember(Name = "weights")]

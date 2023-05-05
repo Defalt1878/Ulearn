@@ -11,7 +11,7 @@ namespace AntiPlagiarism.Api.Models.Parameters
 
 		[FromQuery(Name = "taskId")]
 		public Guid? TaskId { get; set; }
-		
+
 		[FromQuery(Name = "language")]
 		public Language Language { get; set; }
 	}

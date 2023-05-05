@@ -35,7 +35,7 @@ namespace AntiPlagiarism.Api.Models.Results
 
 		[DataMember(Name = "taskId")]
 		public Guid TaskId { get; set; }
-		
+
 		[DataMember(Name = "language")]
 		public Language Language { get; set; }
 

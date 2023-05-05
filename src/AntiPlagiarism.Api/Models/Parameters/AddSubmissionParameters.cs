@@ -31,7 +31,7 @@ namespace AntiPlagiarism.Api.Models.Parameters
 
 		public override string ToString()
 		{
-			return $"AddCodeParameters(TaskId={TaskId}, AuthorId={AuthorId}, Code={Code?.Substring(0, Math.Min(Code.Length, 50))?.Replace("\n", @"\\")}...)";
+			return $"AddCodeParameters(TaskId={TaskId}, AuthorId={AuthorId}, Code={Code?[..Math.Min(Code.Length, 50)]?.Replace("\n", @"\\")}...)";
 		}
 	}
 }

@@ -15,7 +15,7 @@ namespace AntiPlagiarism.Api.Models.Parameters
 		[BindRequired]
 		[FromQuery(Name = "taskId")]
 		public Guid TaskId { get; set; }
-		
+
 		[BindRequired]
 		[FromQuery(Name = "language")]
 		public Language Language { get; set; }
