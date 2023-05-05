@@ -12,68 +12,67 @@ using Microsoft.Extensions.DependencyInjection;
 using Ulearn.Core.Configuration;
 using Ulearn.Core.Logging;
 
-namespace AntiPlagiarism.UpdateDb
+namespace AntiPlagiarism.UpdateDb;
+
+public static class Program
 {
-	public static class Program
+	public static void Main(string[] args)
 	{
-		public static void Main(string[] args)
+		RunAsync(args).Wait();
+	}
+
+	private static async Task RunAsync(IReadOnlyList<string> args)
+	{
+		Console.WriteLine(
+			@"This tool will help you to update antiplagiarism database. " +
+			@"I.e. in case when new logic for code units extraction have been added."
+		);
+
+		var firstSubmissionId = 0;
+		if (args.Contains("--start"))
 		{
-			RunAsync(args).Wait();
+			var startArgIndex = args.FindIndex("--start");
+			if (startArgIndex + 1 >= args.Count || !int.TryParse(args[startArgIndex + 1], out firstSubmissionId))
+				firstSubmissionId = 0;
 		}
 
-		private static async Task RunAsync(IReadOnlyList<string> args)
-		{
-			Console.WriteLine(
-				@"This tool will help you to update antiplagiarism database. " +
-				@"I.e. in case when new logic for code units extraction have been added."
-			);
+		var updateOnlyTokensCount = args.Contains("--update-tokens-count");
 
-			var firstSubmissionId = 0;
-			if (args.Contains("--start"))
-			{
-				var startArgIndex = args.FindIndex("--start");
-				if (startArgIndex + 1 >= args.Count || !int.TryParse(args[startArgIndex + 1], out firstSubmissionId))
-					firstSubmissionId = 0;
-			}
+		var provider = GetServiceProvider();
+		var updater = provider.GetService<AntiPlagiarismSnippetsUpdater>();
+		await updater.UpdateAsync(firstSubmissionId, updateOnlyTokensCount).ConfigureAwait(false);
+	}
 
-			var updateOnlyTokensCount = args.Contains("--update-tokens-count");
+	private static ServiceProvider GetServiceProvider()
+	{
+		var configuration = ApplicationConfiguration.Read<AntiPlagiarismUpdateDbConfiguration>();
 
-			var provider = GetServiceProvider();
-			var updater = provider.GetService<AntiPlagiarismSnippetsUpdater>();
-			await updater.UpdateAsync(firstSubmissionId, updateOnlyTokensCount).ConfigureAwait(false);
-		}
+		var services = new ServiceCollection();
 
-		private static ServiceProvider GetServiceProvider()
-		{
-			var configuration = ApplicationConfiguration.Read<AntiPlagiarismUpdateDbConfiguration>();
+		services.AddOptions();
 
-			var services = new ServiceCollection();
+		services.Configure<AntiPlagiarismUpdateDbConfiguration>(ApplicationConfiguration.GetConfiguration());
+		services.Configure<AntiPlagiarismConfiguration>(ApplicationConfiguration.GetConfiguration());
 
-			services.AddOptions();
+		LoggerSetup.Setup(configuration.HostLog, configuration.GraphiteServiceName);
+		services.AddScoped(_ => GetDatabase(configuration));
+		services.AddScoped<AntiPlagiarismSnippetsUpdater>();
+		services.AddScoped<ISnippetsRepo, SnippetsRepo>();
+		services.AddScoped<ISubmissionsRepo, SubmissionsRepo>();
+		services.AddSingleton<CSharpCodeUnitsExtractor>();
+		services.AddSingleton<CodeUnitsExtractor>();
+		services.AddSingleton<TokensExtractor>();
+		services.AddSingleton<SnippetsExtractor>();
+		services.AddSingleton<SubmissionSnippetsExtractor>();
 
-			services.Configure<AntiPlagiarismUpdateDbConfiguration>(ApplicationConfiguration.GetConfiguration());
-			services.Configure<AntiPlagiarismConfiguration>(ApplicationConfiguration.GetConfiguration());
+		return services.BuildServiceProvider();
+	}
 
-			LoggerSetup.Setup(configuration.HostLog, configuration.GraphiteServiceName);
-			services.AddScoped(_ => GetDatabase(configuration));
-			services.AddScoped<AntiPlagiarismSnippetsUpdater>();
-			services.AddScoped<ISnippetsRepo, SnippetsRepo>();
-			services.AddScoped<ISubmissionsRepo, SubmissionsRepo>();
-			services.AddSingleton<CSharpCodeUnitsExtractor>();
-			services.AddSingleton<CodeUnitsExtractor>();
-			services.AddSingleton<TokensExtractor>();
-			services.AddSingleton<SnippetsExtractor>();
-			services.AddSingleton<SubmissionSnippetsExtractor>();
+	private static AntiPlagiarismDb GetDatabase(AntiPlagiarismUpdateDbConfiguration configuration)
+	{
+		var optionsBuilder = new DbContextOptionsBuilder<AntiPlagiarismDb>();
+		optionsBuilder.UseNpgsql(configuration.Database, o => o.SetPostgresVersion(13, 2));
 
-			return services.BuildServiceProvider();
-		}
-
-		private static AntiPlagiarismDb GetDatabase(AntiPlagiarismUpdateDbConfiguration configuration)
-		{
-			var optionsBuilder = new DbContextOptionsBuilder<AntiPlagiarismDb>();
-			optionsBuilder.UseNpgsql(configuration.Database, o => o.SetPostgresVersion(13, 2));
-
-			return new AntiPlagiarismDb(optionsBuilder.Options);
-		}
+		return new AntiPlagiarismDb(optionsBuilder.Options);
 	}
 }
