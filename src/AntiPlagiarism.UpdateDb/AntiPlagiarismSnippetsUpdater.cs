@@ -8,8 +8,8 @@ using AntiPlagiarism.Web.Database.Models;
 using AntiPlagiarism.Web.Database.Repos;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using Vostok.Logging.Abstractions;
 using Ulearn.Common;
+using Vostok.Logging.Abstractions;
 
 namespace AntiPlagiarism.UpdateDb
 {
@@ -19,7 +19,6 @@ namespace AntiPlagiarism.UpdateDb
 		private readonly CodeUnitsExtractor codeUnitsExtractor;
 		private readonly IServiceScopeFactory serviceScopeFactory;
 		private readonly AntiPlagiarismConfiguration configuration;
-		private static ILog log => LogProvider.Get().ForContext(typeof(AntiPlagiarismSnippetsUpdater));
 
 		public AntiPlagiarismSnippetsUpdater(
 			SubmissionSnippetsExtractor submissionSnippetsExtractor,
@@ -33,9 +32,11 @@ namespace AntiPlagiarism.UpdateDb
 			this.configuration = configuration.Value;
 		}
 
+		private static ILog Log => LogProvider.Get().ForContext(typeof(AntiPlagiarismSnippetsUpdater));
+
 		public async Task UpdateAsync(int startFromIndex = 0, bool updateOnlyTokensCount = false)
 		{
-			log.Info("Начинаю обновлять информацию о сниппетах в базе данных");
+			Log.Info("Начинаю обновлять информацию о сниппетах в базе данных");
 
 			const int maxSubmissionsCount = 1000;
 			while (true)
@@ -54,7 +55,7 @@ namespace AntiPlagiarism.UpdateDb
 
 					var firstSubmissionId = submissions.First().Id;
 					lastSubmissionId = submissions.Last().Id;
-					log.Info($"Получил {submissions.Count} следующих решений из базы данных. Идентификаторы решений от {firstSubmissionId} до {lastSubmissionId}");
+					Log.Info($"Получил {submissions.Count} следующих решений из базы данных. Идентификаторы решений от {firstSubmissionId} до {lastSubmissionId}");
 
 					foreach (var submission in submissions)
 					{
@@ -68,20 +69,20 @@ namespace AntiPlagiarism.UpdateDb
 						}
 						catch (Exception e)
 						{
-							log.Error(e, $"Ошибка при обновлении списка сниппетов решения #{submission.Id}. Продолжаю работу со следующего решения");
+							Log.Error(e, $"Ошибка при обновлении списка сниппетов решения #{submission.Id}. Продолжаю работу со следующего решения");
 						}
 					}
 				}
 
 				startFromIndex = lastSubmissionId + 1;
 
-				log.Info("Запускаю сборку мусора");
-				log.Info($"Потребление памяти до сборки мусора: {GC.GetTotalMemory(false) / 1024}Кб. GC's Gen0: {GC.CollectionCount(0)} Gen1: {GC.CollectionCount(1)} Gen2: {GC.CollectionCount(2)}");
+				Log.Info("Запускаю сборку мусора");
+				Log.Info($"Потребление памяти до сборки мусора: {GC.GetTotalMemory(false) / 1024}Кб. GC's Gen0: {GC.CollectionCount(0)} Gen1: {GC.CollectionCount(1)} Gen2: {GC.CollectionCount(2)}");
 				GC.Collect();
-				log.Info($"Потребление памяти после сборки мусора: {GC.GetTotalMemory(false) / 1024}Кб. GC's Gen0: {GC.CollectionCount(0)} Gen1: {GC.CollectionCount(1)} Gen2: {GC.CollectionCount(2)}");
+				Log.Info($"Потребление памяти после сборки мусора: {GC.GetTotalMemory(false) / 1024}Кб. GC's Gen0: {GC.CollectionCount(0)} Gen1: {GC.CollectionCount(1)} Gen2: {GC.CollectionCount(2)}");
 			}
 
-			log.Info("AntiPlagiarismSnippetsUpdater закончил свою работу");
+			Log.Info("AntiPlagiarismSnippetsUpdater закончил свою работу");
 		}
 
 		private async Task UpdateSnippetsFromSubmissionAsync(ISnippetsRepo snippetsRepo, Submission submission)
@@ -96,14 +97,14 @@ namespace AntiPlagiarism.UpdateDb
 				var foundSnippet = await snippetsRepo.GetOrAddSnippetAsync(snippet);
 				if (!occurences.Contains(Tuple.Create(foundSnippet.Id, firstTokenIndex)))
 				{
-					log.Info($"Информация о сниппете #{foundSnippet.Id} в решении #{submission.Id} не найдена, добавляю");
+					Log.Info($"Информация о сниппете #{foundSnippet.Id} в решении #{submission.Id} не найдена, добавляю");
 					try
 					{
 						await snippetsRepo.AddSnippetOccurenceAsync(submission, foundSnippet, firstTokenIndex, configuration.AntiPlagiarism.SubmissionInfluenceLimitInMonths);
 					}
 					catch (Exception e)
 					{
-						log.Error(e, $"Ошибка при добавлении сниппета #{foundSnippet.Id} в решении #{submission.Id}");
+						Log.Error(e, $"Ошибка при добавлении сниппета #{foundSnippet.Id} в решении #{submission.Id}");
 					}
 				}
 			}

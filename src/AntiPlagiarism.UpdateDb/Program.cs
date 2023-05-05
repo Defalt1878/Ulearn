@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AntiPlagiarism.UpdateDb.Configuration;
@@ -13,14 +14,14 @@ using Ulearn.Core.Logging;
 
 namespace AntiPlagiarism.UpdateDb
 {
-	public class Program
+	public static class Program
 	{
 		public static void Main(string[] args)
 		{
-			new Program().RunAsync(args).Wait();
+			RunAsync(args).Wait();
 		}
 
-		public async Task RunAsync(string[] args)
+		private static async Task RunAsync(IReadOnlyList<string> args)
 		{
 			Console.WriteLine(
 				@"This tool will help you to update antiplagiarism database. " +
@@ -31,7 +32,7 @@ namespace AntiPlagiarism.UpdateDb
 			if (args.Contains("--start"))
 			{
 				var startArgIndex = args.FindIndex("--start");
-				if (startArgIndex + 1 >= args.Length || !int.TryParse(args[startArgIndex + 1], out firstSubmissionId))
+				if (startArgIndex + 1 >= args.Count || !int.TryParse(args[startArgIndex + 1], out firstSubmissionId))
 					firstSubmissionId = 0;
 			}
 
@@ -42,7 +43,7 @@ namespace AntiPlagiarism.UpdateDb
 			await updater.UpdateAsync(firstSubmissionId, updateOnlyTokensCount).ConfigureAwait(false);
 		}
 
-		private ServiceProvider GetServiceProvider()
+		private static ServiceProvider GetServiceProvider()
 		{
 			var configuration = ApplicationConfiguration.Read<AntiPlagiarismUpdateDbConfiguration>();
 
@@ -67,7 +68,7 @@ namespace AntiPlagiarism.UpdateDb
 			return services.BuildServiceProvider();
 		}
 
-		private AntiPlagiarismDb GetDatabase(AntiPlagiarismUpdateDbConfiguration configuration)
+		private static AntiPlagiarismDb GetDatabase(AntiPlagiarismUpdateDbConfiguration configuration)
 		{
 			var optionsBuilder = new DbContextOptionsBuilder<AntiPlagiarismDb>();
 			optionsBuilder.UseNpgsql(configuration.Database, o => o.SetPostgresVersion(13, 2));
