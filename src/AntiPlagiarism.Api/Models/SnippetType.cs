@@ -1,12 +1,11 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
-namespace AntiPlagiarism.Api.Models
+namespace AntiPlagiarism.Api.Models;
+
+[JsonConverter(typeof(StringEnumConverter), true)]
+public enum SnippetType : short
 {
-	[JsonConverter(typeof(StringEnumConverter), true)]
-	public enum SnippetType : short
-	{
-		TokensKinds = 1,
-		TokensValues = 2,
-	}
+	TokensKinds = 1,
+	TokensValues = 2,
 }

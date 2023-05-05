@@ -1,7 +1,6 @@
-﻿namespace AntiPlagiarism.Api.Defaults
+﻿namespace AntiPlagiarism.Api.Defaults;
+
+public static class GetAuthorPlagiarismsDefaults
 {
-	public static class GetAuthorPlagiarismsDefaults
-	{
-		public const int LastSubmissionsCount = 15;
-	}
+	public const int LastSubmissionsCount = 15;
 }
