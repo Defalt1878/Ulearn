@@ -28,7 +28,7 @@ namespace Web.Api.Tests.Controllers.Slides
 		{
 			Directory.SetCurrentDirectory(TestContext.CurrentContext.TestDirectory);
 			videoAnnotationsClient = Mock.Of<IUlearnVideoAnnotationsClient>();
-			slideRenderer = new SlideRenderer(videoAnnotationsClient, null, null, null, null, null, null);
+			slideRenderer = new SlideRenderer(videoAnnotationsClient, null, null, null, null, null);
 			loader = new XmlSlideLoader();
 			courseSettings = new CourseSettings(CourseSettings.DefaultSettings);
 			courseSettings.Scoring.Groups.Add("ScoringGroup1", new ScoringGroup { Id = "ScoringGroup1" });
