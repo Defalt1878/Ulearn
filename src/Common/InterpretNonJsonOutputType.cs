@@ -2,18 +2,17 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
-namespace Ulearn.Common
+namespace Ulearn.Common;
+
+[JsonConverter(typeof(StringEnumConverter), true)]
+public enum InterpretNonJsonOutputType : short
 {
-	[JsonConverter(typeof(StringEnumConverter), true)]
-	public enum InterpretNonJsonOutputType : short
-	{
-		[XmlEnum("SE")]
-		SandboxError,
+	[XmlEnum("SE")]
+	SandboxError,
 
-		[XmlEnum("WA")]
-		WrongAnswer,
+	[XmlEnum("WA")]
+	WrongAnswer,
 
-		[XmlEnum("CE")]
-		CompilationError
-	}
+	[XmlEnum("CE")]
+	CompilationError
 }
