@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using AntiPlagiarism.Web.CodeAnalyzing;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using NUnit.Framework;
 using Ulearn.Common.Extensions;
@@ -14,7 +15,6 @@ namespace AntiPlagiarism.Tests.CodeAnalyzing.CSharp
 	{
 		private CSharpCodeUnitsExtractor extractor;
 
-		/* TODO (andgein): make this code more straighted and clear? */
 		private static DirectoryInfo TestDataDir => new(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "CodeAnalyzing", "CSharp", "TestData"));
 
 		[SetUp]
@@ -42,7 +42,7 @@ namespace AntiPlagiarism.Tests.CodeAnalyzing.CSharp
 				SyntaxKind.StringLiteralToken,
 				SyntaxKind.CloseParenToken,
 				SyntaxKind.SemicolonToken,
-				SyntaxKind.CloseBraceToken,
+				SyntaxKind.CloseBraceToken
 			}.Select(k => k.ToString()).ToList();
 			Assert.AreEqual(methodBodyExpectedKinds.Count, methodBodyUnit.Tokens.Count);
 			CollectionAssert.AreEqual(methodBodyExpectedKinds, methodBodyUnit.Tokens.Select(t => t.Type));
@@ -56,16 +56,16 @@ namespace AntiPlagiarism.Tests.CodeAnalyzing.CSharp
 
 			Assert.AreEqual("ROOT", CSharpCodeUnitsExtractor.GetNodeName(syntaxTreeRoot));
 
-			var namespaceDeclaration = syntaxTreeRoot.ChildNodes().First(n => n.Kind() == SyntaxKind.NamespaceDeclaration);
+			var namespaceDeclaration = syntaxTreeRoot.ChildNodes().First(n => n.IsKind(SyntaxKind.NamespaceDeclaration));
 			Assert.AreEqual("HelloWorld.Namespace", CSharpCodeUnitsExtractor.GetNodeName(namespaceDeclaration));
 
-			var classDeclaration = namespaceDeclaration.ChildNodes().First(n => n.Kind() == SyntaxKind.ClassDeclaration);
+			var classDeclaration = namespaceDeclaration.ChildNodes().First(n => n.IsKind(SyntaxKind.ClassDeclaration));
 			Assert.AreEqual("Program", CSharpCodeUnitsExtractor.GetNodeName(classDeclaration));
 
-			var methodDeclaration = classDeclaration.ChildNodes().First(n => n.Kind() == SyntaxKind.MethodDeclaration);
+			var methodDeclaration = classDeclaration.ChildNodes().First(n => n.IsKind(SyntaxKind.MethodDeclaration));
 			Assert.AreEqual("Main", CSharpCodeUnitsExtractor.GetNodeName(methodDeclaration));
 
-			var propertyDeclaration = classDeclaration.ChildNodes().First(n => n.Kind() == SyntaxKind.PropertyDeclaration);
+			var propertyDeclaration = classDeclaration.ChildNodes().First(n => n.IsKind(SyntaxKind.PropertyDeclaration));
 			Assert.AreEqual("A", CSharpCodeUnitsExtractor.GetNodeName(propertyDeclaration));
 		}
 

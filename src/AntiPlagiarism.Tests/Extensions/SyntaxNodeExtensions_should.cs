@@ -83,13 +83,11 @@ namespace AntiPlagiarism.Tests.Extensions
 				SyntaxKind.CloseBraceToken,
 				SyntaxKind.CloseBraceToken,
 				SyntaxKind.CloseBraceToken,
-				SyntaxKind.CloseBraceToken,
+				SyntaxKind.CloseBraceToken
 			};
 			Assert.AreEqual(kinds.Count, tokens.Count);
 			foreach (var (token, kind) in tokens.Zip(kinds, Tuple.Create))
-			{
 				Assert.AreEqual(kind, token.Kind());
-			}
 		}
 	}
 }

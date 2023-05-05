@@ -7,8 +7,6 @@ namespace AntiPlagiarism.Tests.CodeAnalyzing.Hashers
 	[TestFixture]
 	public class PolynomialSequenceHasher_should
 	{
-		/* TODO (andgein): use DefaultObjectHasher instead of GetHashCode in tests. Add tests for StableStringHasher */
-
 		[Test]
 		public void WorkWithPolynomBase1()
 		{

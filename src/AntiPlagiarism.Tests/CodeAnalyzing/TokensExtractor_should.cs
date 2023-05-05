@@ -1,7 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
-using System.Collections.Generic;
 using System.Linq;
 using AntiPlagiarism.Web.CodeAnalyzing;
 using NUnit.Framework;
@@ -23,7 +23,7 @@ namespace AntiPlagiarism.Tests.CodeAnalyzing
 			tokensExtractor = new TokensExtractor();
 		}
 
-		private List<Token> SkipIfNoPygmentize(Func<List<Token>> getTokens)
+		private static List<Token> SkipIfNoPygmentize(Func<List<Token>> getTokens)
 		{
 			try
 			{

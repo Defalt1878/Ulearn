@@ -10,23 +10,23 @@
 		<PublishWithAspNetCoreTargetManifest>false</PublishWithAspNetCoreTargetManifest>
 	</PropertyGroup>
 	<ItemGroup>
-		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.2.0" />
-		<PackageReference Include="NUnit" Version="3.10.0" />
-		<DotNetCliToolReference Include="dotnet-xunit" Version="2.3.1" />
-		<PackageReference Include="NUnit3TestAdapter" Version="4.2.1" />
-		<PackageReference Include="System.Collections.Immutable" Version="6.0.0" />
+		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.2.0"/>
+		<PackageReference Include="NUnit" Version="3.10.0"/>
+		<DotNetCliToolReference Include="dotnet-xunit" Version="2.3.1"/>
+		<PackageReference Include="NUnit3TestAdapter" Version="4.2.1"/>
+		<PackageReference Include="System.Collections.Immutable" Version="6.0.0"/>
 	</ItemGroup>
 	<ItemGroup>
-		<ProjectReference Include="..\AntiPlagiarism.Web\AntiPlagiarism.Web.csproj" />
+		<ProjectReference Include="..\AntiPlagiarism.Web\AntiPlagiarism.Web.csproj"/>
 	</ItemGroup>
 	<ItemGroup>
-	  <Compile Remove="CodeAnalyzing\CSharp\TestData\*" />
-	  <Content Include="CodeAnalyzing\CSharp\TestData\*">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </Content>
-	  <None Remove="CodeAnalyzing\TestData\*" />
-	  <Content Include="CodeAnalyzing\TestData\*">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </Content>
+		<Compile Remove="CodeAnalyzing\CSharp\TestData\*"/>
+		<Content Include="CodeAnalyzing\CSharp\TestData\*">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<None Remove="CodeAnalyzing\TestData\*"/>
+		<Content Include="CodeAnalyzing\TestData\*">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
 	</ItemGroup>
 </Project>
