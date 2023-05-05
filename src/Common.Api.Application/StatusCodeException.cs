@@ -1,15 +1,14 @@
 using System;
 
-namespace Ulearn.Common.Api
-{
-	public class StatusCodeException : Exception
-	{
-		public StatusCodeException(int code, string message)
-			: base(message)
-		{
-			Code = code;
-		}
+namespace Ulearn.Common.Api;
 
-		public int Code { get; }
+public class StatusCodeException : Exception
+{
+	public StatusCodeException(int code, string message)
+		: base(message)
+	{
+		Code = code;
 	}
+
+	public int Code { get; }
 }

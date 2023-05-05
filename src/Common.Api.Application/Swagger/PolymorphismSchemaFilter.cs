@@ -6,88 +6,87 @@ using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using Ulearn.Common.Extensions;
 
-namespace Ulearn.Common.Api.Swagger
+namespace Ulearn.Common.Api.Swagger;
+
+public class PolymorphismSchemaFilter<T> : ISchemaFilter
 {
-	public class PolymorphismSchemaFilter<T> : ISchemaFilter
+	private const string discriminatorName = "$type";
+	private readonly Lazy<HashSet<Type>> derivedTypes = new(DerivedTypesInit);
+	private readonly Lazy<Dictionary<Type, string>> type2Name = new(Type2NameInit);
+
+	public void Apply(OpenApiSchema schema, SchemaFilterContext context)
 	{
-		private const string discriminatorName = "$type";
-		private readonly Lazy<HashSet<Type>> derivedTypes = new(DerivedTypesInit);
-		private readonly Lazy<Dictionary<Type, string>> type2Name = new(Type2NameInit);
+		var type = context.Type;
+		if (type == typeof(T))
+			ApplyToBaseType(schema);
+		if (derivedTypes.Value.Contains(context.Type))
+			ApplyToDerivedType(schema, context);
+	}
 
-		public void Apply(OpenApiSchema schema, SchemaFilterContext context)
+	private void ApplyToBaseType(OpenApiSchema schema)
+	{
+		var clonedSchema = new OpenApiSchema
 		{
-			var type = context.Type;
-			if (type == typeof(T))
-				ApplyToBaseType(schema);
-			if (derivedTypes.Value.Contains(context.Type))
-				ApplyToDerivedType(schema, context);
-		}
+			Properties = schema.Properties,
+			Type = schema.Type,
+			Required = schema.Required
+		};
 
-		private void ApplyToBaseType(OpenApiSchema schema)
+		var derivedTypesSchema = new OpenApiSchema
 		{
-			var clonedSchema = new OpenApiSchema
+			OneOf = derivedTypes.Value.Select(
+				t => new OpenApiSchema { Reference = new OpenApiReference { Id = t.Name, Type = ReferenceType.Schema } }
+			).ToList(),
+			Discriminator = new OpenApiDiscriminator
 			{
-				Properties = schema.Properties,
-				Type = schema.Type,
-				Required = schema.Required
-			};
-
-			var derivedTypesSchema = new OpenApiSchema
+				PropertyName = discriminatorName,
+				Mapping = derivedTypes.Value.ToDictionary(t => type2Name.Value.GetOrDefault(t) ?? t.Name, t => $"#/components/schemas/{t.Name}")
+			},
+			Required = new HashSet<string> { discriminatorName },
+			Properties = new Dictionary<string, OpenApiSchema>
 			{
-				OneOf = derivedTypes.Value.Select(
-					t => new OpenApiSchema { Reference = new OpenApiReference { Id = t.Name, Type = ReferenceType.Schema } }
-				).ToList(),
-				Discriminator = new OpenApiDiscriminator
 				{
-					PropertyName = discriminatorName,
-					Mapping = derivedTypes.Value.ToDictionary(t => type2Name.Value.GetOrDefault(t) ?? t.Name, t => $"#/components/schemas/{t.Name}")
-				},
-				Required = new HashSet<string> { discriminatorName },
-				Properties = new Dictionary<string, OpenApiSchema>
-				{
+					discriminatorName, new OpenApiSchema
 					{
-						discriminatorName, new OpenApiSchema
-						{
-							Type = "string",
-							Pattern = string.Join("|", derivedTypes.Value.Select(GetTypeDiscriminatorValue))
-						}
+						Type = "string",
+						Pattern = string.Join("|", derivedTypes.Value.Select(GetTypeDiscriminatorValue))
 					}
 				}
-			};
+			}
+		};
 
-			schema.AllOf = new List<OpenApiSchema>
-			{
-				derivedTypesSchema,
-				clonedSchema
-			};
-
-			// reset properties for they are included in allOf, should be null but code does not handle it
-			schema.Properties = new Dictionary<string, OpenApiSchema>();
-		}
-
-		private void ApplyToDerivedType(OpenApiSchema schema, SchemaFilterContext context)
+		schema.AllOf = new List<OpenApiSchema>
 		{
-			schema.Properties.Add(discriminatorName, new OpenApiSchema
-			{
-				Type = "string",
-				Pattern = GetTypeDiscriminatorValue(context.Type),
-				Example = new OpenApiString(GetTypeDiscriminatorValue(context.Type))
-			});
-		}
+			derivedTypesSchema,
+			clonedSchema
+		};
 
-		private string GetTypeDiscriminatorValue(Type t)
-		{
-			return type2Name.Value.GetOrDefault(t) ?? t.Name;
-		}
+		// reset properties for they are included in allOf, should be null but code does not handle it
+		schema.Properties = new Dictionary<string, OpenApiSchema>();
+	}
 
-		private static HashSet<Type> DerivedTypesInit()
+	private void ApplyToDerivedType(OpenApiSchema schema, SchemaFilterContext context)
+	{
+		schema.Properties.Add(discriminatorName, new OpenApiSchema
 		{
-			return new HashSet<Type>(DerivedTypesHelper.GetDerivedTypes(typeof(T)));
-		}
+			Type = "string",
+			Pattern = GetTypeDiscriminatorValue(context.Type),
+			Example = new OpenApiString(GetTypeDiscriminatorValue(context.Type))
+		});
+	}
 
-		private static Dictionary<Type, string> Type2NameInit()
-		{
-			return DerivedTypesHelper.GetType2JsonTypeName(DerivedTypesInit());
-		}
+	private string GetTypeDiscriminatorValue(Type t)
+	{
+		return type2Name.Value.GetOrDefault(t) ?? t.Name;
+	}
+
+	private static HashSet<Type> DerivedTypesInit()
+	{
+		return new HashSet<Type>(DerivedTypesHelper.GetDerivedTypes(typeof(T)));
+	}
+
+	private static Dictionary<Type, string> Type2NameInit()
+	{
+		return DerivedTypesHelper.GetType2JsonTypeName(DerivedTypesInit());
 	}
 }
