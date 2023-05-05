@@ -10,11 +10,12 @@ namespace Ulearn.Common.Api.Swagger
 	{
 		public static IEnumerable<Type> GetDerivedTypes(Type baseType)
 		{
-			var derivedTypes = Assembly
-				.GetAssembly(baseType)
-				.GetTypes()
-				.Where(t => t.IsClass && !t.IsAbstract && (baseType.IsInterface ? baseType.IsAssignableFrom(t) : t.IsSubclassOf(baseType)));
-			return derivedTypes;
+			return Assembly.GetAssembly(baseType)?.GetTypes()
+				.EmptyIfNull()
+				.Where(t =>
+					t is { IsClass: true, IsAbstract: false } &&
+					(baseType.IsInterface ? baseType.IsAssignableFrom(t) : t.IsSubclassOf(baseType))
+				);
 		}
 
 		public static Dictionary<Type, string> GetType2JsonTypeName(IEnumerable<Type> types)

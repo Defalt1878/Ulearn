@@ -13,13 +13,16 @@ namespace Ulearn.Common.Api
 		protected static UlearnConfiguration configuration;
 		protected IServiceProvider serviceProvider;
 
-		public virtual async Task InitializeAsync(IVostokHostingEnvironment hostingEnvironment)
+		public virtual Task InitializeAsync(IVostokHostingEnvironment hostingEnvironment)
 		{
 			var services = new ServiceCollection();
 			ConfigureServices(services, hostingEnvironment);
 			serviceProvider = services.BuildServiceProvider();
-			hostingEnvironment.HostExtensions.AsMutable().Add(serviceProvider); // позволяет запроашивать var serviceProvider = environment.HostExtensions.Get<IServiceProvider>();
+			hostingEnvironment.HostExtensions.AsMutable().Add(serviceProvider); // позволяет запрашивать var serviceProvider = environment.HostExtensions.Get<IServiceProvider>();
+			return Task.CompletedTask;
 		}
+
+		public abstract Task RunAsync(IVostokHostingEnvironment environment);
 
 		protected virtual void ConfigureServices(IServiceCollection services, IVostokHostingEnvironment hostingEnvironment)
 		{
@@ -35,8 +38,6 @@ namespace Ulearn.Common.Api
 		protected virtual void ConfigureDi(IServiceCollection services)
 		{
 		}
-
-		public abstract Task RunAsync(IVostokHostingEnvironment environment);
 
 		public void SetupScheduled<T>(IScheduledActionsBuilder builder, IVostokHostingEnvironment environment)
 			where T : VostokScheduledApplication

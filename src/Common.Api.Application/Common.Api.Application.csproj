@@ -7,32 +7,32 @@
 		<ErrorOnDuplicatePublishOutputFiles>false</ErrorOnDuplicatePublishOutputFiles>
 		<Authors>SKB Kontur Ulearn Team</Authors>
 		<Copyright>Copyright 2014–2022 SKB Kontur</Copyright>
-	 </PropertyGroup>
+	</PropertyGroup>
 
 	<ItemGroup>
-		<FrameworkReference Include="Microsoft.AspNetCore.App" />
-		<PackageReference Include="Community.AspNetCore.ExceptionHandling.Mvc" Version="2.2.0" />
-		<PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5" />
-		<PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="6.0.6" />
-		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
-		<PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="6.5.0" />
-		<PackageReference Include="Swashbuckle.AspNetCore.Filters" Version="7.0.6" />
-		<PackageReference Include="Swashbuckle.AspNetCore.Newtonsoft" Version="6.5.0" />
-		<PackageReference Include="Vostok.Applications.AspNetCore" Version="0.3.7" />
-		<PackageReference Include="Vostok.Applications.Scheduled" Version="0.2.12" />
-		<PackageReference Include="Vostok.Configuration" Version="0.1.42" />
-		<PackageReference Include="Vostok.Datacenters.Kontur" Version="1.0.36" />
-		<PackageReference Include="Vostok.Hosting" Version="0.3.49" />
-		<PackageReference Include="Vostok.Hosting.Kontur" Version="1.0.54" />
-		<PackageReference Include="Vostok.ServiceDiscovery.Kontur" Version="1.0.40" />
-		<PackageReference Include="Vostok.Telemetry.Kontur" Version="1.0.52" />
-		<PackageReference Include="Vostok.Tracing.Kontur" Version="1.0.14" />
+		<FrameworkReference Include="Microsoft.AspNetCore.App"/>
+		<PackageReference Include="Community.AspNetCore.ExceptionHandling.Mvc" Version="2.2.0"/>
+		<PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5"/>
+		<PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="6.0.6"/>
+		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0"/>
+		<PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="6.5.0"/>
+		<PackageReference Include="Swashbuckle.AspNetCore.Filters" Version="7.0.6"/>
+		<PackageReference Include="Swashbuckle.AspNetCore.Newtonsoft" Version="6.5.0"/>
+		<PackageReference Include="Vostok.Applications.AspNetCore" Version="0.3.7"/>
+		<PackageReference Include="Vostok.Applications.Scheduled" Version="0.2.12"/>
+		<PackageReference Include="Vostok.Configuration" Version="0.1.42"/>
+		<PackageReference Include="Vostok.Datacenters.Kontur" Version="1.0.36"/>
+		<PackageReference Include="Vostok.Hosting" Version="0.3.49"/>
+		<PackageReference Include="Vostok.Hosting.Kontur" Version="1.0.54"/>
+		<PackageReference Include="Vostok.ServiceDiscovery.Kontur" Version="1.0.40"/>
+		<PackageReference Include="Vostok.Telemetry.Kontur" Version="1.0.52"/>
+		<PackageReference Include="Vostok.Tracing.Kontur" Version="1.0.14"/>
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\Common.Api\Common.Api.csproj" />
-		<ProjectReference Include="..\Common\Common.csproj" />
-		<ProjectReference Include="..\Core\Core.csproj" />
+		<ProjectReference Include="..\Common.Api\Common.Api.csproj"/>
+		<ProjectReference Include="..\Common\Common.csproj"/>
+		<ProjectReference Include="..\Core\Core.csproj"/>
 	</ItemGroup>
 
 	<!-- See https://docs.microsoft.com/ru-ru/aspnet/core/tutorials/getting-started-with-swashbuckle?view=aspnetcore-2.1&tabs=visual-studio%2Cvisual-studio-xml -->

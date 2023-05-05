@@ -10,20 +10,20 @@ namespace Ulearn.Common.Api.Swagger
 {
 	public class PolymorphismSchemaFilter<T> : ISchemaFilter
 	{
+		private const string discriminatorName = "$type";
 		private readonly Lazy<HashSet<Type>> derivedTypes = new(DerivedTypesInit);
 		private readonly Lazy<Dictionary<Type, string>> type2Name = new(Type2NameInit);
-		private const string discriminatorName = "$type";
 
 		public void Apply(OpenApiSchema schema, SchemaFilterContext context)
 		{
 			var type = context.Type;
 			if (type == typeof(T))
-				ApplyToBaseType(schema, context);
+				ApplyToBaseType(schema);
 			if (derivedTypes.Value.Contains(context.Type))
 				ApplyToDerivedType(schema, context);
 		}
 
-		private void ApplyToBaseType(OpenApiSchema schema, SchemaFilterContext context)
+		private void ApplyToBaseType(OpenApiSchema schema)
 		{
 			var clonedSchema = new OpenApiSchema
 			{
@@ -43,11 +43,16 @@ namespace Ulearn.Common.Api.Swagger
 					Mapping = derivedTypes.Value.ToDictionary(t => type2Name.Value.GetOrDefault(t) ?? t.Name, t => $"#/components/schemas/{t.Name}")
 				},
 				Required = new HashSet<string> { discriminatorName },
-				Properties = new Dictionary<string, OpenApiSchema> { { discriminatorName, new OpenApiSchema
+				Properties = new Dictionary<string, OpenApiSchema>
 				{
-					Type = "string",
-					Pattern = string.Join("|", derivedTypes.Value.Select(GetTypeDiscriminatorValue)),
-				} } }
+					{
+						discriminatorName, new OpenApiSchema
+						{
+							Type = "string",
+							Pattern = string.Join("|", derivedTypes.Value.Select(GetTypeDiscriminatorValue))
+						}
+					}
+				}
 			};
 
 			schema.AllOf = new List<OpenApiSchema>

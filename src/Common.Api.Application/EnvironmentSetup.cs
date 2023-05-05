@@ -47,8 +47,7 @@ namespace Ulearn.Common.Api
 			builder
 				.DisableServiceBeacon()
 				.SetupHerculesSink(sinkBuilder => SetupHerculesSink(sinkBuilder, ulearnConfiguration))
-				.SetupLog((logBuilder, context) => SetupLog(logBuilder, ulearnConfiguration))
-				;
+				.SetupLog((logBuilder, _) => SetupLog(logBuilder, ulearnConfiguration));
 
 			if (ulearnConfiguration.ForceHttps ?? false)
 				builder.SetHttpsScheme();
