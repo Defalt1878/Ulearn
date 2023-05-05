@@ -1,10 +1,9 @@
-﻿namespace AntiPlagiarism.Web.CodeAnalyzing.Hashers
+﻿namespace AntiPlagiarism.Web.CodeAnalyzing.Hashers;
+
+public class DefaultObjectHasher : IObjectHasher
 {
-	public class DefaultObjectHasher : IObjectHasher
+	public int GetHashCode(object o)
 	{
-		public int GetHashCode(object o)
-		{
-			return o.GetHashCode();
-		}
+		return o.GetHashCode();
 	}
 }

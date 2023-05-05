@@ -1,30 +1,29 @@
 ﻿using AntiPlagiarism.Api.Models;
 
-namespace AntiPlagiarism.Web.CodeAnalyzing
+namespace AntiPlagiarism.Web.CodeAnalyzing;
+
+public interface ITokenInSnippetConverter
 {
-	public interface ITokenInSnippetConverter
+	string Convert(IToken token);
+	SnippetType SnippetType { get; }
+}
+
+public class TokensKindsConverter : ITokenInSnippetConverter
+{
+	public string Convert(IToken token)
 	{
-		string Convert(IToken token);
-		SnippetType SnippetType { get; }
+		return token.Type;
 	}
 
-	public class TokensKindsConverter : ITokenInSnippetConverter
-	{
-		public string Convert(IToken token)
-		{
-			return token.Type;
-		}
+	public SnippetType SnippetType => SnippetType.TokensKinds;
+}
 
-		public SnippetType SnippetType => SnippetType.TokensKinds;
+public class TokensValuesConverter : ITokenInSnippetConverter
+{
+	public string Convert(IToken token)
+	{
+		return token.Value;
 	}
 
-	public class TokensValuesConverter : ITokenInSnippetConverter
-	{
-		public string Convert(IToken token)
-		{
-			return token.Value;
-		}
-
-		public SnippetType SnippetType => SnippetType.TokensValues;
-	}
+	public SnippetType SnippetType => SnippetType.TokensValues;
 }

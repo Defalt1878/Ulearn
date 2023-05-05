@@ -2,18 +2,17 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Ulearn.Common;
 
-namespace AntiPlagiarism.Web.Database.Models
+namespace AntiPlagiarism.Web.Database.Models;
+
+public class ManualSuspicionLevels
 {
-	public class ManualSuspicionLevels
-	{
-		[DatabaseGenerated(DatabaseGeneratedOption.None)]
-		public Guid TaskId { get; set; }
+	[DatabaseGenerated(DatabaseGeneratedOption.None)]
+	public Guid TaskId { get; set; }
 
-		public Language Language { get; set; }
-		public double? FaintSuspicion { get; set; }
+	public Language Language { get; set; }
+	public double? FaintSuspicion { get; set; }
 
-		public double? StrongSuspicion { get; set; }
+	public double? StrongSuspicion { get; set; }
 
-		public DateTime Timestamp { get; set; }
-	}
+	public DateTime Timestamp { get; set; }
 }

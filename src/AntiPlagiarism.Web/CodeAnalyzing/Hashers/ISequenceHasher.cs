@@ -1,10 +1,9 @@
-﻿namespace AntiPlagiarism.Web.CodeAnalyzing.Hashers
+﻿namespace AntiPlagiarism.Web.CodeAnalyzing.Hashers;
+
+public interface ISequenceHasher
 {
-	public interface ISequenceHasher
-	{
-		void Enqueue(object obj);
-		void Dequeue();
-		int GetCurrentHash();
-		void Reset();
-	}
+	void Enqueue(object obj);
+	void Dequeue();
+	int GetCurrentHash();
+	void Reset();
 }

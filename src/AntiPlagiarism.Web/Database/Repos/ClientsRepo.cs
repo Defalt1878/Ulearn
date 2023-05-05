@@ -3,25 +3,24 @@ using System.Threading.Tasks;
 using AntiPlagiarism.Web.Database.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace AntiPlagiarism.Web.Database.Repos
+namespace AntiPlagiarism.Web.Database.Repos;
+
+public interface IClientsRepo
 {
-	public interface IClientsRepo
+	Task<Client> FindClientByTokenAsync(Guid token);
+}
+
+public class ClientsRepo : IClientsRepo
+{
+	private readonly AntiPlagiarismDb db;
+
+	public ClientsRepo(AntiPlagiarismDb db)
 	{
-		Task<Client> FindClientByTokenAsync(Guid token);
+		this.db = db;
 	}
 
-	public class ClientsRepo : IClientsRepo
+	public async Task<Client> FindClientByTokenAsync(Guid token)
 	{
-		private readonly AntiPlagiarismDb db;
-
-		public ClientsRepo(AntiPlagiarismDb db)
-		{
-			this.db = db;
-		}
-
-		public async Task<Client> FindClientByTokenAsync(Guid token)
-		{
-			return await db.Clients.FirstOrDefaultAsync(c => c.Token == token && c.IsEnabled).ConfigureAwait(false);
-		}
+		return await db.Clients.FirstOrDefaultAsync(c => c.Token == token && c.IsEnabled).ConfigureAwait(false);
 	}
 }

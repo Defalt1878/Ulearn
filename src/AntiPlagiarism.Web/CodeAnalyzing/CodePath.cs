@@ -2,37 +2,36 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace AntiPlagiarism.Web.CodeAnalyzing
+namespace AntiPlagiarism.Web.CodeAnalyzing;
+
+public class CodePath
 {
-	public class CodePath
+	public List<CodePathPart> Parts { get; }
+
+	public CodePath(IEnumerable<CodePathPart> parts)
 	{
-		public List<CodePathPart> Parts { get; }
-
-		public CodePath(IEnumerable<CodePathPart> parts)
-		{
-			Parts = parts.ToList();
-		}
-
-		public override string ToString()
-		{
-			return string.Join(".", Parts.Select(p => p.ToString()));
-		}
+		Parts = parts.ToList();
 	}
 
-	public class CodePathPart
+	public override string ToString()
 	{
-		public string Name { get; }
-		public Type ContainingType { get; private set; }
+		return string.Join(".", Parts.Select(p => p.ToString()));
+	}
+}
 
-		public CodePathPart(object obj, string name)
-		{
-			Name = name;
-			ContainingType = obj.GetType();
-		}
+public class CodePathPart
+{
+	public string Name { get; }
+	public Type ContainingType { get; private set; }
 
-		public override string ToString()
-		{
-			return Name;
-		}
+	public CodePathPart(object obj, string name)
+	{
+		Name = name;
+		ContainingType = obj.GetType();
+	}
+
+	public override string ToString()
+	{
+		return Name;
 	}
 }

@@ -1,7 +1,6 @@
-﻿namespace AntiPlagiarism.Web.CodeAnalyzing.Hashers
+﻿namespace AntiPlagiarism.Web.CodeAnalyzing.Hashers;
+
+public interface IObjectHasher
 {
-	public interface IObjectHasher
-	{
-		int GetHashCode(object o);
-	}
+	int GetHashCode(object o);
 }
