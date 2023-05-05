@@ -79,7 +79,8 @@ public class ExerciseController : BaseController
 		[FromRoute] Course course,
 		[FromRoute] Guid slideId,
 		[FromBody] RunSolutionParameters parameters,
-		[FromQuery] Language language)
+		[FromQuery] Language language
+	)
 	{
 		var courseId = course.Id;
 		/* Check that no checking solution by this user in last time */
@@ -101,9 +102,9 @@ public class ExerciseController : BaseController
 		var isInstructor = await courseRolesRepo.HasUserAccessToCourse(UserId, courseId, CourseRoleType.Instructor);
 		var isTester = isInstructor || await courseRolesRepo.HasUserAccessToCourse(UserId, courseId, CourseRoleType.Tester);
 		var visibleUnitsIds = await unitsRepo.GetVisibleUnitIds(course, UserId);
-		var exerciseSlide = courseStorage.FindCourse(courseId)?.FindSlideById(slideId, isInstructor, visibleUnitsIds) as ExerciseSlide;
-		if (exerciseSlide is null)
+		if (courseStorage.FindCourse(courseId)?.FindSlideById(slideId, isInstructor, visibleUnitsIds) is not ExerciseSlide exerciseSlide)
 			return NotFound(new ErrorResponse("Slide not found"));
+
 		if (!isTester && (exerciseSlide.IsExtraContent || exerciseSlide.Unit.Settings.IsExtraContent))
 		{
 			var publications = await additionalContentPublicationsRepo.GetAdditionalContentPublicationsForUser(courseId, UserId);
@@ -113,18 +114,16 @@ public class ExerciseController : BaseController
 				return NotFound(new ErrorResponse("Slide not found"));
 		}
 
-		var result = await CheckSolution(
-			courseId, 
-			exerciseSlide, 
-			code, 
+		return await CheckSolution(
+			courseId,
+			exerciseSlide,
+			code,
 			language,
-			UserId, 
+			UserId,
 			User.Identity!.Name,
-			true, 
+			true,
 			false
 		).ConfigureAwait(false);
-
-		return result;
 	}
 
 	private async Task<RunSolutionResponse> CheckSolution(string courseId,
@@ -309,7 +308,7 @@ public class ExerciseController : BaseController
 
 		if (exerciseSlide.Exercise is SingleFileExerciseBlock)
 			return NotFound();
-		if (exerciseSlide.Exercise is UniversalExerciseBlock {NoStudentZip: true})
+		if (exerciseSlide.Exercise is UniversalExerciseBlock { NoStudentZip: true })
 			return NotFound();
 
 		var zipFile = await courseManager.GenerateOrFindStudentZip(courseId, exerciseSlide);
