@@ -1,19 +1,18 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Ulearn.Common.Api.Models.Validations
+namespace Ulearn.Common.Api.Models.Validations;
+
+public class MinValueAttribute : ValidationAttribute
 {
-	public class MinValueAttribute : ValidationAttribute
+	private readonly int minValue;
+
+	public MinValueAttribute(int minValue)
 	{
-		private readonly int minValue;
+		this.minValue = minValue;
+	}
 
-		public MinValueAttribute(int minValue)
-		{
-			this.minValue = minValue;
-		}
-
-		public override bool IsValid(object value)
-		{
-			return (int)value >= minValue;
-		}
+	public override bool IsValid(object value)
+	{
+		return (int)value >= minValue;
 	}
 }
