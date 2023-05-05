@@ -191,8 +191,7 @@ public class GroupController : BaseGroupController
 	/// </summary>
 	[HttpPost("copy")]
 	[SwaggerResponse((int)HttpStatusCode.Created, Description = "Group has been copied", Type = typeof(CopyGroupResponse))]
-	[SwaggerResponse((int)HttpStatusCode.NotFound, Description = "Course not found")]
-	[SwaggerResponse((int)HttpStatusCode.NotFound, Description = "Group not found")]
+	[SwaggerResponse((int)HttpStatusCode.NotFound, Description = "Group or course not found")]
 	[SwaggerResponse((int)HttpStatusCode.Forbidden, Description = "You have no access to destination course. You should be instructor or course admin.")]
 	public async Task<ActionResult<CopyGroupResponse>> Copy([FromRoute] int groupId, [FromQuery] CopyGroupParameters parameters)
 	{
