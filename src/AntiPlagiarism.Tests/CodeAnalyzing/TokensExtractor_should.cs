@@ -13,15 +13,7 @@ namespace AntiPlagiarism.Tests.CodeAnalyzing;
 [TestFixture]
 public class TokensExtractor_should
 {
-	private TokensExtractor tokensExtractor;
-
 	private static DirectoryInfo TestDataDir => new(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "CodeAnalyzing", "TestData"));
-
-	[OneTimeSetUp]
-	public void OneTimeSetUp()
-	{
-		tokensExtractor = new TokensExtractor();
-	}
 
 	private static List<Token> SkipIfNoPygmentize(Func<List<Token>> getTokens)
 	{
