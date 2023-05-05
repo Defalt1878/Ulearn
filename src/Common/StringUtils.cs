@@ -26,8 +26,10 @@ namespace Ulearn.Common
 		{
 			var chars = alphanumericChars.ToCharArray();
 			var randomBytes = new byte[length];
+#pragma warning disable SYSLIB0023
 			using (var crypto = new RNGCryptoServiceProvider())
 				crypto.GetNonZeroBytes(randomBytes);
+#pragma warning restore SYSLIB0023
 
 			var result = new StringBuilder(length);
 			foreach (var randomByte in randomBytes)

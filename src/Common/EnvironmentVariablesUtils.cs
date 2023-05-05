@@ -1,5 +1,7 @@
 using System;
 using System.IO;
+using System.Linq;
+using JetBrains.Annotations;
 
 namespace Ulearn.Common
 {
@@ -7,23 +9,19 @@ namespace Ulearn.Common
 	{
 		public static bool ExistsOnPath(string fileName)
 		{
-			return GetFullPath(fileName) != null;
+			return GetFullPath(fileName) is not null;
 		}
 
+		[CanBeNull]
 		private static string GetFullPath(string fileName)
 		{
 			if (File.Exists(fileName))
 				return Path.GetFullPath(fileName);
 
 			var values = Environment.GetEnvironmentVariable("PATH");
-			foreach (var path in values.Split(Path.PathSeparator))
-			{
-				var fullPath = Path.Combine(path, fileName);
-				if (File.Exists(fullPath))
-					return fullPath;
-			}
-
-			return null;
+			return values?.Split(Path.PathSeparator)
+				.Select(path => Path.Combine(path, fileName!))
+				.FirstOrDefault(File.Exists);
 		}
 	}
 }

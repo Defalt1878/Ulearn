@@ -10,7 +10,7 @@
 			{
 				if (lastDigit == 1)
 					word = options.One;
-				if (lastDigit >= 2 && lastDigit <= 4)
+				if (lastDigit is >= 2 and <= 4)
 					word = options.Two;
 			}
 
@@ -20,7 +20,6 @@
 		public static string PluralizeInRussian(this int number, RussianPluralizationOptions options)
 		{
 			if (options.smallNumbersAreWords)
-			{
 				switch (number)
 				{
 					case 1:
@@ -32,7 +31,6 @@
 					case 3:
 						return $"три {options.Two}";
 				}
-			}
 
 			var word = number.SelectPluralWordInRussian(options);
 			return $"{number} {word}";
@@ -41,22 +39,13 @@
 
 	public class RussianPluralizationOptions
 	{
-		public string One;
-		public string Two;
-		public string Five;
-
-		public Gender Gender = Gender.Male;
-
-		public bool smallNumbersAreWords = true;
-		public bool hideNumberOne = true;
-
 		public static readonly RussianPluralizationOptions Score = new()
 		{
 			One = "балл",
 			Two = "балла",
 			Five = "баллов",
 			smallNumbersAreWords = false,
-			hideNumberOne = false,
+			hideNumberOne = false
 		};
 
 		public static readonly RussianPluralizationOptions ScoreDative = new()
@@ -65,7 +54,7 @@
 			Two = "баллов",
 			Five = "баллов",
 			smallNumbersAreWords = false,
-			hideNumberOne = false,
+			hideNumberOne = false
 		};
 
 		public static readonly RussianPluralizationOptions MinuteDative = new()
@@ -73,7 +62,7 @@
 			One = "минуту",
 			Two = "минуты",
 			Five = "минут",
-			Gender = Gender.Female,
+			Gender = Gender.Female
 		};
 
 		public static readonly RussianPluralizationOptions Hour = new()
@@ -96,7 +85,7 @@
 			Two = "человека",
 			Five = "человек",
 			hideNumberOne = false,
-			smallNumbersAreWords = false,
+			smallNumbersAreWords = false
 		};
 
 		public static readonly RussianPluralizationOptions Tries = new()
@@ -106,7 +95,7 @@
 			Five = "попыток",
 			Gender = Gender.Female,
 			hideNumberOne = false,
-			smallNumbersAreWords = false,
+			smallNumbersAreWords = false
 		};
 
 		public static readonly RussianPluralizationOptions Students = new()
@@ -136,7 +125,7 @@
 			Five = "работ",
 			Gender = Gender.Female,
 			hideNumberOne = false,
-			smallNumbersAreWords = false,
+			smallNumbersAreWords = false
 		};
 
 		public static readonly RussianPluralizationOptions Tasks = new()
@@ -146,9 +135,9 @@
 			Five = "задач",
 			Gender = Gender.Female,
 			hideNumberOne = false,
-			smallNumbersAreWords = false,
+			smallNumbersAreWords = false
 		};
-		
+
 		public static readonly RussianPluralizationOptions Seconds = new()
 		{
 			One = "секунда",
@@ -156,7 +145,16 @@
 			Five = "секунд",
 			Gender = Gender.Female,
 			hideNumberOne = false,
-			smallNumbersAreWords = false,
+			smallNumbersAreWords = false
 		};
+
+		public string Five;
+
+		public Gender Gender = Gender.Male;
+		public bool hideNumberOne = true;
+		public string One;
+
+		public bool smallNumbersAreWords = true;
+		public string Two;
 	}
 }

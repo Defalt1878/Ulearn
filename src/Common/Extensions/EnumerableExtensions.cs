@@ -14,7 +14,7 @@ namespace System.Linq
 
 		public static IEnumerable<TSource> ExceptNulls<TSource>(this IEnumerable<TSource> source)
 		{
-			return source.Where(i => i != null);
+			return source.Where(i => i is not null);
 		}
 
 		public static T SingleVerbose<T>(this IEnumerable<T> items, Func<T, bool> predicate, string predicateDescription = "")
@@ -31,7 +31,7 @@ namespace System.Linq
 		{
 			random = random ?? new Random();
 			var copy = items.ToList();
-			for (int i = 0; i < copy.Count; i++)
+			for (var i = 0; i < copy.Count; i++)
 			{
 				var nextIndex = random.Next(i, copy.Count);
 				yield return copy[nextIndex];
@@ -44,15 +44,15 @@ namespace System.Linq
 			return enumerable.Where(item => !(item is TSearch));
 		}
 
-		///<summary>Finds the index of the first item matching an expression in an enumerable.</summary>
-		///<param name="items">The enumerable to search.</param>
-		///<param name="predicate">The expression to test the items against.</param>
-		///<returns>The index of the first matching item, or -1 if no items match.</returns>
+		/// <summary>Finds the index of the first item matching an expression in an enumerable.</summary>
+		/// <param name="items">The enumerable to search.</param>
+		/// <param name="predicate">The expression to test the items against.</param>
+		/// <returns>The index of the first matching item, or -1 if no items match.</returns>
 		public static int FindIndex<T>(this IEnumerable<T> items, Func<T, bool> predicate)
 		{
-			if (items == null)
+			if (items is null)
 				throw new ArgumentNullException(nameof(items));
-			if (predicate == null)
+			if (predicate is null)
 				throw new ArgumentNullException(nameof(predicate));
 
 			var index = 0;

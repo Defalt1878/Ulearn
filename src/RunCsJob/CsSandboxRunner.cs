@@ -305,7 +305,7 @@ namespace RunCsJob
 
 		private bool CheckIsOutputLimit(AsyncReader reader)
 		{
-			return hasOutputLimit = hasOutputLimit || reader.ReadedLength > settings.OutputLimit;
+			return hasOutputLimit = hasOutputLimit || reader.ReadLength > settings.OutputLimit;
 		}
 
 		private bool CheckIsMemoryLimitExceeded(Process sandbox, long startUsedMemory)

@@ -9,11 +9,11 @@ namespace Ulearn.Common
 	{
 		[XmlEnum("SE")]
 		SandboxError,
-		
+
 		[XmlEnum("WA")]
 		WrongAnswer,
 
 		[XmlEnum("CE")]
-		CompilationError,
+		CompilationError
 	}
 }

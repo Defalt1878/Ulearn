@@ -15,7 +15,7 @@ namespace Ulearn.Common
 		public string CompileCommand { get; set; }
 		public string RunCommand { get; set; }
 	}
-	
+
 	[JsonConverter(typeof(StringEnumConverter), true)]
 	public enum Language : short
 	{
@@ -61,7 +61,7 @@ namespace Ulearn.Common
 		[Lexer("haskell")]
 		[CommentSymbols("--")]
 		Haskell = 9,
-		
+
 		[XmlEnum("cpp")]
 		[Lexer("cpp")]
 		[CommentSymbols("//")]
@@ -81,7 +81,7 @@ namespace Ulearn.Common
 		[Lexer("py3")]
 		[CommentSymbols("#")]
 		Mikrokosmos = 13, // https://mroman42.github.io/mikrokosmos/userguide.html
-		
+
 		[XmlEnum("hdl")]
 		[Lexer("text")]
 		[CommentSymbols("//")]
@@ -90,25 +90,27 @@ namespace Ulearn.Common
 		[XmlEnum("text")]
 		[Lexer("text")]
 		[CommentSymbols("//")]
-		Text = 100,
+		Text = 100
 	}
 
 	public class LexerAttribute : Attribute
 	{
 		public readonly string Lexer;
-		public LexerAttribute(string lexer)  
-		{  
+
+		public LexerAttribute(string lexer)
+		{
 			Lexer = lexer;
-		}  
+		}
 	}
-	
+
 	public class CommentSymbolsAttribute : Attribute
 	{
 		public readonly string CommentSymbols;
-		public CommentSymbolsAttribute(string commentSymbols)  
-		{  
+
+		public CommentSymbolsAttribute(string commentSymbols)
+		{
 			CommentSymbols = commentSymbols;
-		}  
+		}
 	}
 
 	public static class LanguageHelpers
@@ -130,13 +132,13 @@ namespace Ulearn.Common
 			{ ".sql", Language.PgSql },
 			{ ".mkr", Language.Mikrokosmos },
 			{ ".hdl", Language.Hdl },
-			{ ".txt", Language.Text },
+			{ ".txt", Language.Text }
 		};
 
 		public static Language GuessByExtension(string extension)
 		{
-			if (extensions.ContainsKey(extension))
-				return extensions[extension];
+			if (extensions.TryGetValue(extension, out var language))
+				return language;
 
 			throw new ArgumentException(
 				$"Can't guess programming language by file extension. Unknown file extension: {extension}\n" +
@@ -155,8 +157,8 @@ namespace Ulearn.Common
 
 			/* XmlSerializer expects XML so wrap what you got in xml tags */
 			var xmlBytes = Encoding.ASCII.GetBytes($"<Language>{language.EscapeHtml()}</Language>");
-			using (var ms = new MemoryStream(xmlBytes))
-				return (Language)serializer.Deserialize(ms);
+			using var ms = new MemoryStream(xmlBytes);
+			return (Language)serializer.Deserialize(ms)!;
 		}
 
 		public static Language ParseByName(string language)
@@ -171,7 +173,7 @@ namespace Ulearn.Common
 				value = ParseByName(language);
 				return true;
 			}
-			catch (Exception e)
+			catch (Exception)
 			{
 				value = Language.Text;
 				return false;
@@ -188,9 +190,7 @@ namespace Ulearn.Common
 
 		public static string GetName(this Language? language)
 		{
-			if (language.HasValue)
-				return language.Value.GetName();
-			return "";
+			return language.HasValue ? language.Value.GetName() : "";
 		}
 	}
 }

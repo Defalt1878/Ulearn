@@ -7,7 +7,7 @@ namespace Ulearn.Common.Extensions
 	public static class EnumExtensions
 	{
 		/// <summary>
-		/// Gets an attribute on an enum field value
+		///     Gets an attribute on an enum field value
 		/// </summary>
 		public static TAttribute GetAttribute<TAttribute>(this Enum value) where TAttribute : Attribute
 		{

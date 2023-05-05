@@ -6,8 +6,6 @@ namespace Ulearn.Common
 {
 	public class DefaultDictionary<TKey, TValue> : Dictionary<TKey, TValue>
 	{
-		private Func<TValue> DefaultSelector { get; }
-
 		public DefaultDictionary()
 		{
 		}
@@ -28,6 +26,8 @@ namespace Ulearn.Common
 			DefaultSelector = defaultSelector;
 		}
 
+		private Func<TValue> DefaultSelector { get; }
+
 		public new TValue this[TKey key]
 		{
 			[CollectionAccess(CollectionAccessType.UpdatedContent)]
@@ -36,19 +36,19 @@ namespace Ulearn.Common
 				if (TryGetValue(key, out var value))
 					return value;
 
-				value = DefaultSelector != null ? DefaultSelector() : GetEmptyValue();
+				value = DefaultSelector is not null ? DefaultSelector() : GetEmptyValue();
 				Add(key, value);
 				return value;
 			}
 			[CollectionAccess(CollectionAccessType.ModifyExistingContent)]
-			set { base[key] = value; }
+			set => base[key] = value;
 		}
 
 		private static TValue GetEmptyValue()
 		{
 			if (typeof(TValue) == typeof(string))
-				return default(TValue);
-			return typeof(TValue).IsValueType ? default(TValue) : Activator.CreateInstance<TValue>();
+				return default;
+			return typeof(TValue).IsValueType ? default : Activator.CreateInstance<TValue>();
 		}
 	}
 }

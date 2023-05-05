@@ -19,12 +19,12 @@ namespace Ulearn.Common
 			var pairs = this.Cast<string>().Select(key => (key, this[key])).ToDictionary(t => t.Item1, t => t.Item2);
 			var qs = QueryHelpers.AddQueryString("", pairs);
 			if (qs.Length > 0 && qs[0] == '?')
-				return qs.Substring(1);
+				return qs[1..];
 			return qs;
 		}
 	}
 
-	public class WebUtils
+	public static class WebUtils
 	{
 		public static HttpValueCollection ParseQueryString(string query)
 		{

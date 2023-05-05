@@ -6,7 +6,7 @@
 		{
 			if (total == 0)
 				return 0;
-			return (part * 100) / total;
+			return part * 100 / total;
 		}
 	}
 }

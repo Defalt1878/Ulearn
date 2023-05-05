@@ -24,7 +24,7 @@ namespace Ulearn.Common.Extensions
 		[NotNull]
 		public static T EnsureNotNull<T>([CanBeNull] this T o, string exceptionMessageIfNull = "can't be null")
 		{
-			if (o == null)
+			if (o is null)
 				throw new ArgumentException(exceptionMessageIfNull);
 			return o;
 		}
@@ -33,19 +33,15 @@ namespace Ulearn.Common.Extensions
 		{
 			var settings = removeWhitespaces ? withoutSpacesSettings : defaultSettings;
 
-			using (var ms = StaticRecyclableMemoryStreamManager.Manager.GetStream())
-			using (var innerWriter = XmlWriter.Create(ms, settings))
-			{
-				using (var writer = expandEmptyTags ? new XmlTextWriterPreventAutoClosingEmptyTags(innerWriter) : innerWriter)
-				{
-					var s = new XmlSerializer(o.GetType());
-					s.Serialize(writer, o, ns);
-					ms.Flush();
-					ms.Seek(0, SeekOrigin.Begin);
-					var sr = new StreamReader(ms);
-					return sr.ReadToEnd();
-				}
-			}
+			using var ms = StaticRecyclableMemoryStreamManager.Manager.GetStream();
+			using var innerWriter = XmlWriter.Create(ms, settings);
+			using var writer = expandEmptyTags ? new XmlTextWriterPreventAutoClosingEmptyTags(innerWriter) : innerWriter;
+			var s = new XmlSerializer(o.GetType());
+			s.Serialize(writer, o, ns);
+			ms.Flush();
+			ms.Seek(0, SeekOrigin.Begin);
+			var sr = new StreamReader(ms);
+			return sr.ReadToEnd();
 		}
 
 		public static string JsonSerialize(this object o, Formatting formatting = Formatting.None)
@@ -59,7 +55,7 @@ namespace Ulearn.Common.Extensions
 	}
 
 	/* This Xml Writer don't collapse empty tags, because self-closed tags are not valid for HTML.
-	   Standard Xml Writer collapse empty tags: <iframe .../>, this one makes it empty: <iframe ...></iframe>*/
+		Standard Xml Writer collapse empty tags: <iframe .../>, this one makes it empty: <iframe ...></iframe>*/
 	public class XmlTextWriterPreventAutoClosingEmptyTags : XmlWriterDecorator
 	{
 		public XmlTextWriterPreventAutoClosingEmptyTags(XmlWriter baseWriter)
@@ -79,10 +75,12 @@ namespace Ulearn.Common.Extensions
 
 		public XmlWriterDecorator(XmlWriter baseWriter)
 		{
-			this.baseWriter = baseWriter ?? throw new ArgumentNullException();
+			this.baseWriter = baseWriter ?? throw new ArgumentNullException(nameof(baseWriter));
 		}
 
 		protected virtual bool IsSuspended => false;
+
+		public override WriteState WriteState => baseWriter.WriteState;
 
 		public override void Close()
 		{
@@ -220,8 +218,6 @@ namespace Ulearn.Common.Extensions
 				return;
 			baseWriter.WriteStartElement(prefix, localName, ns);
 		}
-
-		public override WriteState WriteState => baseWriter.WriteState;
 
 		public override void WriteString(string text)
 		{

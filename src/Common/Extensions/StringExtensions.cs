@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Security;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -13,7 +14,7 @@ namespace Ulearn.Common.Extensions
 	{
 		public static string[] GetFiles(this string directoryPath)
 		{
-			return Directory.Exists(directoryPath) ? Directory.GetFiles(directoryPath) : new string[0];
+			return Directory.Exists(directoryPath) ? Directory.GetFiles(directoryPath) : Array.Empty<string>();
 		}
 
 		public static string PathCombine(this string directoryPath, string subdirectoryPath)
@@ -23,7 +24,7 @@ namespace Ulearn.Common.Extensions
 
 		public static string[] GetFiles(this string directoryPath, string pattern)
 		{
-			return Directory.Exists(directoryPath) ? Directory.GetFiles(directoryPath, pattern) : new string[0];
+			return Directory.Exists(directoryPath) ? Directory.GetFiles(directoryPath, pattern) : Array.Empty<string>();
 		}
 
 		public static string GetSingleFile(this string directoryPath, string pattern)
@@ -50,7 +51,7 @@ namespace Ulearn.Common.Extensions
 
 		public static string RemoveBom(this string text)
 		{
-			return text.TrimStart(new[] { '\uFEFF', '\u200B' });
+			return text.TrimStart('\uFEFF', '\u200B');
 		}
 
 		public static string AsUtf8(this byte[] bytes)
@@ -94,7 +95,7 @@ namespace Ulearn.Common.Extensions
 				.SkipWhile(string.IsNullOrWhiteSpace);
 			return string.Join("\r\n", lines);
 		}
-		
+
 		public static string RemoveCommonNesting(this string text)
 		{
 			var lines = text.SplitToLines();
@@ -124,7 +125,7 @@ namespace Ulearn.Common.Extensions
 			if (nonEmptyLines.Any())
 			{
 				var nesting = nonEmptyLines.Min(line => line.TakeWhile(char.IsWhiteSpace).Count());
-				var newLines = lines.Select(line => line.Length > nesting ? line.Substring(nesting) : line);
+				var newLines = lines.Select(line => line.Length > nesting ? line[nesting..] : line);
 				return newLines;
 			}
 
@@ -143,12 +144,10 @@ namespace Ulearn.Common.Extensions
 			arg = arg.Unidecode();
 			var result = "";
 			foreach (var c in arg)
-			{
 				if (char.IsLetterOrDigit(c))
 					result += c;
-				else if (result.Length == 0 || result[result.Length - 1] != nonLatinCharsReplacement)
+				else if (result.Length == 0 || result[^1] != nonLatinCharsReplacement)
 					result += nonLatinCharsReplacement;
-			}
 
 			return result;
 		}
@@ -156,18 +155,18 @@ namespace Ulearn.Common.Extensions
 		public static Guid ToDeterministicGuid(this string arg, Encoding encoding = null)
 		{
 			encoding = encoding ?? Encoding.UTF8;
-			using (var md5 = MD5.Create())
-			{
-				var hash = md5.ComputeHash(encoding.GetBytes(arg));
-				return new Guid(hash);
-			}
+			using var md5 = MD5.Create();
+			var hash = md5.ComputeHash(encoding.GetBytes(arg));
+			return new Guid(hash);
 		}
 
 		public static string CalculateMd5(this string arg)
 		{
 			byte[] hash;
 			using (var md5 = MD5.Create())
+			{
 				hash = md5.ComputeHash(Encoding.UTF8.GetBytes(arg));
+			}
 
 			var sb = new StringBuilder();
 			foreach (var b in hash)
@@ -180,7 +179,7 @@ namespace Ulearn.Common.Extensions
 			if (str.Length < 5)
 				return string.Join("", Enumerable.Repeat("*", str.Length));
 
-			return str.Substring(0, 2) + string.Join("", Enumerable.Repeat("*", str.Length - 4)) + str.Substring(str.Length - 2);
+			return str[..2] + string.Join("", Enumerable.Repeat("*", str.Length - 4)) + str[^2..];
 		}
 
 		public static string EscapeMarkdown(this string text)
@@ -190,7 +189,7 @@ namespace Ulearn.Common.Extensions
 
 		public static string EscapeHtml(this string text)
 		{
-			return System.Security.SecurityElement.Escape(text);
+			return SecurityElement.Escape(text);
 		}
 
 		public static string MakeNestedQuotes(this string text)
@@ -222,7 +221,7 @@ namespace Ulearn.Common.Extensions
 		{
 			if (string.IsNullOrEmpty(text))
 				return "";
-			return char.ToLowerInvariant(text[0]) + text.Substring(1);
+			return char.ToLowerInvariant(text[0]) + text[1..];
 		}
 
 		public static bool EqualsIgnoreCase(this string first, string second)

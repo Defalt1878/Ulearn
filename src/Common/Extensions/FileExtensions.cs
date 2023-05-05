@@ -15,7 +15,7 @@ namespace Ulearn.Common.Extensions
 			var startIndex = text.StartsWith(xmlDeclaration) ? xmlDeclaration.Length : 0;
 			while (startIndex < text.Length && char.IsWhiteSpace(text[startIndex]))
 				startIndex++;
-			File.WriteAllText(file.FullName, text.Substring(startIndex));
+			File.WriteAllText(file.FullName, text[startIndex..]);
 		}
 
 		public static string ContentAsUtf8(this FileInfo file)
@@ -30,12 +30,10 @@ namespace Ulearn.Common.Extensions
 
 		public static async Task<byte[]> ReadAllContentAsync(this FileInfo file)
 		{
-			byte[] result;
-			using (var stream = File.Open(file.FullName, FileMode.Open))
-			{
-				result = new byte[stream.Length];
-				await stream.ReadAsync(result, 0, (int)stream.Length);
-			}
+			await using var stream = File.Open(file.FullName, FileMode.Open);
+			var result = new byte[stream.Length];
+			// ReSharper disable once MustUseReturnValue
+			await stream.ReadAsync(result, 0, (int)stream.Length);
 
 			return result;
 		}

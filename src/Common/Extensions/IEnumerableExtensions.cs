@@ -6,14 +6,14 @@ namespace Ulearn.Common.Extensions
 {
 	public class ItemWithIndex<T>
 	{
-		public T Item { get; private set; }
-		public int Index { get; private set; }
-
 		public ItemWithIndex(T item, int index)
 		{
 			Item = item;
 			Index = index;
 		}
+
+		public T Item { get; }
+		public int Index { get; }
 
 		public void Deconstruct(out int index, out T item)
 		{

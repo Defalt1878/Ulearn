@@ -15,13 +15,13 @@ namespace Ulearn.Common
 	{
 		public static string ChooseEnding(this Gender? gender, string male, string female, string unknown)
 		{
-			if (gender == null)
-				return unknown;
-			if (gender == Gender.Male)
-				return male;
-			if (gender == Gender.Female)
-				return female;
-			throw new Exception($"Unknown gender: {gender}");
+			return gender switch
+			{
+				Gender.Male => male,
+				Gender.Female => female,
+				null => unknown,
+				_ => throw new Exception($"Unknown gender: {gender}")
+			};
 		}
 
 		public static string ChooseEnding(this Gender? gender, string male, string female)

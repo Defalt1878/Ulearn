@@ -8,8 +8,7 @@ namespace Ulearn.Common.Extensions
 	{
 		public static async Task<(T, string)> ReadAsJsonAsync<T>(this HttpContent content, JsonSerializerSettings jsonSerializerSettings = null)
 		{
-			if (jsonSerializerSettings == null)
-				jsonSerializerSettings = new JsonSerializerSettings();
+			jsonSerializerSettings ??= new JsonSerializerSettings();
 
 			var s = await content.ReadAsStringAsync();
 			return (JsonConvert.DeserializeObject<T>(s, jsonSerializerSettings), s);

@@ -10,13 +10,13 @@ namespace Ulearn.Common.Extensions
 			where TInput : class
 			where TOutput : class
 		{
-			return input == null ? null : f(input);
+			return input is null ? null : f(input);
 		}
 
 		public static TOutput Call<TInput, TOutput>(this TInput input, Func<TInput, TOutput> f, TOutput defaultValue)
 			where TInput : class
 		{
-			return input == null ? defaultValue : f(input);
+			return input is null ? defaultValue : f(input);
 		}
 
 		public static TValue Get<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key)
@@ -30,18 +30,12 @@ namespace Ulearn.Common.Extensions
 		/* Returns default(TValue) if key not found */
 		public static TValue GetOrDefault<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key)
 		{
-			TValue v;
-			if (dictionary.TryGetValue(key, out v))
-				return v;
-			return default(TValue);
+			return dictionary.TryGetValue(key, out var v) ? v : default;
 		}
 
 		public static TValue GetOrDefault<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key, TValue defaultValue)
 		{
-			TValue v;
-			if (dictionary.TryGetValue(key, out v))
-				return v;
-			return defaultValue;
+			return dictionary.TryGetValue(key, out var v) ? v : defaultValue;
 		}
 
 		[CanBeNull]
