@@ -8,6 +8,11 @@ namespace AntiPlagiarism.Api.Models.Results;
 [DataContract]
 public class GetSubmissionPlagiarismsResponse : SuccessResponse
 {
+	public GetSubmissionPlagiarismsResponse()
+	{
+		Plagiarisms = new List<Plagiarism>();
+	}
+
 	[DataMember(Name = "submission")]
 	public SubmissionInfo SubmissionInfo { get; set; }
 
@@ -23,11 +28,6 @@ public class GetSubmissionPlagiarismsResponse : SuccessResponse
 	[DataMember(Name = "analyzedCodeUnits")]
 	public List<AnalyzedCodeUnit> AnalyzedCodeUnits { get; set; }
 
-	public GetSubmissionPlagiarismsResponse()
-	{
-		Plagiarisms = new List<Plagiarism>();
-	}
-
 	public override string GetShortLogString()
 	{
 		return new GetSubmissionPlagiarismsResponse
@@ -37,7 +37,7 @@ public class GetSubmissionPlagiarismsResponse : SuccessResponse
 			Plagiarisms = Plagiarisms.Select(p => new Plagiarism
 			{
 				Weight = p.Weight,
-				SubmissionInfo = p.SubmissionInfo.CloneWithoutCode(),
+				SubmissionInfo = p.SubmissionInfo.CloneWithoutCode()
 			}).ToList()
 		}.ToString();
 	}

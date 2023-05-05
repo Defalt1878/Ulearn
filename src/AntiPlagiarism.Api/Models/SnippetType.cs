@@ -7,5 +7,5 @@ namespace AntiPlagiarism.Api.Models;
 public enum SnippetType : short
 {
 	TokensKinds = 1,
-	TokensValues = 2,
+	TokensValues = 2
 }

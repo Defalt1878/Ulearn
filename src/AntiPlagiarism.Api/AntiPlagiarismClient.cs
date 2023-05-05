@@ -25,15 +25,6 @@ public class AntiPlagiarismClient : BaseApiClient, IAntiPlagiarismClient
 		this.token = token;
 	}
 
-	protected override Uri AddCustomParametersToUrl(Uri url)
-	{
-		var builder = new UriBuilder(url);
-		var queryString = WebUtils.ParseQueryString(builder.Query);
-		queryString["token"] = token;
-		builder.Query = queryString.ToQueryString();
-		return builder.Uri;
-	}
-
 	public Task<AddSubmissionResponse> AddSubmissionAsync(AddSubmissionParameters parameters)
 	{
 		return MakeRequestAsync<AddSubmissionParameters, AddSubmissionResponse>(HttpMethod.Post, Urls.AddSubmission, parameters);
@@ -67,5 +58,14 @@ public class AntiPlagiarismClient : BaseApiClient, IAntiPlagiarismClient
 	public Task<GetProcessingStatusResponse> GetProcessingStatusAsync(GetProcessingStatusParameters parameters)
 	{
 		return MakeRequestAsync<GetProcessingStatusParameters, GetProcessingStatusResponse>(HttpMethod.Post, Urls.GetProcessingStatus, parameters);
+	}
+
+	protected override Uri AddCustomParametersToUrl(Uri url)
+	{
+		var builder = new UriBuilder(url);
+		var queryString = WebUtils.ParseQueryString(builder.Query);
+		queryString["token"] = token;
+		builder.Query = queryString.ToQueryString();
+		return builder.Uri;
 	}
 }
