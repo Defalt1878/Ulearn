@@ -12,7 +12,7 @@ namespace AntiPlagiarism.ConsoleApp.PlagiarismWriter
 	public class PlagiarismReceiver
 	{
 		private readonly ILog log = LogProvider.Get();
-		private IAntiPlagiarismClient antiPlagiarismClient;
+		private readonly IAntiPlagiarismClient antiPlagiarismClient;
 		private readonly DiffsWriter diffsWriter;
 		private readonly Repository repository;
 
@@ -44,7 +44,7 @@ namespace AntiPlagiarism.ConsoleApp.PlagiarismWriter
 					continue;
 
 				var mostSimilarSubmission = response.Plagiarisms.OrderByDescending(p => p.Weight).First();
-				
+
 				var authorOfMostSimilarSubmission = repository.SubmissionsInfo.Authors.Single(
 					a => a.Id == mostSimilarSubmission.SubmissionInfo.AuthorId);
 				var levels = await antiPlagiarismClient.GetSuspicionLevelsAsync(new GetSuspicionLevelsParameters
@@ -52,30 +52,33 @@ namespace AntiPlagiarism.ConsoleApp.PlagiarismWriter
 					TaskId = submission.TaskId,
 					Language = submission.Language
 				});
-				
+
 				var weight = response.Plagiarisms.Max(p => p.Weight);
 				if (weight < levels.SuspicionLevels.FaintSuspicion)
 					continue;
-				
+
 				plagiarisms.Add(new PlagiarismInfo
 				{
 					AuthorName = author.Name,
 					TaskTitle = task.Title,
 					PlagiarismAuthorName = authorOfMostSimilarSubmission.Name,
-					SuspicionLevel = weight < levels.SuspicionLevels.StrongSuspicion ? "слабый" : "сильный", 
+					SuspicionLevel = weight < levels.SuspicionLevels.StrongSuspicion ? "слабый" : "сильный",
 					Language = submission.Language,
 					Weight = $"{Math.Round(weight * 100, 2)}%",
 					Code = response.SubmissionInfo.Code,
 					PlagiarismCode = mostSimilarSubmission.SubmissionInfo.Code
 				});
 			}
-			
-			diffsWriter.WritePlagiarisms(plagiarisms.Select(p1 =>
-			{
-				p1.PlagiarismCount = plagiarisms.Count(p2 => p1.AuthorName == p2.AuthorName);
-				return p1;
-			}).OrderByDescending(p => p.PlagiarismCount)
-				.ToList());
+
+			diffsWriter.WritePlagiarisms(plagiarisms
+				.Select(p1 =>
+				{
+					p1.PlagiarismCount = plagiarisms.Count(p2 => p1.AuthorName == p2.AuthorName);
+					return p1;
+				})
+				.OrderByDescending(p => p.PlagiarismCount)
+				.ToList()
+			);
 		}
 	}
 }

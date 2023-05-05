@@ -10,13 +10,13 @@ namespace AntiPlagiarism.ConsoleApp.PlagiarismWriter
 	public class PlagiarismsInfoCsvWriter
 	{
 		private readonly string path;
-		
+
 		public PlagiarismsInfoCsvWriter(string path)
 		{
 			this.path = path.PathCombine(Repository.AntiplagiarismDataDirectory);
 		}
 
-		public void WritePlagiarism(List<PlagiarismInfo> plagiarisms, string fileName="plagiarisms.csv")
+		public void WritePlagiarism(IEnumerable<PlagiarismInfo> plagiarisms, string fileName = "plagiarisms.csv")
 		{
 			var file = path.PathCombine(fileName);
 			try

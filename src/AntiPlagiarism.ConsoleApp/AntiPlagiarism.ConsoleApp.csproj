@@ -1,21 +1,21 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-    <PropertyGroup>
-        <OutputType>Exe</OutputType>
-        <TargetFramework>net6.0</TargetFramework>
-        <Authors>SKB Kontur Ulearn Team</Authors>
-        <Copyright>Copyright 2014–2022 SKB Kontur</Copyright>
-    </PropertyGroup>
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<TargetFramework>net6.0</TargetFramework>
+		<Authors>SKB Kontur Ulearn Team</Authors>
+		<Copyright>Copyright 2014–2022 SKB Kontur</Copyright>
+	</PropertyGroup>
 
-    <ItemGroup>
-      <ProjectReference Include="..\AntiPlagiarism.Api\AntiPlagiarism.Api.csproj" />
-    </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\AntiPlagiarism.Api\AntiPlagiarism.Api.csproj" />
+	</ItemGroup>
 
-    <ItemGroup>
-      <PackageReference Include="CsvHelper" Version="27.2.1" />
-      <PackageReference Include="Vostok.Logging.File" Version="1.0.21" />
-    </ItemGroup>
-	
+	<ItemGroup>
+		<PackageReference Include="CsvHelper" Version="27.2.1" />
+		<PackageReference Include="Vostok.Logging.File" Version="1.0.21" />
+	</ItemGroup>
+
 	<ItemGroup>
 		<None Remove="packages\**" />
 	</ItemGroup>

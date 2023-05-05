@@ -12,14 +12,14 @@ using Vostok.Logging.Formatting;
 
 namespace AntiPlagiarism.ConsoleApp
 {
-	class Program
+	internal static class Program
 	{
 		private static Repository repository;
 		private static AntiplagiarismConsoleApp app;
 		private static IAntiPlagiarismClient antiPlagiarismClient;
 		private static string workingDirectory;
-		
-		static void Main(string[] args)
+
+		private static void Main()
 		{
 			InitLogger();
 			InitApp();
@@ -31,8 +31,8 @@ namespace AntiPlagiarism.ConsoleApp
 		{
 			workingDirectory = GetWorkingDirectory();
 			repository = new Repository(workingDirectory);
-			antiPlagiarismClient = new AntiPlagiarismClient(repository.Config.EndPointUrl, GetToken());
-			
+			antiPlagiarismClient = new AntiPlagiarismClient(Config.EndPointUrl, GetToken());
+
 			app = new AntiplagiarismConsoleApp(
 				new SubmissionSearcher(workingDirectory, new CodeExtractor(repository), repository),
 				new SubmissionSender(antiPlagiarismClient, repository),
@@ -57,10 +57,11 @@ namespace AntiPlagiarism.ConsoleApp
 				Console.WriteLine("Введите токен клиента антиплагиата");
 				repository.SetAccessToken(ConsoleWorker.GetUserInput());
 			}
+
 			ConsoleWorker.WriteLine($"Используется токен клиента {repository.Config.Token}");
 			return repository.Config.Token;
-		} 
-		
+		}
+
 		private static void InitLogger()
 		{
 			var logPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs", "{RollingSuffix}.log");
@@ -72,7 +73,7 @@ namespace AntiPlagiarism.ConsoleApp
 					MaxFiles = 0,
 					Type = RollingStrategyType.Hybrid,
 					Period = RollingPeriod.Day,
-					MaxSize = 4 * 1073741824L,
+					MaxSize = 4 * 1073741824L
 				},
 				OutputTemplate = OutputTemplate.Parse("{Timestamp:HH:mm:ss.fff} {Level:u5} {sourceContext:w}{Message}{NewLine}{Exception}")
 			};

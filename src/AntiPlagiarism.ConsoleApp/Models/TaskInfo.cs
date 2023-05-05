@@ -4,9 +4,9 @@ namespace AntiPlagiarism.ConsoleApp.Models
 {
 	public class TaskInfo
 	{
-		public string Title;
+		public readonly string Title;
 		public Guid Id;
-		
+
 		public TaskInfo(string title)
 		{
 			Title = title;

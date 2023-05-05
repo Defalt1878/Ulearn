@@ -15,21 +15,21 @@ namespace AntiPlagiarism.ConsoleApp.SubmissionPreparer
 		{
 			this.repository = repository;
 		}
-		
+
 		public Dictionary<Language, string> ExtractCode(string submissionDirectoryPath)
 		{
 			var lang2CodePieces = new Dictionary<Language, List<string>>();
 
 			var dirs = new Stack<string>();
 			dirs.Push(submissionDirectoryPath);
-			
+
 			do
 			{
 				var dir = dirs.Pop();
-				
+
 				if (repository.Config.ExcludedPaths.Any(excluded => dir.Contains(excluded)))
 					continue;
-				
+
 				Directory.GetDirectories(dir).ForEach(d => dirs.Push(d));
 
 				foreach (var file in dir.GetFiles())
@@ -43,15 +43,20 @@ namespace AntiPlagiarism.ConsoleApp.SubmissionPreparer
 					}
 				}
 			} while (dirs.Count > 0);
-			
-			return lang2CodePieces.ToDictionary(kwp => kwp.Key,
-				kwp => string.Join('\n', kwp.Value))
+
+			return lang2CodePieces
+				.ToDictionary(
+					kwp => kwp.Key,
+					kwp => string.Join('\n', kwp.Value)
+				)
 				.Where(kwp => HasCorrectLenght(kwp.Value))
-				.ToDictionary(kwp => kwp.Key,
-					kwp => kwp.Value);
+				.ToDictionary(
+					kwp => kwp.Key,
+					kwp => kwp.Value
+				);
 		}
 
-		private bool HasCorrectLenght(string code) 
-			=> code.Split('\n').Length <= repository.Config.MaxCodeLinesCount;
+		private static bool HasCorrectLenght(string code) =>
+			code.Split('\n').Length <= Config.MaxCodeLinesCount;
 	}
 }

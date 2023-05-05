@@ -39,13 +39,13 @@ namespace AntiPlagiarism.ConsoleApp.Models
 			SubmissionsInfo.Authors.Add(author);
 			SaveInJsonFile(SubmissionsInfo, submissionsInfoFile);
 		}
-		
+
 		public void AddTask(TaskInfo taskInfo)
 		{
 			SubmissionsInfo.Tasks.Add(taskInfo);
 			SaveInJsonFile(SubmissionsInfo, submissionsInfoFile);
 		}
-		
+
 		private void LoadSubmissionsInfo()
 		{
 			if (!File.Exists(submissionsInfoFile))
@@ -53,10 +53,11 @@ namespace AntiPlagiarism.ConsoleApp.Models
 				SubmissionsInfo = new SubmissionsInfo();
 				return;
 			}
+
 			SubmissionsInfo = JsonConvert.DeserializeObject<SubmissionsInfo>(
 				File.ReadAllText(submissionsInfoFile));
 		}
-		
+
 		private void LoadConfig()
 		{
 			if (!File.Exists(configFilePath))
@@ -64,10 +65,11 @@ namespace AntiPlagiarism.ConsoleApp.Models
 				Config = new Config();
 				return;
 			}
+
 			Config = JsonConvert.DeserializeObject<Config>(File.ReadAllText(configFilePath));
 		}
 
-		private void SaveInJsonFile<T>(T content, string file)
+		private static void SaveInJsonFile<T>(T content, string file)
 		{
 			File.WriteAllText(file, JsonConvert.SerializeObject(content, Formatting.Indented));
 		}

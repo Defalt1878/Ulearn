@@ -4,7 +4,6 @@ using System.Linq;
 using AntiPlagiarism.ConsoleApp.Models;
 using AntiPlagiarism.ConsoleApp.PlagiarismWriter;
 using AntiPlagiarism.ConsoleApp.SubmissionPreparer;
-using Vostok.Logging.Abstractions;
 
 namespace AntiPlagiarism.ConsoleApp
 {
@@ -14,8 +13,7 @@ namespace AntiPlagiarism.ConsoleApp
 		private readonly SubmissionSender submissionSender;
 		private readonly PlagiarismReceiver plagiarismReceiver;
 		private readonly Repository repository;
-		private readonly ILog log = LogProvider.Get();
-		
+
 		public AntiplagiarismConsoleApp(SubmissionSearcher submissionSearcher,
 			SubmissionSender submissionSender,
 			PlagiarismReceiver plagiarismReceiver,
@@ -55,14 +53,18 @@ namespace AntiPlagiarism.ConsoleApp
 				Console.WriteLine("Новых посылок не найдено");
 				return;
 			}
+
 			if (ValidateSubmissions(newSubmissions))
 			{
 				submissionSender.SendSubmissionsAsync(newSubmissions).GetAwaiter().GetResult();
 				ConsoleWorker.WriteLine("Посылки успешно отправлены");
 			}
 			else
+			{
 				ConsoleWorker.WriteLine("Новые посылки не были отправлены");
+			}
 		}
+
 		private void GetPlagiarisms()
 		{
 			plagiarismReceiver.GetPlagiarismsAsync().GetAwaiter().GetResult();
@@ -71,7 +73,7 @@ namespace AntiPlagiarism.ConsoleApp
 		private bool ValidateSubmissions(IEnumerable<Submission> submissions)
 		{
 			Console.WriteLine("Будут отправлены следующие посылки:");
-			ConsoleWorker.PrintSubmissions(submissions.ToArray(), 
+			ConsoleWorker.PrintSubmissions(submissions.ToArray(),
 				repository.SubmissionsInfo.Authors.ToArray(),
 				repository.SubmissionsInfo.Tasks.ToArray());
 

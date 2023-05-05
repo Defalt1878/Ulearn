@@ -15,7 +15,7 @@ namespace AntiPlagiarism.ConsoleApp.PlagiarismWriter
 			plagiarismsDirectory = path.PathCombine(Repository.AntiplagiarismDataDirectory).PathCombine("diffs");
 			csvWriter = new PlagiarismsInfoCsvWriter(path);
 		}
-		
+
 		public void WritePlagiarisms(List<PlagiarismInfo> plagiarisms)
 		{
 			csvWriter.WritePlagiarism(plagiarisms);
@@ -27,18 +27,18 @@ namespace AntiPlagiarism.ConsoleApp.PlagiarismWriter
 			{
 				var currentPlagiarismPath = plagiarismsDirectory.PathCombine(plagiarism.AuthorName);
 				if (!Directory.Exists(currentPlagiarismPath))
-					Directory.CreateDirectory(currentPlagiarismPath);
-				
+					Directory.CreateDirectory(currentPlagiarismPath!);
+
 				currentPlagiarismPath = currentPlagiarismPath.PathCombine(plagiarism.TaskTitle);
 				if (!Directory.Exists(currentPlagiarismPath))
-					Directory.CreateDirectory(currentPlagiarismPath);
+					Directory.CreateDirectory(currentPlagiarismPath!);
 
 				WriteCodeInFile(currentPlagiarismPath, plagiarism.AuthorName, plagiarism.TaskTitle, plagiarism.Code);
 				WriteCodeInFile(currentPlagiarismPath, plagiarism.PlagiarismAuthorName, plagiarism.TaskTitle, plagiarism.PlagiarismCode);
 			}
 		}
 
-		private void WriteCodeInFile(string path, string authorName, string taskTitle, string content) 
-			=> File.WriteAllText(path.PathCombine($"{taskTitle} {authorName}.txt"), content);
+		private static void WriteCodeInFile(string path, string authorName, string taskTitle, string content) => 
+			File.WriteAllText(path.PathCombine($"{taskTitle} {authorName}.txt"), content);
 	}
 }

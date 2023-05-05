@@ -4,7 +4,7 @@ namespace AntiPlagiarism.ConsoleApp.Models
 {
 	public class Author
 	{
-		public string Name;
+		public readonly string Name;
 		public Guid Id;
 
 		public Author(string name)
