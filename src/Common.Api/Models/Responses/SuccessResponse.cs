@@ -12,12 +12,12 @@ namespace Ulearn.Common.Api.Models.Responses
 	[DataContract]
 	public class SuccessResponseWithMessage : SuccessResponse
 	{
-		[DataMember(Name = "message", EmitDefaultValue = false, Order = 0)]
-		public string Message { get; set; }
-
 		public SuccessResponseWithMessage(string message)
 		{
 			Message = message;
 		}
+
+		[DataMember(Name = "message", EmitDefaultValue = false, Order = 0)]
+		public string Message { get; set; }
 	}
 }

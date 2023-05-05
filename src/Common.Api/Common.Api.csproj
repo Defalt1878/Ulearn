@@ -10,27 +10,27 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <PackageReference Include="Microsoft.AspNetCore.Mvc" Version="2.2.0" />
-	  <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5" />
-	  <PackageReference Include="System.Collections.Immutable" Version="6.0.0" />
-	  <PackageReference Include="Vostok.Context" Version="0.1.6" />
-	  <PackageReference Include="Vostok.Datacenters.Kontur" Version="1.0.36" />
-	  <PackageReference Include="Vostok.Logging.Tracing" Version="0.1.7" />
-	  <PackageReference Include="Vostok.Telemetry.Kontur" Version="1.0.52" />
-	  <PackageReference Include="Vostok.Tracing.Abstractions" Version="0.1.7" />
-	  <PackageReference Include="Vostok.Tracing.Kontur" Version="1.0.14" />
+		<PackageReference Include="Microsoft.AspNetCore.Mvc" Version="2.2.0"/>
+		<PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5"/>
+		<PackageReference Include="System.Collections.Immutable" Version="6.0.0"/>
+		<PackageReference Include="Vostok.Context" Version="0.1.6"/>
+		<PackageReference Include="Vostok.Datacenters.Kontur" Version="1.0.36"/>
+		<PackageReference Include="Vostok.Logging.Tracing" Version="0.1.7"/>
+		<PackageReference Include="Vostok.Telemetry.Kontur" Version="1.0.52"/>
+		<PackageReference Include="Vostok.Tracing.Abstractions" Version="0.1.7"/>
+		<PackageReference Include="Vostok.Tracing.Kontur" Version="1.0.14"/>
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\Common\Common.csproj" />
+		<ProjectReference Include="..\Common\Common.csproj"/>
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Reference Include="System.Net.Http" />
+		<Reference Include="System.Net.Http"/>
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include="Models\AuthorizationRequirement" />
+		<Folder Include="Models\AuthorizationRequirement"/>
 	</ItemGroup>
 
 	<!-- See https://docs.microsoft.com/ru-ru/aspnet/core/tutorials/getting-started-with-swashbuckle?view=aspnetcore-2.1&tabs=visual-studio%2Cvisual-studio-xml -->

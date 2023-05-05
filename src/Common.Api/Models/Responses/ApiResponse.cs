@@ -21,6 +21,6 @@ namespace Ulearn.Common.Api.Models.Responses
 	public enum ResponseStatus
 	{
 		Ok,
-		Error,
+		Error
 	}
 }

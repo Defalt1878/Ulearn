@@ -8,6 +8,11 @@ namespace Ulearn.Common.Api.Models.Responses
 	[DataContract]
 	public class ErrorResponse : ApiResponse
 	{
+		public ErrorResponse(string message)
+		{
+			Message = message;
+		}
+
 		[DataMember(Name = "status")]
 		public ResponseStatus Status { get; } = ResponseStatus.Error;
 
@@ -15,14 +20,9 @@ namespace Ulearn.Common.Api.Models.Responses
 		public string Message { get; set; }
 
 		[DataMember(Name = "traceId")]
-		public Guid TraceId => FlowingContext.Globals.Get<TraceContext>().TraceId;
+		public Guid TraceId => FlowingContext.Globals.Get<TraceContext>()!.TraceId;
 
 		[DataMember(Name = "timestamp")]
 		public DateTime Timestamp { get; } = DateTime.Now;
-
-		public ErrorResponse(string message)
-		{
-			Message = message;
-		}
 	}
 }

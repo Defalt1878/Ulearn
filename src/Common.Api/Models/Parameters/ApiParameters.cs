@@ -36,10 +36,10 @@ namespace Ulearn.Common.Api.Models.Parameters
 				var valueElemType = valueType.IsGenericType
 					? valueType.GetGenericArguments()[0]
 					: valueType.GetElementType();
-				if (valueElemType.IsPrimitive || valueElemType == typeof(string))
+				if (valueElemType is { IsPrimitive: true } || valueElemType == typeof(string))
 				{
 					var enumerable = properties[propertyName] as IEnumerable;
-					properties[propertyName] = string.Join(iEnumerableValuesSeparator, enumerable.Cast<object>());
+					properties[propertyName] = string.Join(iEnumerableValuesSeparator, enumerable!.Cast<object>());
 				}
 			}
 
@@ -53,9 +53,9 @@ namespace Ulearn.Common.Api.Models.Parameters
 		private static string GetPropertyNameForQueryString(PropertyInfo property)
 		{
 			var fromQueryAttribute = property.GetCustomAttribute<FromQueryAttribute>();
-			if (fromQueryAttribute != null)
-				return fromQueryAttribute.Name;
-			return property.Name;
+			return fromQueryAttribute is not null 
+				? fromQueryAttribute.Name 
+				: property.Name;
 		}
 
 		private static string ConstructQueryString(NameValueCollection parameters)
@@ -65,7 +65,7 @@ namespace Ulearn.Common.Api.Models.Parameters
 			foreach (string name in parameters)
 				items.Add(string.Concat(name, "=", WebUtility.UrlEncode(parameters[name])));
 
-			return string.Join("&", items.ToArray());
+			return string.Join("&", items);
 		}
 	}
 }

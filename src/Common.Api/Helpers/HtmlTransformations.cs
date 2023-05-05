@@ -67,7 +67,7 @@ namespace Ulearn.Common.Api.Helpers
 
 		private static bool IsEmailUrl(string url)
 		{
-			return url.Contains("@") && !url.Contains("/");
+			return url.Contains('@') && !url.Contains('/');
 		}
 
 		public static string HighlightLink(string url)
@@ -85,20 +85,25 @@ namespace Ulearn.Common.Api.Helpers
 		}
 
 		/// <summary>
-		/// Converts the specified attribute value to an HTML-encoded string. Use only in double quotes.
-		/// Analog of [https://docs.microsoft.com/ru-ru/dotnet/api/system.web.httputility.htmlattributeencode?view=netframework-4.7.2]
+		///     Converts the specified attribute value to an HTML-encoded string. Use only in double quotes.
+		///     Analog of
+		///     [https://docs.microsoft.com/ru-ru/dotnet/api/system.web.httputility.htmlattributeencode?view=netframework-4.7.2]
 		/// </summary>
 		/// <returns>The HTML-encoded string. If the value parameter is null or empty, this method returns an empty string.</returns>
 		/// <param name="attributeValue">The string to encode.</param>
 		public static string EncodeAttribute(string attributeValue)
 		{
-			if (string.IsNullOrEmpty(attributeValue))
-				return string.Empty;
-			return attributeValue.Replace("&", "&amp;").Replace("\"", "&quot;").Replace("<", "&lt;").Replace(">", "&gt;");
+			return string.IsNullOrEmpty(attributeValue) 
+				? string.Empty 
+				: attributeValue
+					.Replace("&", "&amp;")
+					.Replace("\"", "&quot;")
+					.Replace("<", "&lt;")
+					.Replace(">", "&gt;");
 		}
 
 		/// <summary>
-		/// Find urls in html-encoded text and replace it with links
+		///     Find urls in html-encoded text and replace it with links
 		/// </summary>
 		/// <param name="htmlEncodedText">HTML-encoded text</param>
 		/// <returns>HTML string with links</returns>
