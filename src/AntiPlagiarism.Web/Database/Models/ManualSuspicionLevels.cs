@@ -8,7 +8,7 @@ namespace AntiPlagiarism.Web.Database.Models
 	{
 		[DatabaseGenerated(DatabaseGeneratedOption.None)]
 		public Guid TaskId { get; set; }
-		
+
 		public Language Language { get; set; }
 		public double? FaintSuspicion { get; set; }
 

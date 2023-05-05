@@ -1,4 +1,5 @@
 ﻿using Ulearn.Core.Configuration;
+// ReSharper disable ClassNeverInstantiated.Global
 
 namespace AntiPlagiarism.Web.Configuration
 {
@@ -53,6 +54,7 @@ namespace AntiPlagiarism.Web.Configuration
 
 		/// После вычислений границы сликом большие и слишком маленькие округляются до 4 значений ниже
 		public double MinFaintSuspicionLevel { get; set; }
+
 		public double MinStrongSuspicionLevel { get; set; }
 		public double MaxFaintSuspicionLevel { get; set; }
 		public double MaxStrongSuspicionLevel { get; set; }

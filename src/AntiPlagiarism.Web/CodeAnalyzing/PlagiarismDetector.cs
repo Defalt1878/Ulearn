@@ -9,9 +9,9 @@ using AntiPlagiarism.Web.Database.Models;
 using AntiPlagiarism.Web.Database.Repos;
 using AntiPlagiarism.Web.Extensions;
 using Microsoft.Extensions.Options;
-using Vostok.Logging.Abstractions;
 using Ulearn.Common;
 using Ulearn.Common.Extensions;
+using Vostok.Logging.Abstractions;
 
 namespace AntiPlagiarism.Web.CodeAnalyzing
 {
@@ -21,8 +21,9 @@ namespace AntiPlagiarism.Web.CodeAnalyzing
 		private readonly ISubmissionsRepo submissionsRepo;
 		private readonly IMostSimilarSubmissionsRepo mostSimilarSubmissionsRepo;
 		private readonly CodeUnitsExtractor codeUnitsExtractor;
-		private static ILog log => LogProvider.Get().ForContext(typeof(PlagiarismDetector));
 		private readonly AntiPlagiarismConfiguration configuration;
+
+		private static ILog Log => LogProvider.Get().ForContext(typeof(PlagiarismDetector));
 
 		public PlagiarismDetector(
 			ISnippetsRepo snippetsRepo, ISubmissionsRepo submissionsRepo,
@@ -39,13 +40,13 @@ namespace AntiPlagiarism.Web.CodeAnalyzing
 
 		public async Task<double> GetWeightAsync(Submission firstSubmission, Submission secondSubmission)
 		{
-			log.Info($"Вычисляю коэффициент похожести решения #{firstSubmission.Id} и #{secondSubmission.Id}");
+			Log.Info($"Вычисляю коэффициент похожести решения #{firstSubmission.Id} и #{secondSubmission.Id}");
 			var maxSnippetsCount = configuration.AntiPlagiarism.PlagiarismDetector.CountOfColdestSnippetsUsedToSecondSearch;
 			var authorsCountThreshold = configuration.AntiPlagiarism.PlagiarismDetector.SnippetAuthorsCountThreshold;
 			var snippetsOccurrencesOfFirstSubmission = await snippetsRepo.GetSnippetsOccurrencesForSubmissionAsync(firstSubmission, maxSnippetsCount, 0, authorsCountThreshold).ConfigureAwait(false);
-			log.Debug($"Сниппеты первого решения: [{string.Join(", ", snippetsOccurrencesOfFirstSubmission)}]");
+			Log.Debug($"Сниппеты первого решения: [{string.Join(", ", snippetsOccurrencesOfFirstSubmission)}]");
 			var snippetsOccurrencesOfSecondSubmission = await snippetsRepo.GetSnippetsOccurrencesForSubmissionAsync(secondSubmission, maxSnippetsCount, 0, authorsCountThreshold).ConfigureAwait(false);
-			log.Debug($"Сниппеты второго решения: [{string.Join(", ", snippetsOccurrencesOfSecondSubmission)}]");
+			Log.Debug($"Сниппеты второго решения: [{string.Join(", ", snippetsOccurrencesOfSecondSubmission)}]");
 
 			/* Group by snippets from the second submissions by snippetId for fast searching */
 			var snippetsOccurrencesOfSecondSubmissionBySnippet = snippetsOccurrencesOfSecondSubmission
@@ -60,7 +61,7 @@ namespace AntiPlagiarism.Web.CodeAnalyzing
 				var snippet = snippetOccurence.Snippet;
 				foreach (var otherOccurence in snippetsOccurrencesOfSecondSubmissionBySnippet[snippet.Id])
 				{
-					log.Debug($"Нашёл совпадающий сниппет в обоих решениях: {snippet}");
+					Log.Debug($"Нашёл совпадающий сниппет в обоих решениях: {snippet}");
 					for (var i = 0; i < snippet.TokensCount; i++)
 					{
 						tokensMatchedInFirstSubmission[snippet.SnippetType].Add(snippetOccurence.FirstTokenIndex + i);
@@ -69,7 +70,7 @@ namespace AntiPlagiarism.Web.CodeAnalyzing
 				}
 			}
 
-			log.Debug("Закончил поиск совпадающих сниппетов");
+			Log.Debug("Закончил поиск совпадающих сниппетов");
 
 			var unionLength = 0;
 			var allSnippetTypes = GetAllSnippetTypes();
@@ -84,12 +85,12 @@ namespace AntiPlagiarism.Web.CodeAnalyzing
 
 			var totalLength = GetTokensCountFromSnippetOccurrences(snippetsOccurrencesOfFirstSubmission) +
 							GetTokensCountFromSnippetOccurrences(snippetsOccurrencesOfSecondSubmission);
-			var weight = totalLength == 0 ? 0 : ((double)unionLength) / totalLength;
+			var weight = totalLength == 0 ? 0 : (double)unionLength / totalLength;
 
 			/* Normalize weight */
 			weight /= allSnippetTypes.Count;
 
-			log.Info($"Совпавших токенов {unionLength}, всего токенов {totalLength}, итоговый коэффициент {weight}");
+			Log.Info($"Совпавших токенов {unionLength}, всего токенов {totalLength}, итоговый коэффициент {weight}");
 			return weight;
 		}
 
@@ -97,10 +98,8 @@ namespace AntiPlagiarism.Web.CodeAnalyzing
 		{
 			var tokens = new HashSet<int>();
 			foreach (var occurrence in occurrences)
-			{
 				for (var i = 0; i < occurrence.Snippet.TokensCount; i++)
 					tokens.Add(occurrence.FirstTokenIndex + i);
-			}
 
 			return tokens.Count;
 		}
@@ -118,15 +117,15 @@ namespace AntiPlagiarism.Web.CodeAnalyzing
 			var authorsCountThreshold = configuration.AntiPlagiarism.PlagiarismDetector.SnippetAuthorsCountThreshold;
 
 			/* We make two queries for finding suspicion submissions: first query is more limited by snippets count (`maxSnippetsCountFirstSearch` from configuration).
-			   For the first query we are looking for all submissions which are similar to our submission and filter only top-`maxSubmissionsAfterFirstSearch` by matched snippets count */
+				For the first query we are looking for all submissions which are similar to our submission and filter only top-`maxSubmissionsAfterFirstSearch` by matched snippets count */
 			var snippetsOccurrencesFirstSearch = await snippetsRepo.GetSnippetsOccurrencesForSubmissionAsync(
 				submission,
 				maxSnippetsCountFirstSearch,
-				authorsCountMinThreshold: 2,
-				authorsCountMaxThreshold: authorsCountThreshold
+				2,
+				authorsCountThreshold
 			).ConfigureAwait(false);
 			var snippetsIdsFirstSearch = new HashSet<int>(snippetsOccurrencesFirstSearch.Select(o => o.SnippetId));
-			log.Info($"Found following snippets after first search: {string.Join(", ", snippetsIdsFirstSearch)}");
+			Log.Info($"Found following snippets after first search: {string.Join(", ", snippetsIdsFirstSearch)}");
 			var useSubmissionsFromDate = DateTime.Now.AddMonths(-submissionInfluenceLimitInMonths);
 			var suspicionSubmissionIds = await snippetsRepo.GetSubmissionIdsWithSameSnippets(
 				snippetsIdsFirstSearch,
@@ -138,14 +137,14 @@ namespace AntiPlagiarism.Web.CodeAnalyzing
 					o.Submission.AddingTime > useSubmissionsFromDate,
 				maxSubmissionsAfterFirstSearch
 			);
-			log.Info($"Found following submissions after first search: {string.Join(", ", suspicionSubmissionIds)}");
+			Log.Info($"Found following submissions after first search: {string.Join(", ", suspicionSubmissionIds)}");
 
 			var snippetsOccurrences = await snippetsRepo.GetSnippetsOccurrencesForSubmissionAsync(submission, maxSnippetsCountSecondSearch, 0, authorsCountThreshold).ConfigureAwait(false);
 			var snippetsIds = new HashSet<int>(snippetsOccurrences.Select(o => o.SnippetId));
 
 			var allOtherOccurrences = (await snippetsRepo.GetSnippetsOccurrences(
 				snippetsIds,
-				/* Filter only snippet occurences in submissions BY THIS client, THIS task, THIS language and NOT BY THIS author */
+				/* Filter only snippet occurrences in submissions BY THIS client, THIS task, THIS language and NOT BY THIS author */
 				o => o.Submission.ClientId == submission.ClientId &&
 					o.Submission.TaskId == submission.TaskId &&
 					o.Submission.Language == submission.Language &&
@@ -181,7 +180,7 @@ namespace AntiPlagiarism.Web.CodeAnalyzing
 						TokensCount = snippet.TokensCount,
 						OriginalSubmissionFirstTokenIndex = snippetOccurrence.FirstTokenIndex,
 						PlagiarismSubmissionFirstTokenIndex = otherOccurence.FirstTokenIndex,
-						SnippetFrequency = GetSnippetFrequency(snippetsStatistics[snippet.Id], authorsCount),
+						SnippetFrequency = GetSnippetFrequency(snippetsStatistics[snippet.Id], authorsCount)
 					});
 				}
 			}
@@ -209,11 +208,11 @@ namespace AntiPlagiarism.Web.CodeAnalyzing
 
 				var plagiarismSubmissionLength = plagiarismSubmission.TokensCount;
 				var totalLength = thisSubmissionLength + plagiarismSubmissionLength;
-				var weight = totalLength == 0 ? 0 : ((double)unionLength) / totalLength;
+				var weight = totalLength == 0 ? 0 : (double)unionLength / totalLength;
 				/* Normalize weight */
 				weight /= allSnippetTypes.Count;
 
-				if (mostSimilarSubmission == null || mostSimilarSubmission.Weight < weight)
+				if (mostSimilarSubmission is null || mostSimilarSubmission.Weight < weight)
 					mostSimilarSubmission = new MostSimilarSubmission
 					{
 						Weight = weight,
@@ -221,7 +220,7 @@ namespace AntiPlagiarism.Web.CodeAnalyzing
 						SimilarSubmissionId = plagiarismSubmission.Id,
 						Timestamp = DateTime.Now
 					};
-				log.Info($"Link weight between submisions {submission.Id} and {plagiarismSubmission.Id} is {weight}. Union length is {unionLength}.");
+				Log.Info($"Link weight between submissions {submission.Id} and {plagiarismSubmission.Id} is {weight}. Union length is {unionLength}.");
 
 				if (weight < suspicionLevels.FaintSuspicion)
 					continue;
@@ -229,10 +228,8 @@ namespace AntiPlagiarism.Web.CodeAnalyzing
 				plagiarisms.Add(BuildPlagiarismInfo(plagiarismSubmission, weight, matchedSnippets[plagiarismSubmission.Id]));
 			}
 
-			if (mostSimilarSubmission != null)
-			{
+			if (mostSimilarSubmission is not null)
 				await mostSimilarSubmissionsRepo.TrySaveMostSimilarSubmissionAsync(mostSimilarSubmission).ConfigureAwait(false);
-			}
 
 			return plagiarisms;
 		}
@@ -242,20 +239,20 @@ namespace AntiPlagiarism.Web.CodeAnalyzing
 			return GetNeededTokensPositions(codeUnitsExtractor.Extract(program, language));
 		}
 
-		public static List<TokenPosition> GetNeededTokensPositions(IEnumerable<CodeUnit> codeUnits)
+		private static List<TokenPosition> GetNeededTokensPositions(IEnumerable<CodeUnit> codeUnits)
 		{
-			return codeUnits.SelectMany(u => u.Tokens.Enumerate(start: u.FirstTokenIndex)).Select(t => new TokenPosition
+			return codeUnits.SelectMany(u => u.Tokens.Enumerate(u.FirstTokenIndex)).Select(t => new TokenPosition
 			{
 				TokenIndex = t.Index,
 				StartPosition = t.Item.Position,
-				Length = t.Item.Value.Length,
+				Length = t.Item.Value.Length
 			}).ToList();
 		}
-		
+
 		private Plagiarism BuildPlagiarismInfo(Submission submission, double weight, List<MatchedSnippet> matchedSnippets)
 		{
 			/* We do TrimStart() because of issue in a way of passing code to codemirror on ulearn's frontend. We insert data into <textarea> which loses first spaces.
-			   We can remove it after migrating to new, React-based frontend. */
+				We can remove it after migrating to new, React-based frontend. */
 			var codeUnits = codeUnitsExtractor.Extract(submission.ProgramText.TrimStart(), submission.Language);
 			return new Plagiarism
 			{
@@ -266,10 +263,10 @@ namespace AntiPlagiarism.Web.CodeAnalyzing
 					{
 						Name = u.Path.ToString(),
 						FirstTokenIndex = u.FirstTokenIndex,
-						TokensCount = u.Tokens.Count,
+						TokensCount = u.Tokens.Count
 					}).ToList(),
 				TokensPositions = GetNeededTokensPositions(codeUnits),
-				MatchedSnippets = matchedSnippets,
+				MatchedSnippets = matchedSnippets
 			};
 		}
 

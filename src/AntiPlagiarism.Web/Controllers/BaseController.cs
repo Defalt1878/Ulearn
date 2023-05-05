@@ -6,16 +6,14 @@ using AntiPlagiarism.Web.Database.Models;
 using AntiPlagiarism.Web.Database.Repos;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using Vostok.Logging.Abstractions;
 using Ulearn.Common.Api.Models.Responses;
-
+using Vostok.Logging.Abstractions;
 
 namespace AntiPlagiarism.Web.Controllers
 {
 	[ApiController]
 	public abstract class BaseController : Controller
 	{
-		private static ILog log => LogProvider.Get().ForContext(typeof(BaseController));
 		protected readonly IClientsRepo clientsRepo;
 		protected readonly AntiPlagiarismDb db;
 
@@ -26,6 +24,8 @@ namespace AntiPlagiarism.Web.Controllers
 			this.clientsRepo = clientsRepo;
 			this.db = db;
 		}
+
+		private static ILog Log => LogProvider.Get().ForContext(typeof(BaseController));
 
 		public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
 		{
@@ -44,9 +44,9 @@ namespace AntiPlagiarism.Web.Controllers
 				return;
 			}
 
-			log.Debug($"Token in request is {token}", token);
+			Log.Debug($"Token in request is {token}", token);
 			client = await clientsRepo.FindClientByTokenAsync(tokenGuid).ConfigureAwait(false);
-			if (client == null)
+			if (client is null)
 			{
 				context.HttpContext.Response.StatusCode = (int)HttpStatusCode.Forbidden;
 				context.Result = new JsonResult(new ErrorResponse("Not authenticated request. Token is invalid or disabled for a while."));
@@ -66,9 +66,7 @@ namespace AntiPlagiarism.Web.Controllers
 			db.ChangeTracker.AutoDetectChangesEnabled = !isRequestSafe;
 
 			if (isRequestSafe)
-			{
-				log.Debug("Выключаю автоматическое отслеживание изменений в EF Core: db.ChangeTracker.AutoDetectChangesEnabled = false");
-			}
+				Log.Debug("Выключаю автоматическое отслеживание изменений в EF Core: db.ChangeTracker.AutoDetectChangesEnabled = false");
 		}
 	}
 }

@@ -3,7 +3,6 @@ using Ulearn.Common;
 
 namespace AntiPlagiarism.Web.Database.Models
 {
-	/* TODO (andgein): Add clientId to TaskStatisticsParameters? */
 	public class TaskStatisticsParameters
 	{
 		public Guid TaskId { get; set; }
@@ -16,6 +15,5 @@ namespace AntiPlagiarism.Web.Database.Models
 		public int SubmissionsCount { get; set; }
 
 		public DateTime? Timestamp { get; set; }
-		
 	}
 }

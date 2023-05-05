@@ -17,7 +17,7 @@ namespace AntiPlagiarism.Web.Workers
 		private readonly IServiceScopeFactory serviceScopeFactory;
 		private readonly IOptions<AntiPlagiarismConfiguration> configuration;
 
-		private static ILog log => LogProvider.Get().ForContext(typeof(AddNewSubmissionWorker));
+		private static ILog Log => LogProvider.Get().ForContext(typeof(AddNewSubmissionWorker));
 
 		public AddNewSubmissionWorker(
 			IOptions<AntiPlagiarismConfiguration> configuration,
@@ -37,11 +37,11 @@ namespace AntiPlagiarism.Web.Workers
 			var threadsCount = configuration.Value.AntiPlagiarism.ThreadsCount;
 			if (threadsCount < 1)
 			{
-				log.Error($"Не могу определить количество потоков для запуска из конфигурации: ${threadsCount}. Количество потоков должно быть положительно");
-				throw new ArgumentOutOfRangeException(nameof(threadsCount), "Number of threads (antiplagiarism:threadsCount) should be positive");
+				Log.Error($"Не могу определить количество потоков для запуска из конфигурации: ${threadsCount}. Количество потоков должно быть положительно");
+				throw new ArgumentOutOfRangeException(nameof(threadsCount), @"Number of threads (antiplagiarism:threadsCount) should be positive");
 			}
 
-			log.Info($"Запускаю AddNewSubmissionWorker в {threadsCount} потока(ов)");
+			Log.Info($"Запускаю AddNewSubmissionWorker в {threadsCount} потока(ов)");
 			for (var i = 0; i < threadsCount; i++)
 			{
 				var scheduler = Scheduler.PeriodicalWithConstantPause(sleep);
@@ -54,7 +54,7 @@ namespace AntiPlagiarism.Web.Workers
 			while (true)
 			{
 				var newSubmissionHandled = false;
-				using (var scope = serviceScopeFactory.CreateScope())
+				await using (var scope = serviceScopeFactory.CreateAsyncScope())
 				{
 					var newSubmissionHandler = scope.ServiceProvider.GetService<NewSubmissionHandler>();
 					try
@@ -63,9 +63,10 @@ namespace AntiPlagiarism.Web.Workers
 					}
 					catch (Exception ex)
 					{
-						log.Error(ex, "Exception during HandleNewSubmission");
+						Log.Error(ex, "Exception during HandleNewSubmission");
 					}
 				}
+
 				if (!newSubmissionHandled)
 					return;
 			}

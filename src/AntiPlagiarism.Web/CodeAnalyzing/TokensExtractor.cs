@@ -9,15 +9,17 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
-using Vostok.Logging.Abstractions;
 using Ulearn.Common;
 using Ulearn.Common.Extensions;
+using Vostok.Logging.Abstractions;
 
 namespace AntiPlagiarism.Web.CodeAnalyzing
 {
 	public class TokensExtractor
 	{
-		private static ILog log => LogProvider.Get().ForContext(typeof(TokensExtractor));
+		// Pygmentize заменяет в токенах конец строки на \n. Заменим сами на \n, а потом восстановим в токенах
+		private static readonly Regex lineEndingsRegex = new("\r\n|\n", RegexOptions.Compiled);
+		private static ILog Log => LogProvider.Get().ForContext(typeof(TokensExtractor));
 
 		private static IEnumerable<Token> FilterWhitespaceTokens(IEnumerable<Token> tokens)
 		{
@@ -30,18 +32,18 @@ namespace AntiPlagiarism.Web.CodeAnalyzing
 		}
 
 		[NotNull]
-		public List<Token> GetFilteredTokensFromPygmentize(string code, Language language)
+		public static List<Token> GetFilteredTokensFromPygmentize(string code, Language language)
 		{
 			var tokens = GetAllTokensFromPygmentize(code, language).EmptyIfNull();
 			return FilterCommentTokens(FilterWhitespaceTokens(tokens)).ToList();
 		}
 
 		[CanBeNull]
-		public List<Token> GetAllTokensFromPygmentize(string code, Language language)
+		public static List<Token> GetAllTokensFromPygmentize(string code, Language language)
 		{
 			var (codeWithNLineEndings, originalLineEndings) = PrepareLineEndingsForPygmentize(code);
 			var pygmentizeResult = GetPygmentizeResult(codeWithNLineEndings, language);
-			if (pygmentizeResult == null)
+			if (pygmentizeResult is null)
 				return null;
 			var tokensWithNLineEndings = ParseTokensFromPygmentize(pygmentizeResult).ToList();
 			var tokens = ReturnOriginalLineEndings(tokensWithNLineEndings, originalLineEndings).ToList();
@@ -49,15 +51,14 @@ namespace AntiPlagiarism.Web.CodeAnalyzing
 			return tokens;
 		}
 
-		private IEnumerable<Token> ParseTokensFromPygmentize(string pygmentizeResult)
+		private static IEnumerable<Token> ParseTokensFromPygmentize(string pygmentizeResult)
 		{
 			var lines = pygmentizeResult.TrimEnd().SplitToLines();
-			for (var i = 0; i < lines.Length; i++)
+			foreach (var line in lines)
 			{
-				var line = lines[i];
 				var parts = line.Split('\t', 2);
 				var tokenType = parts[0];
-				tokenType = tokenType.Substring("Token.".Length);
+				tokenType = tokenType["Token.".Length..];
 				var tokenContentInQuotes = parts[1];
 				var tokenContentEscaped = tokenContentInQuotes.Substring(1, parts[1].Length - 2);
 				var tokenContent = Regex.Unescape(tokenContentEscaped);
@@ -70,19 +71,17 @@ namespace AntiPlagiarism.Web.CodeAnalyzing
 			}
 		}
 
-		// Pygmentize заменяет в токенах конец строки на \n. Заменим сами на \n, а потом восстановим в токенах
-		private static readonly Regex lineEndingsRegex = new("\r\n|\n", RegexOptions.Compiled);
-		private (string code, List<string> originalLineEndings) PrepareLineEndingsForPygmentize(string code)
+		private static (string code, List<string> originalLineEndings) PrepareLineEndingsForPygmentize(string code)
 		{
 			var originalLineEndings = lineEndingsRegex.Matches(code).Select(m => m.Value).ToList();
 			var resultCode = code.Replace("\r\n", "\n");
 			return (resultCode, originalLineEndings);
 		}
 
-		private IEnumerable<Token> ReturnOriginalLineEndings(List<Token> tokens, List<string> originalLineEndings)
+		private static IEnumerable<Token> ReturnOriginalLineEndings(IReadOnlyList<Token> tokens, IReadOnlyList<string> originalLineEndings)
 		{
 			var lineNumber = 0;
-			for (var i=0; i<tokens.Count; i++)
+			for (var i = 0; i < tokens.Count; i++)
 			{
 				var token = tokens[i];
 				if (token.Value == "\n")
@@ -95,6 +94,7 @@ namespace AntiPlagiarism.Web.CodeAnalyzing
 					yield return token;
 					continue;
 				}
+
 				var parts = token.Value.Split('\n'); // Если \n в конце, последняя часть будет пустой строкой
 				var sb = new StringBuilder();
 				foreach (var part in parts.SkipLast(1))
@@ -106,6 +106,7 @@ namespace AntiPlagiarism.Web.CodeAnalyzing
 					sb.Append(originalLineEndings[lineNumber]);
 					lineNumber++;
 				}
+
 				sb.Append(parts.Last());
 				token.Value = sb.ToString();
 				yield return token;
@@ -114,12 +115,9 @@ namespace AntiPlagiarism.Web.CodeAnalyzing
 
 		public static void ThrowExceptionIfTokensNotMatchOriginalCode(string code, List<Token> tokens)
 		{
-			for (var i = 0; i < tokens.Count; i++)
-			{
-				var token = tokens[i];
-				if (code.Substring(token.Position, token.Value.Length) != token.Value)
-					throw new Exception();
-			}
+			if (tokens.Any(token => code.Substring(token.Position, token.Value.Length) != token.Value))
+				throw new Exception();
+
 			var allTokensContentLength = tokens.Sum(t => t.Value.Length);
 			if (code.Length != allTokensContentLength)
 				throw new Exception();
@@ -135,44 +133,43 @@ namespace AntiPlagiarism.Web.CodeAnalyzing
 			}
 		}
 
-		private string GetPygmentizeResult(string code, Language language)
+		private static string GetPygmentizeResult(string code, Language language)
 		{
 			var lexer = language.GetAttribute<LexerAttribute>().Lexer;
-			var arguments = lexer == null ? "-g" : $"-l {lexer}";
+			var arguments = lexer is null ? "-g" : $"-l {lexer}";
 			arguments += " -f tokens -O encoding=utf-8";
 
 			var sw = Stopwatch.StartNew();
-			using (var process = BuildProcess(arguments))
-			{
-				process.Start();
-				const int limit = 10 * 1024 * 1024;
-				var utf8StandardErrorReader = new StreamReader(process.StandardError.BaseStream, Encoding.UTF8);
-				var utf8StandardOutputReader = new StreamReader(process.StandardOutput.BaseStream, Encoding.UTF8);
-				var readErrTask = new AsyncReader(utf8StandardErrorReader, limit).GetDataAsync();
-				var readOutTask = new AsyncReader(utf8StandardOutputReader, limit).GetDataAsync();
-				process.StandardInput.BaseStream.Write(Encoding.UTF8.GetBytes(code));
-				process.StandardInput.BaseStream.Close();
-				var isFinished = Task.WaitAll(new Task[] { readErrTask, readOutTask }, 1000);
-				var ms = sw.ElapsedMilliseconds;
+			using var process = BuildProcess(arguments);
+			process.Start();
+			
+			const int limit = 10 * 1024 * 1024;
+			var utf8StandardErrorReader = new StreamReader(process.StandardError.BaseStream, Encoding.UTF8);
+			var utf8StandardOutputReader = new StreamReader(process.StandardOutput.BaseStream, Encoding.UTF8);
+			var readErrTask = new AsyncReader(utf8StandardErrorReader, limit).GetDataAsync();
+			var readOutTask = new AsyncReader(utf8StandardOutputReader, limit).GetDataAsync();
+			process.StandardInput.BaseStream.Write(Encoding.UTF8.GetBytes(code));
+			process.StandardInput.BaseStream.Close();
+			var isFinished = Task.WaitAll(new Task[] { readErrTask, readOutTask }, 1000);
+			var ms = sw.ElapsedMilliseconds;
 
-				if (!process.HasExited)
-					Shutdown(process);
+			if (!process.HasExited)
+				Shutdown(process);
 
-				if (readErrTask.Result.Length > 0)
-					log.Warn($"pygmentize написал на stderr: {readErrTask.Result}");
+			if (readErrTask.Result.Length > 0)
+				Log.Warn($"pygmentize написал на stderr: {readErrTask.Result}");
 
-				if (!isFinished)
-					log.Warn($"Не хватило времени ({ms} ms) на работу pygmentize");
-				else
-					log.Info($"pygmentize закончил работу за {ms} ms");
+			if (!isFinished)
+				Log.Warn($"Не хватило времени ({ms} ms) на работу pygmentize");
+			else
+				Log.Info($"pygmentize закончил работу за {ms} ms");
 
-				if (process.ExitCode != 0)
-					log.Info($"pygmentize завершился с кодом {process.ExitCode}");
+			if (process.ExitCode != 0)
+				Log.Info($"pygmentize завершился с кодом {process.ExitCode}");
 
-				return isFinished && readErrTask.Result.Length == 0 && readOutTask.Result.Length > 0
-					? readOutTask.Result
-					: null;
-			}
+			return isFinished && readErrTask.Result.Length == 0 && readOutTask.Result.Length > 0
+				? readOutTask.Result
+				: null;
 		}
 
 		private static void Shutdown(Process process)
@@ -211,7 +208,7 @@ namespace AntiPlagiarism.Web.CodeAnalyzing
 					FileName = "pygmentize",
 					RedirectStandardOutput = true,
 					RedirectStandardError = true,
-					RedirectStandardInput =  true,
+					RedirectStandardInput = true,
 					CreateNoWindow = true,
 					UseShellExecute = false
 				}

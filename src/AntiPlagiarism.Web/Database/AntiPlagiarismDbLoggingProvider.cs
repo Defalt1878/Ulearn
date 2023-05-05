@@ -10,7 +10,7 @@ namespace AntiPlagiarism.Web.Database
 	{
 		public NpgsqlLogger CreateLogger(string name)
 		{
-			return new AntiPlagiarismDbLogger(name);
+			return new AntiPlagiarismDbLogger();
 		}
 	}
 
@@ -18,7 +18,7 @@ namespace AntiPlagiarism.Web.Database
 	{
 		private readonly LogLevel dbMinimumLevel;
 
-		public AntiPlagiarismDbLogger(string name)
+		public AntiPlagiarismDbLogger()
 		{
 			dbMinimumLevel = GetDbMinimumLevelFromConfig();
 		}

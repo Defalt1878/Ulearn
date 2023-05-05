@@ -44,16 +44,14 @@ namespace AntiPlagiarism.Web.Database.Repos
 			var executionStrategy = new NpgsqlRetryingExecutionStrategy(db, 5);
 			await executionStrategy.ExecuteAsync(async () =>
 			{
-				using (var ts = new TransactionScope(TransactionScopeOption.Required, TimeSpan.FromSeconds(30), TransactionScopeAsyncFlowOption.Enabled))
-				{
-					await db.TaskStatisticsSourceData
-						.Where(d => d.Submission1.TaskId == parameters.TaskId && d.Submission1.Language == parameters.Language)
-						.DeleteAsync();
-					db.AddOrUpdate(parameters, p => p.TaskId == parameters.TaskId && p.Language == parameters.Language);
-					db.TaskStatisticsSourceData.AddRange(sourceData);
-					await db.SaveChangesAsync().ConfigureAwait(false);
-					ts.Complete();
-				}
+				using var ts = new TransactionScope(TransactionScopeOption.Required, TimeSpan.FromSeconds(30), TransactionScopeAsyncFlowOption.Enabled);
+				await db.TaskStatisticsSourceData
+					.Where(d => d.Submission1.TaskId == parameters.TaskId && d.Submission1.Language == parameters.Language)
+					.DeleteAsync();
+				db.AddOrUpdate(parameters, p => p.TaskId == parameters.TaskId && p.Language == parameters.Language);
+				db.TaskStatisticsSourceData.AddRange(sourceData);
+				await db.SaveChangesAsync().ConfigureAwait(false);
+				ts.Complete();
 			});
 		}
 	}

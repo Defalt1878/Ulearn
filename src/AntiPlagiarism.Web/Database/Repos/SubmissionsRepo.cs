@@ -61,7 +61,7 @@ namespace AntiPlagiarism.Web.Database.Repos
 				Language = language,
 				Program = new Code
 				{
-					Text = code,
+					Text = code
 				},
 				TokensCount = tokensCount,
 				AdditionalInfo = additionalInfo,

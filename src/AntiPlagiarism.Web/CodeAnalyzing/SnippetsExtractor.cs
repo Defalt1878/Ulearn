@@ -12,14 +12,12 @@ namespace AntiPlagiarism.Web.CodeAnalyzing
 
 		public static SnippetsExtractorOptions Default => new()
 		{
-			SequenceHasher = new PolynomialSequenceHasher(137, new StableStringHasher()),
+			SequenceHasher = new PolynomialSequenceHasher(137, new StableStringHasher())
 		};
 	}
 
 	public class SnippetsExtractor
 	{
-		public SnippetsExtractorOptions Options { get; private set; }
-
 		public SnippetsExtractor(SnippetsExtractorOptions options)
 		{
 			Options = options;
@@ -30,13 +28,15 @@ namespace AntiPlagiarism.Web.CodeAnalyzing
 		{
 		}
 
+		private SnippetsExtractorOptions Options { get; }
+
 		public IEnumerable<Snippet> GetSnippets(IEnumerable<IToken> tokens, int snippetTokensCount, ITokenInSnippetConverter converter)
 		{
 			if (snippetTokensCount <= 0)
-				throw new ArgumentException("Tokens count in snippet must be positive", nameof(snippetTokensCount));
+				throw new ArgumentException(@"Tokens count in snippet must be positive", nameof(snippetTokensCount));
 
 			var tokensQueue = new Queue<string>();
-			/* TODO (andgein): Don't use hasher from options, create new one */
+
 			var hasher = Options.SequenceHasher;
 			hasher.Reset();
 
@@ -52,14 +52,12 @@ namespace AntiPlagiarism.Web.CodeAnalyzing
 				tokensQueue.Enqueue(token);
 
 				if (tokensQueue.Count == snippetTokensCount)
-				{
 					yield return new Snippet
 					{
 						SnippetType = converter.SnippetType,
 						TokensCount = snippetTokensCount,
-						Hash = hasher.GetCurrentHash(),
+						Hash = hasher.GetCurrentHash()
 					};
-				}
 			}
 		}
 	}

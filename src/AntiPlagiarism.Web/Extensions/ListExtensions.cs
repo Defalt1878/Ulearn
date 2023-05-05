@@ -24,10 +24,7 @@ namespace AntiPlagiarism.Web.Extensions
 			var count = values.Count;
 			if (count <= 1)
 				return 0;
-			var variance = 0.0;
-			foreach (var value in values)
-				variance += (value - mean) * (value - mean) / (count - 1);
-			return variance;
+			return values.Sum(value => (value - mean) * (value - mean) / (count - 1));
 		}
 
 		public static double Deviation(this List<double> values)

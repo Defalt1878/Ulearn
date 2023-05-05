@@ -8,12 +8,14 @@ namespace AntiPlagiarism.Web.Database.Models
 	{
 		[Key]
 		[DatabaseGenerated(DatabaseGeneratedOption.None)]
-		[ForeignKey("Submission")] // Если явно не указать, то создаст копию поля SubmissionId
+		[ForeignKey(nameof(Submission))] // Если явно не указать, то создаст копию поля SubmissionId
 		public int SubmissionId { get; set; }
+
 		public virtual Submission Submission { get; set; }
 
 		[Required]
 		public int SimilarSubmissionId { get; set; }
+
 		public virtual Submission SimilarSubmission { get; set; }
 
 		[Required]

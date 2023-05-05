@@ -14,8 +14,8 @@ namespace AntiPlagiarism.Web.Workers
 	{
 		private readonly IServiceScopeFactory serviceScopeFactory;
 		private readonly AntiPlagiarismConfiguration configuration;
-		private static ILog log => LogProvider.Get().ForContext(typeof(UpdateOldSubmissionsFromStatisticsWorker));
-// ReSharper disable once NotAccessedField.Local
+
+		private static ILog Log => LogProvider.Get().ForContext(typeof(UpdateOldSubmissionsFromStatisticsWorker));
 
 		public UpdateOldSubmissionsFromStatisticsWorker(
 			IOptions<AntiPlagiarismConfiguration> configuration,
@@ -41,7 +41,7 @@ namespace AntiPlagiarism.Web.Workers
 
 		private async Task Task(object stateInfo)
 		{
-			log.Info("Start UpdateOldSubmissionsFromStatisticsWorker");
+			Log.Info("Start UpdateOldSubmissionsFromStatisticsWorker");
 			using (var scope = serviceScopeFactory.CreateScope())
 			{
 				var snippetsRepo = scope.ServiceProvider.GetService<ISnippetsRepo>();
@@ -57,10 +57,11 @@ namespace AntiPlagiarism.Web.Workers
 				}
 				catch (Exception ex)
 				{
-					log.Error(ex, "Exception during UpdateOldSubmissionsFromStatistics");
+					Log.Error(ex, "Exception during UpdateOldSubmissionsFromStatistics");
 				}
 			}
-			log.Info("End UpdateOldSubmissionsFromStatisticsWorker");
+
+			Log.Info("End UpdateOldSubmissionsFromStatisticsWorker");
 		}
 	}
 }

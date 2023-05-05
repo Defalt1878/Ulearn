@@ -7,12 +7,12 @@ namespace AntiPlagiarism.Web.Database
 {
 	public class AntiPlagiarismDb : DbContext
 	{
-		public static readonly string DefaultSchema = "antiplagiarism";
+		public const string DefaultSchema = "antiplagiarism";
 
 		static AntiPlagiarismDb()
 		{
 			var configuration = ApplicationConfiguration.Read<UlearnConfiguration>();
-			if (configuration.HostLog != null)
+			if (configuration.HostLog is not null)
 			{
 				NpgsqlLogManager.Provider = new AntiPlagiarismDbLoggingProvider();
 				NpgsqlLogManager.IsParameterLoggingEnabled = true;
@@ -23,6 +23,41 @@ namespace AntiPlagiarism.Web.Database
 			: base(options)
 		{
 		}
+
+
+		public DbSet<Client> Clients { get; set; } // Id и токены пользователей, которые могут делать запросы к антиплагиату. Один из пользователей — ulearn
+
+		public DbSet<Submission> Submissions { get; set; } // Посылки: автор добавил такой-то код посылки (ссылка на таблицу Code) для задачи в такое время
+
+		public DbSet<Code> Codes { get; set; } // Код посылки
+
+		public DbSet<Snippet> Snippets { get; set; } // Hash (токена), SnippetType (только типы токенов или сами значения), TokensCount (количество токенов в сниппете). Сам набор токенов в снипете не хранится
+
+		public DbSet<SnippetStatistics> SnippetsStatistics { get; set; } // Для задачи для сниппета количество уникальных авторов с этим сниппетом в этой задаче.
+
+		public DbSet<SnippetOccurence> SnippetsOccurences { get; set; } // id сниппета, id посылки, местоположение сниппета в посылке
+
+		// Для задачи количество посылок, мат ожидание и дисперсия распределения попарных расстояний между последними решениями 100 последних авторов.
+		// Количество посылок здесь на момент последнего обновления статистик.
+		// Статистики обновляются при увеличении количества в 2 раза, а потом каждую 1000. Идентичные решения не учитываются в статистике.
+		public DbSet<TaskStatisticsParameters> TasksStatisticsParameters { get; set; }
+
+		public DbSet<WorkQueueItem> WorkQueueItems { get; set; } // Очередь, которая может содержать что угодно. Используется для постановки задачи парсинга новой посылки в очередь, чтобы выгребать, когда есть время.
+
+		public DbSet<TaskStatisticsSourceData> TaskStatisticsSourceData { get; set; } // Содержит данные, на основе которых считались TasksStatisticsParameters. Т.е. попарные веса решений 100 авторов. Полезно для построения графиков распределения весов.
+
+		public DbSet<MostSimilarSubmission> MostSimilarSubmissions { get; set; } // Во время запроса для преподавателя информации о плагиате в эту таблицу записывается вес самого похожего решения. Полезно для принятия решения установке ручных suspicion levels (границ, когад показывается плашка).
+
+		public DbSet<ManualSuspicionLevels> ManualSuspicionLevels { get; set; } // Вручную установленные границы похожести для показа плашек. (Админ курса может менять слева в верхнему угду страницы с подробностями обнаруженного списывания.)
+
+		// Антиплагиат не показывает совпадения с посылками старше submissionInfluenceLimitInMonths.
+		// Для этого ежедневно запускаемый UpdateOldSubmissionsFromStatisticsWorker обновляет таблицу SnippetsStatistics,
+		// чтобы поле authorsCount содержало только авторов, которые отправляли свои посылки за последние submissionInfluenceLimitInMonths.
+		// В OldSubmissionsInfluenceBorder хранится дата и время, с которой на данный момент учитываются посылки в SnippetsStatistics.
+		// UpdateOldSubmissionsFromStatisticsWorker запускается ночью. Если пока обрабатываются сниппеты таска придет новое решение,
+		// то результат SnippetsStatistics может разойтись на этого автора, пока снова кто-то не отправит решение с тем же сниппетом.
+		// Но время работы над одним таском в среднем меньше минуты. Так что вероятность небольшая, если запускать ночью.
+		public DbSet<OldSubmissionsInfluenceBorder> OldSubmissionsInfluenceBorder { get; set; }
 
 		protected override void OnModelCreating(ModelBuilder modelBuilder)
 		{
@@ -78,7 +113,7 @@ namespace AntiPlagiarism.Web.Database
 
 			modelBuilder.Entity<TaskStatisticsParameters>()
 				.HasKey(p => new { p.TaskId, p.Language });
-			
+
 			modelBuilder.Entity<ManualSuspicionLevels>()
 				.HasKey(p => new { p.TaskId, p.Language });
 		}
@@ -88,8 +123,8 @@ namespace AntiPlagiarism.Web.Database
 			Database.Migrate();
 		}
 
-		/* We stands with perfomance issue on EF Core: https://github.com/aspnet/EntityFrameworkCore/issues/11680
-  		   So we decided to disable AutoDetectChangesEnabled temporary for some queries */
+		/* We stands with performance issue on EF Core: https://github.com/aspnet/EntityFrameworkCore/issues/11680
+			So we decided to disable AutoDetectChangesEnabled temporary for some queries */
 		public void DisableAutoDetectChanges()
 		{
 			ChangeTracker.AutoDetectChangesEnabled = false;
@@ -99,40 +134,5 @@ namespace AntiPlagiarism.Web.Database
 		{
 			ChangeTracker.AutoDetectChangesEnabled = true;
 		}
-
-		
-		public DbSet<Client> Clients { get; set; } // Id и токены пользователей, которые могут делать запросы к антиплагиату. Один из пользователей — ulearn
-
-		public DbSet<Submission> Submissions { get; set; } // Посылки: автор добавил такой-то код посылки (ссылка на таблицу Code) для задачи в такое время
-
-		public DbSet<Code> Codes { get; set; } // Код посылки
-
-		public DbSet<Snippet> Snippets { get; set; } // Hash (токена), SnippetType (только типы токенов или сами значения), TokensCount (количество токенов в сниппете). Сам набор токенов в снипете не хранится
-
-		public DbSet<SnippetStatistics> SnippetsStatistics { get; set; } // Для задачи для сниппета количество уникальных авторов с этим сниппетом в этой задаче.
-
-		public DbSet<SnippetOccurence> SnippetsOccurences { get; set; } // id сниппета, id посылки, местоположение снипета в посылке
-
-		// Для задачи количество посылок, мат ожидание и дисперсия распределения попарных расстояний между последними решениями 100 последних авторов.
-		// Количество посылок здесь на момент последнего обновления статистик.
-		// Статистики обновляются при увеличении количества в 2 раза, а потом каждую 1000. Идентичные решения не учитываются в статистике.
-		public DbSet<TaskStatisticsParameters> TasksStatisticsParameters { get; set; }
-
-		public DbSet<WorkQueueItem> WorkQueueItems { get; set; } // Очередь, которая может содержать что угодно. Используется для постановки задачи парсинга новой посылки в очередь, чтобы выгребать, когда есть время.
-
-		public DbSet<TaskStatisticsSourceData> TaskStatisticsSourceData { get; set; } // Cодержит данные, на основе которых считались TasksStatisticsParameters. Т.е. попарные веса решений 100 авторов. Полезно для построения графиков распределения весов.
-
-		public DbSet<MostSimilarSubmission> MostSimilarSubmissions { get; set; } // Во время запроса для преподавателя информации о плагиате в эту таблицу записывается вес самого похожего решения. Полезно для принятия решения установке ручных suspicion levels (границ, когад показывается плашка).
-
-		public DbSet<ManualSuspicionLevels> ManualSuspicionLevels { get; set; } // Вручную установленные границы похожести для показа плашек. (Админ курса может менять слева в верхнему угду страницы с подробностями обнаруженного списывания.)
-
-		// Антиплагиат не показывает совпадения с посылками старше submissionInfluenceLimitInMonths.
-		// Для этого ежедневно запускаемый UpdateOldSubmissionsFromStatisticsWorker обновляет таблицу SnippetsStatistics,
-		// чтобы поле authorsCount содержало только авторов, которые отправляли свои посылки за последние submissionInfluenceLimitInMonths.
-		// В OldSubmissionsInfluenceBorder хранится дата и время, с которой на данный момент учитываются посылки в SnippetsStatistics.
-		// UpdateOldSubmissionsFromStatisticsWorker запускается ночью. Если пока обрабатываются сниппеты таска придет новое решение,
-		// то результат SnippetsStatistics может разойтись на этого автора, пока снова кто-то не отправит решение с тем же сниппетом.
-		// Но время работы над одним таском в среднем меньше минуты. Так что вероятность небольшая, если запускать ночью.
-		public DbSet<OldSubmissionsInfluenceBorder> OldSubmissionsInfluenceBorder { get; set; }
 	}
 }

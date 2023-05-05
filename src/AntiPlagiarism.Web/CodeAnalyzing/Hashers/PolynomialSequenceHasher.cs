@@ -31,8 +31,8 @@ namespace AntiPlagiarism.Web.CodeAnalyzing.Hashers
 		{
 			if (objectsHashes.Count == 0)
 				throw new InvalidOperationException("Can't dequeue from empty sequence");
-			var valueToSubstract = GetBasePower(objectsHashes.Count - 1);
-			currentHash = unchecked(currentHash - valueToSubstract * objectsHashes.Dequeue());
+			var valueToSubtract = GetBasePower(objectsHashes.Count - 1);
+			currentHash = unchecked(currentHash - valueToSubtract * objectsHashes.Dequeue());
 		}
 
 		public int GetCurrentHash()
@@ -59,7 +59,7 @@ namespace AntiPlagiarism.Web.CodeAnalyzing.Hashers
 			var result = 1;
 			while (power >= basePowers.Length)
 			{
-				result = unchecked(result * basePowers[basePowers.Length - 1]);
+				result = unchecked(result * basePowers[^1]);
 				power -= basePowers.Length - 1;
 			}
 

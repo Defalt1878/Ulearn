@@ -7,10 +7,10 @@ namespace AntiPlagiarism.Web.CodeAnalyzing.Hashers
 	{
 		public int GetHashCode(object o)
 		{
-			if (!(o is string))
-				throw new ArgumentException("Object should be string for stable hashing", nameof(o));
+			if (o is not string s)
+				throw new ArgumentException(@"Object should be string for stable hashing", nameof(o));
 
-			return ((string)o).GetStableHashCode();
+			return s.GetStableHashCode();
 		}
 	}
 }

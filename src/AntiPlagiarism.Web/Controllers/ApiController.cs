@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AntiPlagiarism.Api;
 using AntiPlagiarism.Api.Models.Parameters;
 using AntiPlagiarism.Api.Models.Results;
 using AntiPlagiarism.Web.CodeAnalyzing;
@@ -14,10 +15,10 @@ using JetBrains.Annotations;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using Vostok.Logging.Abstractions;
 using Ulearn.Common;
 using Ulearn.Common.Api.Models.Responses;
 using Ulearn.Common.Extensions;
+using Vostok.Logging.Abstractions;
 
 namespace AntiPlagiarism.Web.Controllers
 {
@@ -35,7 +36,8 @@ namespace AntiPlagiarism.Web.Controllers
 		private readonly IServiceScopeFactory serviceScopeFactory;
 		private readonly NewSubmissionHandler newSubmissionHandler;
 		private readonly AntiPlagiarismConfiguration configuration;
-		private static ILog log => LogProvider.Get().ForContext(typeof(ApiController));
+
+		private static ILog Log => LogProvider.Get().ForContext(typeof(ApiController));
 
 		public ApiController(
 			AntiPlagiarismDb db,
@@ -64,17 +66,16 @@ namespace AntiPlagiarism.Web.Controllers
 		}
 
 		/// <summary>
-		/// Зарегистрировать код студента в антиплагиате. Долгая операция, выполняется не сразу, ставится в очередь.
+		///     Зарегистрировать код студента в антиплагиате. Долгая операция, выполняется не сразу, ставится в очередь.
 		/// </summary>
 		/// <remarks>
-		/// token — Для авторизации. Для получения пишите на support@ulearn.me
-		/// 
-		/// additionalInfo — Json с любой дополнительной информацией, которую хочется сохранять вместе с submission; без изменений возвращается в ответах, см. класс SubmissionInfo
-		///
-		/// clientSubmissionId — Id посылки кода студентом в терминах клиентского кода. Любая строка
+		///     token — Для авторизации. Для получения пишите на support@ulearn.me
+		///     additionalInfo — Json с любой дополнительной информацией, которую хочется сохранять вместе с submission; без
+		///     изменений возвращается в ответах, см. класс SubmissionInfo
+		///     clientSubmissionId — Id посылки кода студентом в терминах клиентского кода. Любая строка
 		/// </remarks>
-		[HttpPost(Api.Urls.AddSubmission)]
-		public async Task<ActionResult<AddSubmissionResponse>> AddSubmission([FromQuery]string token, AddSubmissionParameters parameters)
+		[HttpPost(Urls.AddSubmission)]
+		public async Task<ActionResult<AddSubmissionResponse>> AddSubmission([FromQuery] string token, AddSubmissionParameters parameters)
 		{
 			if (!ModelState.IsValid)
 				return BadRequest(ModelState);
@@ -94,7 +95,7 @@ namespace AntiPlagiarism.Web.Controllers
 				parameters.ClientSubmissionId
 			).ConfigureAwait(false);
 
-			log.Info(
+			Log.Info(
 				"Добавлено новое решение {submissionId} по задаче {taskId}, автор {authorId}, язык {language}, доп. информация {additionalInfo}",
 				submission.Id,
 				parameters.TaskId,
@@ -107,7 +108,7 @@ namespace AntiPlagiarism.Web.Controllers
 
 			return new AddSubmissionResponse
 			{
-				SubmissionId = submission.Id,
+				SubmissionId = submission.Id
 			};
 		}
 
@@ -118,11 +119,12 @@ namespace AntiPlagiarism.Web.Controllers
 		}
 
 		/// <summary>
-		/// Для разработчиков.
-		/// Удалить данные из базы и занво разбить код для задачи на токены и сниппеты. Почти как если бы этот код заново послали.
-		/// Запускать при изменении алгорита разбиение на токены и получения сниппетов.
+		///     Для разработчиков.
+		///     Удалить данные из базы и заново разбить код для задачи на токены и сниппеты. Почти как если бы этот код заново
+		///     послали.
+		///     Запускать при изменении алгоритма разбиение на токены и получения сниппетов.
 		/// </summary>
-		[HttpPost(Api.Urls.RebuildSnippetsForTask)]
+		[HttpPost(Urls.RebuildSnippetsForTask)]
 		public async Task<ActionResult<RebuildSnippetsForTaskResponse>> RebuildSnippetsForTask([FromQuery] RebuildSnippetsForTaskParameters parameters)
 		{
 			if (!ModelState.IsValid)
@@ -141,16 +143,17 @@ namespace AntiPlagiarism.Web.Controllers
 
 			return new RebuildSnippetsForTaskResponse
 			{
-				SubmissionsIds = submissions.Select(s => s.Id).ToList(),
+				SubmissionsIds = submissions.Select(s => s.Id).ToList()
 			};
 		}
 
 		/// <summary>
-		/// Для админов.
-		/// Пересчитать статистики для задачи, по которым вычисляются границы suspicion-levels, влияющие на то, при какой степени похожести показываем предупреждения.
-		/// Хотя, они и так автоматически пересчитываются раз в 1000 посылок или чаще.
+		///     Для администраторов.
+		///     Пересчитать статистики для задачи, по которым вычисляются границы suspicion-levels, влияющие на то, при какой
+		///     степени похожести показываем предупреждения.
+		///     Хотя, они и так автоматически пересчитываются раз в 1000 посылок или чаще.
 		/// </summary>
-		[HttpPost(Api.Urls.RecalculateTaskStatistics)]
+		[HttpPost(Urls.RecalculateTaskStatistics)]
 		public async Task<ActionResult<RecalculateTaskStatisticsResponse>> RecalculateTaskStatistics([FromQuery] RecalculateTaskStatisticsParameters parameters)
 		{
 			if (!ModelState.IsValid)
@@ -166,12 +169,12 @@ namespace AntiPlagiarism.Web.Controllers
 				taskIds = taskIds.Where(t => t == parameters.TaskId.Value).ToList();
 
 			var weights = new Dictionary<Guid, List<double>>();
-			foreach (var (index, taskId) in taskIds.Enumerate(start: 1))
+			foreach (var (index, taskId) in taskIds.Enumerate(1))
 			{
 				weights[taskId] = await newSubmissionHandler.CalculateTaskStatisticsParametersAsync(client.Id, taskId, parameters.Language).ConfigureAwait(false);
 				weights[taskId].Sort();
 
-				log.Info($"RecalculateTaskStatistics: обработано {index.PluralizeInRussian(RussianPluralizationOptions.Tasks)} из {taskIds.Count}");
+				Log.Info($"RecalculateTaskStatistics: обработано {index.PluralizeInRussian(RussianPluralizationOptions.Tasks)} из {taskIds.Count}");
 
 				GC.Collect();
 			}
@@ -185,18 +188,19 @@ namespace AntiPlagiarism.Web.Controllers
 		}
 
 		/// <summary>
-		/// Для разработчиков.
-		/// Получить результаты анализа на плагиат посылки кода.
-		/// Обычно не используется, потому что принимает на вход внутренний для сервиса антиплагита submissionId, который еще откуда-то взять надо.
+		///     Для разработчиков.
+		///     Получить результаты анализа на плагиат посылки кода.
+		///     Обычно не используется, потому что принимает на вход внутренний для сервиса антиплагита submissionId, который еще
+		///     откуда-то взять надо.
 		/// </summary>
-		[HttpGet(Api.Urls.GetSubmissionPlagiarisms)]
+		[HttpGet(Urls.GetSubmissionPlagiarisms)]
 		public async Task<ActionResult<GetSubmissionPlagiarismsResponse>> GetSubmissionPlagiarisms([FromQuery] GetSubmissionPlagiarismsParameters parameters)
 		{
 			if (!ModelState.IsValid)
 				return BadRequest(ModelState);
 
 			var submission = await submissionsRepo.FindSubmissionByIdAsync(parameters.SubmissionId).ConfigureAwait(false);
-			if (submission == null || submission.ClientId != client.Id)
+			if (submission is null || submission.ClientId != client.Id)
 				return NotFound(new ErrorResponse("Invalid submission id"));
 
 			var suspicionLevels = await GetSuspicionLevelsAsync(submission.TaskId, submission.Language).ConfigureAwait(false);
@@ -207,16 +211,16 @@ namespace AntiPlagiarism.Web.Controllers
 				Plagiarisms = await plagiarismDetector.GetPlagiarismsAsync(submission, suspicionLevels, configuration.AntiPlagiarism.SubmissionInfluenceLimitInMonths).ConfigureAwait(false),
 				TokensPositions = plagiarismDetector.GetNeededTokensPositions(submission.ProgramText, submission.Language),
 				SuspicionLevels = suspicionLevels,
-				AnalyzedCodeUnits = GetAnalyzedCodeUnits(submission),
+				AnalyzedCodeUnits = GetAnalyzedCodeUnits(submission)
 			};
 
 			return result;
 		}
 
 		/// <summary>
-		/// Получить результаты анализа на плагиат всех посылок кода студента authorId по задаче taskId.
+		///     Получить результаты анализа на плагиат всех посылок кода студента authorId по задаче taskId.
 		/// </summary>
-		[HttpGet(Api.Urls.GetAuthorPlagiarisms)]
+		[HttpGet(Urls.GetAuthorPlagiarisms)]
 		public async Task<ActionResult<GetAuthorPlagiarismsResponse>> GetAuthorPlagiarisms([FromQuery] GetAuthorPlagiarismsParameters parameters)
 		{
 			if (!ModelState.IsValid)
@@ -231,23 +235,21 @@ namespace AntiPlagiarism.Web.Controllers
 			var submissions = await submissionsRepo.GetSubmissionsByAuthorAndTaskAsync(client.Id, parameters.AuthorId, parameters.TaskId, parameters.Language, parameters.LastSubmissionsCount).ConfigureAwait(false);
 			var result = new GetAuthorPlagiarismsResponse
 			{
-				SuspicionLevels = suspicionLevels,
+				SuspicionLevels = suspicionLevels
 			};
 			foreach (var submission in submissions)
 			{
-				using (var scope = serviceScopeFactory.CreateScope())
-				{
-					/* Create internal plagiarismDetector for preventing memory leaks */
-					var internalPlagiarismDetector = scope.ServiceProvider.GetService<PlagiarismDetector>();
+				await using var scope = serviceScopeFactory.CreateAsyncScope();
+				/* Create internal plagiarismDetector for preventing memory leaks */
+				var internalPlagiarismDetector = scope.ServiceProvider.GetService<PlagiarismDetector>();
 
-					result.ResearchedSubmissions.Add(new ResearchedSubmission
-					{
-						SubmissionInfo = submission.GetSubmissionInfoForApi(),
-						Plagiarisms = await internalPlagiarismDetector.GetPlagiarismsAsync(submission, suspicionLevels, configuration.AntiPlagiarism.SubmissionInfluenceLimitInMonths).ConfigureAwait(false),
-						TokensPositions = internalPlagiarismDetector.GetNeededTokensPositions(submission.ProgramText, submission.Language),
-						AnalyzedCodeUnits = GetAnalyzedCodeUnits(submission),
-					});
-				}
+				result.ResearchedSubmissions.Add(new ResearchedSubmission
+				{
+					SubmissionInfo = submission.GetSubmissionInfoForApi(),
+					Plagiarisms = await internalPlagiarismDetector.GetPlagiarismsAsync(submission, suspicionLevels, configuration.AntiPlagiarism.SubmissionInfluenceLimitInMonths).ConfigureAwait(false),
+					TokensPositions = internalPlagiarismDetector.GetNeededTokensPositions(submission.ProgramText, submission.Language),
+					AnalyzedCodeUnits = GetAnalyzedCodeUnits(submission)
+				});
 			}
 
 			return result;
@@ -261,7 +263,7 @@ namespace AntiPlagiarism.Web.Controllers
 				{
 					Name = u.Path.ToString(),
 					FirstTokenIndex = u.FirstTokenIndex,
-					TokensCount = u.Tokens.Count,
+					TokensCount = u.Tokens.Count
 				}).ToList();
 		}
 
@@ -273,7 +275,7 @@ namespace AntiPlagiarism.Web.Controllers
 
 			var automaticFaintSuspicion = configuration.AntiPlagiarism.StatisticsAnalyzing.MaxFaintSuspicionLevel;
 			var automaticStrongSuspicion = configuration.AntiPlagiarism.StatisticsAnalyzing.MaxStrongSuspicionLevel;
-			if (taskStatisticsParameters != null)
+			if (taskStatisticsParameters is not null)
 				(automaticFaintSuspicion, automaticStrongSuspicion) = GetAutomaticSuspicionLevels(taskStatisticsParameters);
 
 			return new SuspicionLevels
@@ -283,7 +285,7 @@ namespace AntiPlagiarism.Web.Controllers
 				ManualFaintSuspicion = manualSuspicionLevels?.FaintSuspicion,
 				ManualStrongSuspicion = manualSuspicionLevels?.StrongSuspicion,
 				FaintSuspicion = manualSuspicionLevels?.FaintSuspicion ?? automaticFaintSuspicion,
-				StrongSuspicion = manualSuspicionLevels?.StrongSuspicion ?? automaticStrongSuspicion,
+				StrongSuspicion = manualSuspicionLevels?.StrongSuspicion ?? automaticStrongSuspicion
 			};
 		}
 
@@ -316,11 +318,14 @@ namespace AntiPlagiarism.Web.Controllers
 		}
 
 		/// <summary>
-		/// Получить вес самого похожего решения для каждого решения, для которого вызывалось get-author-plagiarisms или get-submission-plagiarisms (фактически, на ревью которых заходил преподаватель).
-		/// Используется для отображения графика степень похожести/количетсво решений. Для принятия решения, какие suspicion-levels задать вручную.
-		/// Админы курса на ulearn видят этот график в левом верхнем углу на странице подробностей о найденном случае списывания и там же могут поменять границы.
+		///     Получить вес самого похожего решения для каждого решения, для которого вызывалось get-author-plagiarisms или
+		///     get-submission-plagiarisms (фактически, на ревью которых заходил преподаватель).
+		///     Используется для отображения графика степень похожести/количество решений. Для принятия решения, какие
+		///     suspicion-levels задать вручную.
+		///     Админы курса на ulearn видят этот график в левом верхнем углу на странице подробностей о найденном случае
+		///     списывания и там же могут поменять границы.
 		/// </summary>
-		[HttpGet(Api.Urls.GetMostSimilarSubmissions)]
+		[HttpGet(Urls.GetMostSimilarSubmissions)]
 		public async Task<ActionResult<GetMostSimilarSubmissionsResponse>> GetMostSimilarSubmissions([FromQuery] GetMostSimilarSubmissionsParameters parameters)
 		{
 			if (!ModelState.IsValid)
@@ -329,16 +334,18 @@ namespace AntiPlagiarism.Web.Controllers
 			var mostSimilarSubmissions = await mostSimilarSubmissionsRepo.GetMostSimilarSubmissionsByTaskAsync(client.Id, parameters.TaskId, parameters.Language).ConfigureAwait(false);
 			var result = new GetMostSimilarSubmissionsResponse
 			{
-				MostSimilarSubmissions = mostSimilarSubmissions,
+				MostSimilarSubmissions = mostSimilarSubmissions
 			};
 			return result;
 		}
 
 		/// <summary>
-		/// Получить границы, при какой степени похожести показываем предупреждения. faintSuspicion — желтая плашка, strongSuspicion — красная.
-		/// Метод get-author-plagiarisms их тоже в том числе возвращает. Так что этот не надо вызывать, если вызываешь еще и get-author-plagiarisms.
+		///     Получить границы, при какой степени похожести показываем предупреждения. faintSuspicion — желтая плашка,
+		///     strongSuspicion — красная.
+		///     Метод get-author-plagiarisms их тоже в том числе возвращает. Так что этот не надо вызывать, если вызываешь еще и
+		///     get-author-plagiarisms.
 		/// </summary>
-		[HttpGet(Api.Urls.GetSuspicionLevels)]
+		[HttpGet(Urls.GetSuspicionLevels)]
 		public async Task<ActionResult<GetSuspicionLevelsResponse>> GetSuspicionLevelsAsync([FromQuery] GetSuspicionLevelsParameters parameters)
 		{
 			if (!ModelState.IsValid)
@@ -351,10 +358,11 @@ namespace AntiPlagiarism.Web.Controllers
 		}
 
 		/// <summary>
-		/// Вручную задать для задачи границы, при какой степени похожести показываем предупреждения. Если не устраивают автоматические.
+		///     Вручную задать для задачи границы, при какой степени похожести показываем предупреждения. Если не устраивают
+		///     автоматические.
 		/// </summary>
-		[HttpPost(Api.Urls.SetSuspicionLevels)]
-		public async Task<ActionResult<GetSuspicionLevelsResponse>> SetSuspicionLevelsAsync([FromQuery]string token, SetSuspicionLevelsParameters parameters)
+		[HttpPost(Urls.SetSuspicionLevels)]
+		public async Task<ActionResult<GetSuspicionLevelsResponse>> SetSuspicionLevelsAsync([FromQuery] string token, SetSuspicionLevelsParameters parameters)
 		{
 			if (!ModelState.IsValid)
 				return BadRequest(ModelState);
@@ -375,14 +383,14 @@ namespace AntiPlagiarism.Web.Controllers
 		}
 
 		/// <summary>
-		/// Возвращает состояние проверки антиплагиатом Submission по SubmissionId
+		///     Возвращает состояние проверки антиплагиатом Submission по SubmissionId
 		/// </summary>
-		[HttpPost(Api.Urls.GetProcessingStatus)]
+		[HttpPost(Urls.GetProcessingStatus)]
 		public async Task<ActionResult<GetProcessingStatusResponse>> GetProcessingStatusAsync(GetProcessingStatusParameters parameters)
 		{
 			if (!ModelState.IsValid)
 				return BadRequest(ModelState);
-			
+
 			var workQueueItems = await workQueueRepo.GetItemsAsync().ConfigureAwait(false);
 
 			return new GetProcessingStatusResponse

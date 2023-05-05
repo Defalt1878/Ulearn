@@ -6,7 +6,7 @@ namespace AntiPlagiarism.Web.CodeAnalyzing
 {
 	public class CodePath
 	{
-		public List<CodePathPart> Parts { get; private set; }
+		public List<CodePathPart> Parts { get; }
 
 		public CodePath(IEnumerable<CodePathPart> parts)
 		{
@@ -21,7 +21,7 @@ namespace AntiPlagiarism.Web.CodeAnalyzing
 
 	public class CodePathPart
 	{
-		public string Name { get; private set; }
+		public string Name { get; }
 		public Type ContainingType { get; private set; }
 
 		public CodePathPart(object obj, string name)

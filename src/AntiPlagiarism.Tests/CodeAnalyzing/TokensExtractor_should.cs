@@ -39,7 +39,7 @@ public class TokensExtractor_should
 	public void CodeLengthEqualsTokensContentLengthTest()
 	{
 		const string code = CommonTestData.SimpleProgramWithMethodAndProperty;
-		var tokens = SkipIfNoPygmentize(() => tokensExtractor.GetAllTokensFromPygmentize(code, Language.CSharp).EmptyIfNull().ToList());
+		var tokens = SkipIfNoPygmentize(() => TokensExtractor.GetAllTokensFromPygmentize(code, Language.CSharp).EmptyIfNull().ToList());
 		Assert.IsNotEmpty(tokens);
 		TokensExtractor.ThrowExceptionIfTokensNotMatchOriginalCode(code, tokens);
 	}
@@ -48,7 +48,7 @@ public class TokensExtractor_should
 	public void TokensFiltersTest()
 	{
 		const string code = CommonTestData.SimpleProgramWithMethodAndProperty;
-		var tokens = SkipIfNoPygmentize(() => tokensExtractor.GetFilteredTokensFromPygmentize(code, Language.CSharp));
+		var tokens = SkipIfNoPygmentize(() => TokensExtractor.GetFilteredTokensFromPygmentize(code, Language.CSharp));
 		Assert.IsNotEmpty(tokens);
 		Assert.False(tokens.Any(t => string.IsNullOrWhiteSpace(t.Value)));
 		Assert.False(tokens.Any(t => t.Type.StartsWith("Comment")));
@@ -67,7 +67,7 @@ public class TokensExtractor_should
 	public void LanguagesTest(string file, Language language)
 	{
 		var code = File.ReadAllText(TestDataDir.GetFile(file).FullName);
-		var tokens = SkipIfNoPygmentize(() => tokensExtractor.GetFilteredTokensFromPygmentize(code, language));
+		var tokens = SkipIfNoPygmentize(() => TokensExtractor.GetFilteredTokensFromPygmentize(code, language));
 		Assert.IsNotEmpty(tokens);
 		Assert.False(tokens.Any(t => t.Type.Contains("error")));
 	}

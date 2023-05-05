@@ -21,9 +21,6 @@ namespace AntiPlagiarism.Web.Database.Repos
 
 		public async Task<Client> FindClientByTokenAsync(Guid token)
 		{
-			if (token == null)
-				throw new ArgumentNullException(nameof(token));
-
 			return await db.Clients.FirstOrDefaultAsync(c => c.Token == token && c.IsEnabled).ConfigureAwait(false);
 		}
 	}

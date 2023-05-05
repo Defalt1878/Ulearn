@@ -11,10 +11,12 @@ namespace AntiPlagiarism.Web.Database.Models
 
 		[Required]
 		public int Submission1Id { get; set; }
+
 		public virtual Submission Submission1 { get; set; }
 
 		[Required]
 		public int Submission2Id { get; set; }
+
 		public virtual Submission Submission2 { get; set; }
 
 		[Required]

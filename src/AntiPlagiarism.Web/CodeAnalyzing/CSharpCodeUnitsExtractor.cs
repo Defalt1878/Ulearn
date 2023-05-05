@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using AntiPlagiarism.Web.Extensions;
 using Microsoft.CodeAnalysis;
@@ -14,125 +15,119 @@ namespace AntiPlagiarism.Web.CodeAnalyzing
 		public List<CodeUnit> Extract(string program)
 		{
 			var syntaxTree = CSharpSyntaxTree.ParseText(program);
-			var syntaxTreeRoot = syntaxTree.GetRoot();
-			var codeUnits = GetCodeUnitsFrom(syntaxTreeRoot as CompilationUnitSyntax, new Stack<CodePathPart>()).ToList();
+			var syntaxTreeRoot = syntaxTree.GetRoot() as CompilationUnitSyntax;
+			var codeUnits = GetCodeUnitsFrom(syntaxTreeRoot, ImmutableList<CodePathPart>.Empty).ToList();
 
 			var tokens = syntaxTreeRoot.GetTokens();
-			var tokenIndexByPosition = tokens.Enumerate().ToDictionary(
-				t => t.Item.SpanStart,
-				t => t.Index
-			);
+			var tokenIndexByPosition = tokens
+				.Enumerate()
+				.ToDictionary(
+					t => t.Item.SpanStart,
+					t => t.Index
+				);
 
 			foreach (var unit in codeUnits)
-			{
 				unit.FirstTokenIndex = tokenIndexByPosition[unit.Tokens[0].Position];
-			}
 
 			return codeUnits;
 		}
 
-		private IEnumerable<CodeUnit> GetCodeUnitsFrom(CSharpSyntaxNode obj, Stack<CodePathPart> currentCodePath)
+		private IEnumerable<CodeUnit> GetCodeUnitsFrom(CSharpSyntaxNode node, ImmutableList<CodePathPart> codePath)
 		{
-			var codeUnits = new List<CodeUnit>();
-
-			codeUnits.AddRange(GetCodeUnitsFromChilds(obj as CompilationUnitSyntax, currentCodePath, z => z.Members));
-			codeUnits.AddRange(GetCodeUnitsFromChilds(obj as NamespaceDeclarationSyntax, currentCodePath, z => z.Members));
-			codeUnits.AddRange(GetCodeUnitsFromChilds(obj as ClassDeclarationSyntax, currentCodePath, z => z.Members));
-			codeUnits.AddRange(GetCodeUnitsFromChilds(obj as PropertyDeclarationSyntax, currentCodePath, PropertyEnumerator));
-			codeUnits.AddRange(GetCodeUnitsFromChilds(obj as MethodDeclarationSyntax, currentCodePath, MethodEnumerator));
-			codeUnits.AddRange(GetCodeUnitsFromChilds(obj as ConstructorDeclarationSyntax, currentCodePath, MethodEnumerator));
-			codeUnits.AddRange(GetCodeUnitsFromChilds(obj as OperatorDeclarationSyntax, currentCodePath, MethodEnumerator));
-			codeUnits.AddRange(GetCodeUnitsFromChilds(obj as ConversionOperatorDeclarationSyntax, currentCodePath, MethodEnumerator));
-
-			codeUnits.AddRange(GetCodeUnitFrom(obj as AccessorDeclarationSyntax, currentCodePath, z => z.Body));
-			codeUnits.AddRange(GetCodeUnitFrom(obj as ArrowExpressionClauseSyntax, currentCodePath, z => z.Expression));
-			codeUnits.AddRange(GetCodeUnitFrom(obj as BlockSyntax, currentCodePath, z => z));
-			codeUnits.AddRange(GetCodeUnitFrom(obj as ConstructorInitializerSyntax, currentCodePath, z => z));
-
-			return codeUnits;
+			return node switch
+			{
+				CompilationUnitSyntax syntax => GetCodeUnitsFromChildren(syntax, codePath, z => z.Members),
+				NamespaceDeclarationSyntax syntax => GetCodeUnitsFromChildren(syntax, codePath, z => z.Members),
+				TypeDeclarationSyntax syntax => GetCodeUnitsFromChildren(syntax, codePath, z => z.Members),
+				PropertyDeclarationSyntax syntax => GetCodeUnitsFromChildren(syntax, codePath, PropertyEnumerator),
+				BaseMethodDeclarationSyntax syntax => GetCodeUnitsFromChildren(syntax, codePath, MethodEnumerator),
+				AccessorDeclarationSyntax syntax => GetCodeUnitFrom(syntax, codePath, z => z.Body),
+				ArrowExpressionClauseSyntax syntax => GetCodeUnitFrom(syntax, codePath, z => z.Expression),
+				BlockSyntax syntax => GetCodeUnitFrom(syntax, codePath, z => z),
+				ConstructorInitializerSyntax syntax => GetCodeUnitFrom(syntax, codePath, z => z),
+				_ => Enumerable.Empty<CodeUnit>()
+			};
 		}
 
-		private IEnumerable<CodeUnit> GetCodeUnitsFromChilds<T>(T node, Stack<CodePathPart> currentCodePath, Func<T, IEnumerable<CSharpSyntaxNode>> childEnumeratorFunction)
+		private IEnumerable<CodeUnit> GetCodeUnitsFromChildren<T>(
+			T node,
+			ImmutableList<CodePathPart> codePath,
+			Func<T, IEnumerable<CSharpSyntaxNode>> childrenFunc
+		)
 			where T : CSharpSyntaxNode
 		{
-			if (node == null)
-				yield break;
-
 			var nodeName = GetNodeName(node);
-			currentCodePath.Push(new CodePathPart(node, nodeName));
+			var currentCodePath = codePath.Add(new CodePathPart(node, nodeName));
 
-			foreach (var children in childEnumeratorFunction(node))
-			{
-				foreach (var codeUnit in GetCodeUnitsFrom(children, currentCodePath))
-					yield return codeUnit;
-			}
-
-			currentCodePath.Pop();
+			return childrenFunc(node)
+				.SelectMany(child => GetCodeUnitsFrom(child, currentCodePath));
 		}
 
-		private static IEnumerable<CodeUnit> GetCodeUnitFrom<T>(T node, Stack<CodePathPart> currentCodePath, Func<T, CSharpSyntaxNode> getEntryFunction)
+		private static IEnumerable<CodeUnit> GetCodeUnitFrom<T>(
+			T node,
+			ImmutableList<CodePathPart> codePath,
+			Func<T, CSharpSyntaxNode> entryFunc
+		)
 			where T : CSharpSyntaxNode
 		{
-			if (node == null)
-				yield break;
+			var entry = entryFunc(node);
+			if (entry is null)
+				return Enumerable.Empty<CodeUnit>();
 
 			var nodeName = GetNodeName(node);
-			currentCodePath.Push(new CodePathPart(node, nodeName));
+			var currentCodePath = new CodePath(codePath.Add(new CodePathPart(node, nodeName)));
 
-			var codePath = new CodePath(currentCodePath.Reverse().ToList());
-			var entry = getEntryFunction(node);
-			if (entry != null)
-			{
-				var tokens = entry.GetTokens().ToList();
-				yield return new CodeUnit(codePath, tokens.Select(t => new CSharpToken(t)));
-			}
-
-			currentCodePath.Pop();
+			var tokens = entry.GetTokens().Select(token => new CSharpToken(token));
+			return new[] { new CodeUnit(currentCodePath, tokens) };
 		}
 
-		private static IEnumerable<CSharpSyntaxNode> PropertyEnumerator(PropertyDeclarationSyntax z)
+		private static IEnumerable<CSharpSyntaxNode> PropertyEnumerator(PropertyDeclarationSyntax syntax)
 		{
-			if (z.AccessorList == null)
+			if (syntax.AccessorList is not null)
 			{
-				if (z.ExpressionBody != null)
-					yield return z.ExpressionBody;
-			}
-			else
-			{
-				foreach (var e in z.AccessorList.Accessors)
+				foreach (var e in syntax.AccessorList.Accessors)
 					yield return e;
 			}
+			else if (syntax.ExpressionBody is not null)
+			{
+				yield return syntax.ExpressionBody;
+			}
 		}
 
-		private static IEnumerable<CSharpSyntaxNode> MethodEnumerator(BaseMethodDeclarationSyntax z)
+		private static IEnumerable<CSharpSyntaxNode> MethodEnumerator(BaseMethodDeclarationSyntax syntax)
 		{
-			if (z is ConstructorDeclarationSyntax constructor)
+			if (syntax is ConstructorDeclarationSyntax constructor)
 				yield return constructor.Initializer;
 
-			if (z.Body != null)
-				yield return z.Body;
-			else if (z.ExpressionBody != null)
-				yield return z.ExpressionBody;
+			if (syntax.Body is not null)
+				yield return syntax.Body;
+			else if (syntax.ExpressionBody is not null)
+				yield return syntax.ExpressionBody;
 		}
 
-		private static string InternalGetNodeName(CompilationUnitSyntax node) => "ROOT";
-		private static string InternalGetNodeName(NamespaceDeclarationSyntax node) => node.Name.ToString();
-		private static string InternalGetNodeName(BaseTypeDeclarationSyntax node) => node.Identifier.ValueText;
-		private static string InternalGetNodeName(PropertyDeclarationSyntax node) => node.Identifier.ValueText;
-		private static string InternalGetNodeName(MethodDeclarationSyntax node) => node.Identifier.ToString();
-		private static string InternalGetNodeName(ConstructorDeclarationSyntax node) => node.Identifier.ToString();
-		private static string InternalGetNodeName(OperatorDeclarationSyntax node) => "Operator" + node.OperatorToken;
+		public static string GetNodeName(SyntaxNode node) =>
+			node switch
+			{
+				CompilationUnitSyntax => "ROOT",
+				NamespaceDeclarationSyntax syntaxNode => syntaxNode.Name.ToString(),
+				BaseTypeDeclarationSyntax syntaxNode => syntaxNode.Identifier.ValueText,
+				PropertyDeclarationSyntax syntaxNode => syntaxNode.Identifier.ValueText,
+				BaseMethodDeclarationSyntax syntaxNode => GetNodeName(syntaxNode),
+				CSharpSyntaxNode syntaxNode => syntaxNode.Kind().ToString(),
+				_ => throw new InvalidOperationException("node should be CSharpSyntaxNode")
+			};
 
-		private static string InternalGetNodeName(ConversionOperatorDeclarationSyntax node) =>
-			"Conversion-" + node.Type + "-from-" + string.Join("-", node.ParameterList.Parameters.Select(p => p.Type));
-
-		private static string InternalGetNodeName(CSharpSyntaxNode node) => node.Kind().ToString();
-
-		public static string GetNodeName(SyntaxNode node)
-		{
-			if (!(node is CSharpSyntaxNode))
-				throw new InvalidOperationException("node should be CSharpSyntaxNode");
-			return InternalGetNodeName((dynamic)node);
-		}
+		private static string GetNodeName(BaseMethodDeclarationSyntax node) =>
+			node switch
+			{
+				ConstructorDeclarationSyntax syntaxNode => syntaxNode.Identifier.ToString(),
+				ConversionOperatorDeclarationSyntax syntaxNode =>
+					"Conversion-" + syntaxNode.Type + "-from-" +
+					string.Join("-", syntaxNode.ParameterList.Parameters.Select(p => p.Type)),
+				DestructorDeclarationSyntax syntaxNode => syntaxNode.Identifier.ToString(),
+				MethodDeclarationSyntax syntaxNode => syntaxNode.Identifier.ToString(),
+				OperatorDeclarationSyntax syntaxNode => "Operator" + syntaxNode.OperatorToken,
+				CSharpSyntaxNode syntaxNode => syntaxNode.Kind().ToString(),
+			};
 	}
 }

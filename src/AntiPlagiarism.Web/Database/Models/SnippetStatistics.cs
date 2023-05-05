@@ -15,7 +15,7 @@ namespace AntiPlagiarism.Web.Database.Models
 		public virtual Snippet Snippet { get; set; }
 
 		public Guid TaskId { get; set; }
-		
+
 		public Language Language { get; set; }
 
 		public int ClientId { get; set; }

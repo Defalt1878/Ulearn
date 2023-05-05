@@ -19,7 +19,7 @@ namespace AntiPlagiarism.Web
 	{
 		private AddNewSubmissionWorker addNewSubmissionWorker; // держит ссылку на воркеры
 		private UpdateOldSubmissionsFromStatisticsWorker updateOldSubmissionsFromStatisticsWorker; // держит ссылку на воркеры
-		
+
 		protected override IApplicationBuilder ConfigureWebApplication(IApplicationBuilder app)
 		{
 			var database = app.ApplicationServices.GetService<AntiPlagiarismDb>();
@@ -50,7 +50,6 @@ namespace AntiPlagiarism.Web
 			base.ConfigureDi(services);
 
 			/* Database repositories */
-			/* TODO (andgein): make auto-discovering of repositories */
 			services.AddScoped<IClientsRepo, ClientsRepo>();
 			services.AddScoped<ISubmissionsRepo, SubmissionsRepo>();
 			services.AddScoped<ISnippetsRepo, SnippetsRepo>();
@@ -78,7 +77,7 @@ namespace AntiPlagiarism.Web
 
 		protected override OpenApiInfo GetApiNameAndDescription()
 		{
-			return new OpenApiInfo 
+			return new OpenApiInfo
 			{
 				Title = "Ulearn antiplagiarism API",
 				Version = "v1",
@@ -89,6 +88,5 @@ namespace AntiPlagiarism.Web
 				}
 			};
 		}
-
 	}
 }

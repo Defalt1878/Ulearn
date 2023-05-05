@@ -5,8 +5,8 @@ namespace AntiPlagiarism.Web.CodeAnalyzing
 {
 	public class CodeUnit
 	{
-		public CodePath Path { get; private set; }
-		public List<IToken> Tokens { get; private set; }
+		public CodePath Path { get; }
+		public List<IToken> Tokens { get; }
 		public int FirstTokenIndex { get; set; }
 
 		public int Position => Tokens.FirstOrDefault()?.Position ?? 0;
