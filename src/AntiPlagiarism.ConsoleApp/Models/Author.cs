@@ -1,16 +1,15 @@
 ﻿using System;
 
-namespace AntiPlagiarism.ConsoleApp.Models
-{
-	public class Author
-	{
-		public readonly string Name;
-		public Guid Id;
+namespace AntiPlagiarism.ConsoleApp.Models;
 
-		public Author(string name)
-		{
-			Name = name;
-			Id = Guid.NewGuid();
-		}
+public class Author
+{
+	public readonly string Name;
+	public Guid Id;
+
+	public Author(string name)
+	{
+		Name = name;
+		Id = Guid.NewGuid();
 	}
 }
