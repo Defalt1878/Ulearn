@@ -209,6 +209,8 @@ public class WebApplication : BaseApiWebApplication
 
 	protected override void ConfigureSwaggerDocumentationGeneration(SwaggerGenOptions c)
 	{
+		c.EnableAnnotations();
+
 		c.OperationFilter<AuthResponsesOperationFilter>();
 
 		c.OperationFilter<AppendAuthorizeToSummaryOperationFilter>();
