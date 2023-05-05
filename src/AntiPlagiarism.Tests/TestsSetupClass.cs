@@ -1,15 +1,14 @@
 ﻿using NUnit.Framework;
 using Ulearn.Core.Logging;
 
-namespace AntiPlagiarism.Tests
+namespace AntiPlagiarism.Tests;
+
+[SetUpFixture]
+public class TestsSetupClass
 {
-	[SetUpFixture]
-	public class TestsSetupClass
+	[OneTimeSetUp]
+	public void GlobalSetup()
 	{
-		[OneTimeSetUp]
-		public void GlobalSetup()
-		{
-			LoggerSetup.SetupForTests();
-		}
+		LoggerSetup.SetupForTests();
 	}
 }

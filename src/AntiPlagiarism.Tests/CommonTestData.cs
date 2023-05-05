@@ -1,8 +1,8 @@
-﻿namespace AntiPlagiarism.Tests
+﻿namespace AntiPlagiarism.Tests;
+
+public static class CommonTestData
 {
-	public static class CommonTestData
-	{
-		public const string SimpleProgramWithMethodAndProperty = @"using System;
+	public const string SimpleProgramWithMethodAndProperty = @"using System;
 using System.Collections;
 using System.Linq;
 using System.Text;
@@ -20,5 +20,4 @@ A"");}
 		static int A { get { return 2; } set { Console.WriteLine(value); }}
 	}
 }";
-	}
 }

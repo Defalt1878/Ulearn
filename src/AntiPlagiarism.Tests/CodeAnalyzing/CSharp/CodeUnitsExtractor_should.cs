@@ -8,101 +8,100 @@ using Microsoft.CodeAnalysis.CSharp;
 using NUnit.Framework;
 using Ulearn.Common.Extensions;
 
-namespace AntiPlagiarism.Tests.CodeAnalyzing.CSharp
+namespace AntiPlagiarism.Tests.CodeAnalyzing.CSharp;
+
+[TestFixture]
+public class CodeUnitsExtractor_should
 {
-	[TestFixture]
-	public class CodeUnitsExtractor_should
+	private CSharpCodeUnitsExtractor extractor;
+
+	private static DirectoryInfo TestDataDir => new(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "CodeAnalyzing", "CSharp", "TestData"));
+
+	[SetUp]
+	public void SetUp()
 	{
-		private CSharpCodeUnitsExtractor extractor;
+		extractor = new CSharpCodeUnitsExtractor();
+	}
 
-		private static DirectoryInfo TestDataDir => new(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "CodeAnalyzing", "CSharp", "TestData"));
+	[Test]
+	public void ExtractCodeUnits()
+	{
+		var codeUnits = extractor.Extract(CommonTestData.SimpleProgramWithMethodAndProperty);
 
-		[SetUp]
-		public void SetUp()
+		Assert.AreEqual(3, codeUnits.Count);
+		CollectionAssert.AreEqual(new List<int> { 31, 45, 51 }, codeUnits.Select(u => u.FirstTokenIndex));
+
+		var methodBodyUnit = codeUnits[0];
+		var methodBodyExpectedKinds = new List<SyntaxKind>
 		{
-			extractor = new CSharpCodeUnitsExtractor();
-		}
+			SyntaxKind.OpenBraceToken,
+			SyntaxKind.IdentifierToken,
+			SyntaxKind.DotToken,
+			SyntaxKind.IdentifierToken,
+			SyntaxKind.OpenParenToken,
+			SyntaxKind.StringLiteralToken,
+			SyntaxKind.CloseParenToken,
+			SyntaxKind.SemicolonToken,
+			SyntaxKind.CloseBraceToken
+		}.Select(k => k.ToString()).ToList();
+		Assert.AreEqual(methodBodyExpectedKinds.Count, methodBodyUnit.Tokens.Count);
+		CollectionAssert.AreEqual(methodBodyExpectedKinds, methodBodyUnit.Tokens.Select(t => t.Type));
+	}
 
-		[Test]
-		public void ExtractCodeUnits()
-		{
-			var codeUnits = extractor.Extract(CommonTestData.SimpleProgramWithMethodAndProperty);
+	[Test]
+	public void GiveCorrectNodeNames()
+	{
+		var syntaxTree = CSharpSyntaxTree.ParseText(CommonTestData.SimpleProgramWithMethodAndProperty);
+		var syntaxTreeRoot = syntaxTree.GetRoot();
 
-			Assert.AreEqual(3, codeUnits.Count);
-			CollectionAssert.AreEqual(new List<int> { 31, 45, 51 }, codeUnits.Select(u => u.FirstTokenIndex));
+		Assert.AreEqual("ROOT", CSharpCodeUnitsExtractor.GetNodeName(syntaxTreeRoot));
 
-			var methodBodyUnit = codeUnits[0];
-			var methodBodyExpectedKinds = new List<SyntaxKind>
-			{
-				SyntaxKind.OpenBraceToken,
-				SyntaxKind.IdentifierToken,
-				SyntaxKind.DotToken,
-				SyntaxKind.IdentifierToken,
-				SyntaxKind.OpenParenToken,
-				SyntaxKind.StringLiteralToken,
-				SyntaxKind.CloseParenToken,
-				SyntaxKind.SemicolonToken,
-				SyntaxKind.CloseBraceToken
-			}.Select(k => k.ToString()).ToList();
-			Assert.AreEqual(methodBodyExpectedKinds.Count, methodBodyUnit.Tokens.Count);
-			CollectionAssert.AreEqual(methodBodyExpectedKinds, methodBodyUnit.Tokens.Select(t => t.Type));
-		}
+		var namespaceDeclaration = syntaxTreeRoot.ChildNodes().First(n => n.IsKind(SyntaxKind.NamespaceDeclaration));
+		Assert.AreEqual("HelloWorld.Namespace", CSharpCodeUnitsExtractor.GetNodeName(namespaceDeclaration));
 
-		[Test]
-		public void GiveCorrectNodeNames()
-		{
-			var syntaxTree = CSharpSyntaxTree.ParseText(CommonTestData.SimpleProgramWithMethodAndProperty);
-			var syntaxTreeRoot = syntaxTree.GetRoot();
+		var classDeclaration = namespaceDeclaration.ChildNodes().First(n => n.IsKind(SyntaxKind.ClassDeclaration));
+		Assert.AreEqual("Program", CSharpCodeUnitsExtractor.GetNodeName(classDeclaration));
 
-			Assert.AreEqual("ROOT", CSharpCodeUnitsExtractor.GetNodeName(syntaxTreeRoot));
+		var methodDeclaration = classDeclaration.ChildNodes().First(n => n.IsKind(SyntaxKind.MethodDeclaration));
+		Assert.AreEqual("Main", CSharpCodeUnitsExtractor.GetNodeName(methodDeclaration));
 
-			var namespaceDeclaration = syntaxTreeRoot.ChildNodes().First(n => n.IsKind(SyntaxKind.NamespaceDeclaration));
-			Assert.AreEqual("HelloWorld.Namespace", CSharpCodeUnitsExtractor.GetNodeName(namespaceDeclaration));
+		var propertyDeclaration = classDeclaration.ChildNodes().First(n => n.IsKind(SyntaxKind.PropertyDeclaration));
+		Assert.AreEqual("A", CSharpCodeUnitsExtractor.GetNodeName(propertyDeclaration));
+	}
 
-			var classDeclaration = namespaceDeclaration.ChildNodes().First(n => n.IsKind(SyntaxKind.ClassDeclaration));
-			Assert.AreEqual("Program", CSharpCodeUnitsExtractor.GetNodeName(classDeclaration));
+	[Test]
+	public void ExtractInnerClass()
+	{
+		var codeUnits = ExtractCodeUnitsFromTestFile("NestedClasses.cs");
 
-			var methodDeclaration = classDeclaration.ChildNodes().First(n => n.IsKind(SyntaxKind.MethodDeclaration));
-			Assert.AreEqual("Main", CSharpCodeUnitsExtractor.GetNodeName(methodDeclaration));
+		/* At least one code unit is inside InnerClass */
+		Assert.IsTrue(codeUnits.Any(u => u.Path.Parts.Any(p => p.Name == "InnerClass")));
+	}
 
-			var propertyDeclaration = classDeclaration.ChildNodes().First(n => n.IsKind(SyntaxKind.PropertyDeclaration));
-			Assert.AreEqual("A", CSharpCodeUnitsExtractor.GetNodeName(propertyDeclaration));
-		}
+	[Test]
+	public void ExtractConstructors()
+	{
+		var codeUnits = ExtractCodeUnitsFromTestFile("Constructors.cs");
 
-		[Test]
-		public void ExtractInnerClass()
-		{
-			var codeUnits = ExtractCodeUnitsFromTestFile("NestedClasses.cs");
+		Assert.AreEqual(5, codeUnits.Count);
 
-			/* At least one code unit is inside InnerClass */
-			Assert.IsTrue(codeUnits.Any(u => u.Path.Parts.Any(p => p.Name == "InnerClass")));
-		}
+		/* One code unit should be ThisConstructorInitializer */
+		Assert.AreEqual(1, codeUnits.Count(u => u.Path.Parts.Any(p => p.Name == "ThisConstructorInitializer")));
+	}
 
-		[Test]
-		public void ExtractConstructors()
-		{
-			var codeUnits = ExtractCodeUnitsFromTestFile("Constructors.cs");
+	[Test]
+	public void ExtractOperators()
+	{
+		var codeUnits = ExtractCodeUnitsFromTestFile("Operators.cs");
 
-			Assert.AreEqual(5, codeUnits.Count);
+		Assert.AreEqual(4, codeUnits.Count(u => u.Path.Parts.Any(p => p.Name.StartsWith("Operator"))));
+		Assert.AreEqual(3, codeUnits.Count(u => u.Path.Parts.Any(p => p.Name.StartsWith("Conversion-"))));
+	}
 
-			/* One code unit should be ThisConstructorInitializer */
-			Assert.AreEqual(1, codeUnits.Count(u => u.Path.Parts.Any(p => p.Name == "ThisConstructorInitializer")));
-		}
-
-		[Test]
-		public void ExtractOperators()
-		{
-			var codeUnits = ExtractCodeUnitsFromTestFile("Operators.cs");
-
-			Assert.AreEqual(4, codeUnits.Count(u => u.Path.Parts.Any(p => p.Name.StartsWith("Operator"))));
-			Assert.AreEqual(3, codeUnits.Count(u => u.Path.Parts.Any(p => p.Name.StartsWith("Conversion-"))));
-		}
-
-		private List<CodeUnit> ExtractCodeUnitsFromTestFile(string filename)
-		{
-			var testFile = TestDataDir.GetFile(filename);
-			var testContent = File.ReadAllText(testFile.FullName);
-			return extractor.Extract(testContent);
-		}
+	private List<CodeUnit> ExtractCodeUnitsFromTestFile(string filename)
+	{
+		var testFile = TestDataDir.GetFile(filename);
+		var testContent = File.ReadAllText(testFile.FullName);
+		return extractor.Extract(testContent);
 	}
 }
