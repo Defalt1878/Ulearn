@@ -98,6 +98,75 @@ public class CodeUnitsExtractor_should
 		Assert.AreEqual(3, codeUnits.Count(u => u.Path.Parts.Any(p => p.Name.StartsWith("Conversion-"))));
 	}
 
+	[Test]
+	public void ExtractInterfaces()
+	{
+		var codeUnits = ExtractCodeUnitsFromTestFile("Interface.cs");
+
+		Assert.AreEqual(1, codeUnits.Count);
+		CollectionAssert.AreEqual(
+			new[] { 22 },
+			codeUnits.Select(u => u.FirstTokenIndex)
+		);
+		Assert.AreEqual("Interface.DefaultMethod.Block", string.Join(".", codeUnits[0].Path.Parts.Skip(2)));
+	}
+
+	[Test]
+	public void ExtractStruct()
+	{
+		var codeUnits = ExtractCodeUnitsFromTestFile("Struct.cs");
+
+		Assert.AreEqual(2, codeUnits.Count);
+		CollectionAssert.AreEqual(
+			new[] { 23, 30 },
+			codeUnits.Select(u => u.FirstTokenIndex)
+		);
+		CollectionAssert.AreEqual(
+			new[] { "Struct.Method1.Block", "Struct.Method2.Block" },
+			codeUnits.Select(u => string.Join(".", u.Path.Parts.Skip(2)))
+		);
+	}
+
+	[Test]
+	public void ExtractRecord()
+	{
+		var codeUnits = ExtractCodeUnitsFromTestFile("Record.cs");
+
+		Assert.AreEqual(2, codeUnits.Count);
+		CollectionAssert.AreEqual(
+			new[] { 30, 37 },
+			codeUnits.Select(u => u.FirstTokenIndex)
+		);
+		CollectionAssert.AreEqual(
+			new[] { "Record.Method1.Block", "Record.Method2.Block" },
+			codeUnits.Select(u => string.Join(".", u.Path.Parts.Skip(2)))
+		);
+	}
+
+	[Test]
+	public void ExtractRecordStruct()
+	{
+		var codeUnits = ExtractCodeUnitsFromTestFile("RecordStruct.cs");
+
+		Assert.AreEqual(2, codeUnits.Count);
+		CollectionAssert.AreEqual(
+			new[] { 31, 38 },
+			codeUnits.Select(u => u.FirstTokenIndex)
+		);
+		CollectionAssert.AreEqual(
+			new[] { "RecordStruct.Method1.Block", "RecordStruct.Method2.Block" },
+			codeUnits.Select(u => string.Join(".", u.Path.Parts.Skip(2)))
+		);
+	}
+
+	[Test]
+	public void EmptyRecord()
+	{
+		var codeUnits = ExtractCodeUnitsFromTestFile("EmptyRecord.cs");
+
+		Assert.AreEqual(0, codeUnits.Count);
+	}
+
 	private List<CodeUnit> ExtractCodeUnitsFromTestFile(string filename)
 	{
 		var testFile = TestDataDir.GetFile(filename);
