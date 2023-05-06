@@ -3,7 +3,6 @@ using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Ulearn.Common.Extensions;
-using uLearn.CSharp.Validators.SpellingValidator;
 
 namespace Ulearn.Core.CSharp.Validators.SpellingValidator
 {
@@ -34,7 +33,7 @@ namespace Ulearn.Core.CSharp.Validators.SpellingValidator
 			return InspectNamesAndArguments(localFunctionStatement.Identifier, localFunctionStatement.ReturnType,
 				localFunctionStatement.ParameterList);
 		}
-		
+
 		private IEnumerable<SolutionStyleError> InspectNamesAndArguments(SyntaxToken identifier, TypeSyntax returnType,
 			ParameterListSyntax parameterList)
 		{
@@ -58,7 +57,7 @@ namespace Ulearn.Core.CSharp.Validators.SpellingValidator
 		private SolutionStyleError InspectMethodParameter(ParameterSyntax parameter)
 		{
 			var identifier = parameter.Identifier;
-			return CheckIdentifierNameForSpellingErrors(identifier, parameter.Type.ToString());
+			return CheckIdentifierNameForSpellingErrors(identifier, parameter.Type?.ToString());
 		}
 
 		private IEnumerable<SolutionStyleError> InspectVariablesNames(VariableDeclarationSyntax variableDeclarationSyntax, SemanticModel semanticModel)
@@ -91,7 +90,7 @@ namespace Ulearn.Core.CSharp.Validators.SpellingValidator
 			var errors = new List<SolutionStyleError>();
 			if (interfaceNameParts.First() != "I")
 				errors.Add(new SolutionStyleError(
-					StyleErrorType.Misspeling01,
+					StyleErrorType.Misspelling01,
 					interfaceDeclarationSyntax.Identifier,
 					interfaceNameParts.First(), "Имя интерфейса должно начинаться с I"));
 			var errorInName = CheckIdentifierNameForSpellingErrors(interfaceDeclarationSyntax.Identifier);
@@ -103,9 +102,9 @@ namespace Ulearn.Core.CSharp.Validators.SpellingValidator
 		private IEnumerable<SolutionStyleError> InspectVariablesNames(VariableDeclaratorSyntax variableDeclaratorSyntax, TypeInfo variableTypeInfo)
 		{
 			var errors = new List<SolutionStyleError>();
-			var errrorInVariable = CheckIdentifierNameForSpellingErrors(variableDeclaratorSyntax.Identifier, variableTypeInfo.Type.Name);
-			if (errrorInVariable != null)
-				errors.Add(errrorInVariable);
+			var errorInVariable = CheckIdentifierNameForSpellingErrors(variableDeclaratorSyntax.Identifier, variableTypeInfo.Type?.Name);
+			if (errorInVariable != null)
+				errors.Add(errorInVariable);
 			return errors;
 		}
 
@@ -125,7 +124,7 @@ namespace Ulearn.Core.CSharp.Validators.SpellingValidator
 		{
 			var identifierName = identifier.ValueText;
 			return spellChecker.CheckIdentifierNameForSpellingErrors(identifierName, typeAsString)
-				? new SolutionStyleError(StyleErrorType.Misspeling01, identifier, identifierName, "")
+				? new SolutionStyleError(StyleErrorType.Misspelling01, identifier, identifierName, "")
 				: null;
 		}
 	}

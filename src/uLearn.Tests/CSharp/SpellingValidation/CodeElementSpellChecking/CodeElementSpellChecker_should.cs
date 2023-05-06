@@ -1,5 +1,5 @@
 using NUnit.Framework;
-using uLearn.CSharp.Validators.SpellingValidator;
+using Ulearn.Core.CSharp.Validators.SpellingValidator;
 
 namespace uLearn.CSharp.SpellingValidation.CodeElementSpellChecking
 {

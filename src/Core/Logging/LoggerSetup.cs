@@ -3,15 +3,14 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using JetBrains.Annotations;
-using Vostok.Logging.Abstractions;
 using Ulearn.Core.Configuration;
 using Ulearn.Core.Courses.Manager;
+using Vostok.Logging.Abstractions;
 using Vostok.Logging.Abstractions.Values;
 using Vostok.Logging.Console;
 using Vostok.Logging.File;
 using Vostok.Logging.File.Configuration;
 using Vostok.Logging.Formatting;
-using LogEvent = Vostok.Logging.Abstractions.LogEvent;
 
 namespace Ulearn.Core.Logging
 {
@@ -19,6 +18,8 @@ namespace Ulearn.Core.Logging
 	{
 		public static readonly OutputTemplate OutputTemplate
 			= OutputTemplate.Parse("{Timestamp:HH:mm:ss.fff} {Level:u5} {traceContext:w}{operationContext:w}{sourceContext:w}{threadId:w}{address:w}{user:w} {Message}{NewLine}{Exception}");
+
+		private static Regex DropRequestRegex;
 
 		public static void SetupForTests()
 		{
@@ -75,7 +76,7 @@ namespace Ulearn.Core.Logging
 					MaxFiles = 0,
 					Type = RollingStrategyType.Hybrid,
 					Period = RollingPeriod.Day,
-					MaxSize = 4 * 1073741824L,
+					MaxSize = 4 * 1073741824L
 				},
 				OutputTemplate = OutputTemplate
 			};
@@ -123,8 +124,6 @@ namespace Ulearn.Core.Logging
 			return IsJobWithName(UpdateCoursesWorker.UpdateCoursesJobName) || IsJobWithName(UpdateCoursesWorker.UpdateTempCoursesJobName);
 		}
 
-		private static Regex DropRequestRegex;
-
 		private static bool IfShouldBeDroppedByRegex(LogEvent e)
 		{
 			if (DropRequestRegex == null || e.Exception != null) return false;
@@ -132,13 +131,13 @@ namespace Ulearn.Core.Logging
 			var isLoggingMiddleware = GetSourceContext(e)?.Contains("LoggingMiddleware") ?? false;
 			if (!isLoggingMiddleware)
 				return false;
-			
+
 			var operationContext = GetOperationContext(e);
 			if (operationContext == null)
 				return false;
-			
+
 			var requestPath = operationContext.FirstOrDefault(c => c.StartsWith("RequestPath"));
-			
+
 			return requestPath != null && DropRequestRegex.IsMatch(requestPath);
 		}
 

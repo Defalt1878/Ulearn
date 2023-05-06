@@ -8,8 +8,8 @@ namespace Ulearn.Core.CSharp.Validators.IndentsValidation
 {
 	public class IndentsValidator : BaseStyleValidator
 	{
-		private SyntaxTree tree;
 		private BracesPair[] bracesPairs;
+		private SyntaxTree tree;
 
 		public override List<SolutionStyleError> FindErrors(SyntaxTree userSolution, SemanticModel semanticModel)
 		{
@@ -31,14 +31,12 @@ namespace Ulearn.Core.CSharp.Validators.IndentsValidation
 		{
 			var braces = tree.GetRoot().DescendantTokens()
 				.Where(t => t.IsKind(SyntaxKind.OpenBraceToken) || t.IsKind(SyntaxKind.CloseBraceToken));
-			var openbracesStack = new Stack<SyntaxToken>();
+			var openBracesStack = new Stack<SyntaxToken>();
 			foreach (var brace in braces)
-			{
 				if (brace.IsKind(SyntaxKind.OpenBraceToken))
-					openbracesStack.Push(brace);
+					openBracesStack.Push(brace);
 				else
-					yield return new BracesPair(openbracesStack.Pop(), brace);
-			}
+					yield return new BracesPair(openBracesStack.Pop(), brace);
 		}
 	}
 }

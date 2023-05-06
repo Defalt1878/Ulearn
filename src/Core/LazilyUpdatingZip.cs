@@ -33,34 +33,32 @@ namespace Ulearn.Core
 		{
 			if (IsActual())
 				return;
-			using (var zip = new ZipFile(Encoding.UTF8))
+			using var zip = new ZipFile(Encoding.UTF8);
+			zip.CompressionLevel = CompressionLevel.BestSpeed;
+			foreach (var f in EnumerateFiles())
 			{
-				zip.CompressionLevel = CompressionLevel.BestSpeed;
-				foreach (var f in EnumerateFiles())
-				{
-					var newContent = getFileContent(f);
-					if (newContent == null)
-						zip.AddFile(f.FullName, Path.GetDirectoryName(f.GetRelativePath(dir.FullName)));
-					else
-						zip.AddEntry(
-							f.GetRelativePath(dir.FullName),
-							_ =>
-							{
-								newContent.Position = 0;
-								return newContent;
-							}, (_, s) => s.Dispose()
-						);
-				}
-
-				foreach (var fileToAdd in filesToAdd)
-				{
-					var directoriesList = GetDirectoriesList(fileToAdd.Path);
-					if (!excludedDirs.Intersect(directoriesList).Any())
-						zip.UpdateEntry(fileToAdd.Path, fileToAdd.Data);
-				}
-
-				zip.Save(zipFile.FullName);
+				var newContent = getFileContent(f);
+				if (newContent == null)
+					zip.AddFile(f.FullName, Path.GetDirectoryName(f.GetRelativePath(dir.FullName)));
+				else
+					zip.AddEntry(
+						f.GetRelativePath(dir.FullName),
+						_ =>
+						{
+							newContent.Position = 0;
+							return newContent;
+						}, (_, s) => s.Dispose()
+					);
 			}
+
+			foreach (var fileToAdd in filesToAdd)
+			{
+				var directoriesList = GetDirectoriesList(fileToAdd.Path);
+				if (!excludedDirs.Intersect(directoriesList).Any())
+					zip.UpdateEntry(fileToAdd.Path, fileToAdd.Data);
+			}
+
+			zip.Save(zipFile.FullName);
 		}
 
 		public static IEnumerable<string> GetDirectoriesList(string filename)
@@ -86,8 +84,8 @@ namespace Ulearn.Core
 				if (!needExcludeFile(f))
 					yield return f;
 			var dirs = aDir.GetDirectories().Where(d => !excludedDirs.Contains(d.Name));
-			foreach (var subdir in dirs)
-			foreach (var f in EnumerateFiles(subdir))
+			foreach (var subDir in dirs)
+			foreach (var f in EnumerateFiles(subDir))
 				yield return f;
 		}
 	}

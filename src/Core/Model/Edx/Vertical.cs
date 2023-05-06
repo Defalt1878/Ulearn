@@ -1,3 +1,4 @@
+using System;
 using System.ComponentModel;
 using System.Linq;
 using System.Xml.Serialization;
@@ -22,8 +23,8 @@ namespace Ulearn.Core.Model.Edx
 		[XmlElement("lti", Type = typeof(LtiComponentReference))]
 		public EdxReference[] ComponentReferences
 		{
-			get { return componentReferences = componentReferences ?? new EdxReference[0]; }
-			set { componentReferences = value; }
+			get { return componentReferences ??= Array.Empty<EdxReference>(); }
+			set => componentReferences = value;
 		}
 
 		public Vertical()
@@ -39,10 +40,11 @@ namespace Ulearn.Core.Model.Edx
 		public bool Graded
 		{
 			get => !string.IsNullOrEmpty(ScoringGroup);
+			// ReSharper disable once ValueParameterNotUsed
 			set { }
 		}
 
-		public bool ShouldSerizlizeGraded() => !string.IsNullOrEmpty(ScoringGroup);
+		public bool ShouldSerializeGraded() => !string.IsNullOrEmpty(ScoringGroup);
 
 		[XmlAttribute("weight")]
 		[DefaultValue("0.0")]

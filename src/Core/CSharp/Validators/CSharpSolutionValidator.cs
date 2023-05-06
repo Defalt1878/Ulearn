@@ -3,16 +3,15 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using Vostok.Logging.Abstractions;
-using uLearn.CSharp.Validators;
 using Ulearn.Core.CSharp.Validators.IndentsValidation;
 using Ulearn.Core.CSharp.Validators.VerbInMethodNameValidation;
+using Vostok.Logging.Abstractions;
 
 namespace Ulearn.Core.CSharp.Validators
 {
 	public class CSharpSolutionValidator : ISolutionValidator
 	{
-		private static ILog log => LogProvider.Get().ForContext(typeof(CSharpSolutionValidator));
+		private static ILog Log => LogProvider.Get().ForContext(typeof(CSharpSolutionValidator));
 
 		private readonly List<ICSharpSolutionValidator> validators = new()
 		{
@@ -57,7 +56,7 @@ namespace Ulearn.Core.CSharp.Validators
 
 		public string FindSyntaxError(string solution)
 		{
-			IEnumerable<Diagnostic> diagnostics = CSharpSyntaxTree.ParseText(solution).GetDiagnostics();
+			var diagnostics = CSharpSyntaxTree.ParseText(solution).GetDiagnostics();
 			var error = diagnostics.FirstOrDefault();
 			return error?.ToString();
 		}
@@ -76,7 +75,7 @@ namespace Ulearn.Core.CSharp.Validators
 			}
 			catch (Exception e)
 			{
-				log.Error(e, "Can't run style validators");
+				Log.Error(e, "Can't run style validators");
 				return new List<SolutionStyleError>();
 			}
 		}

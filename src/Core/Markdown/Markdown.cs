@@ -11,6 +11,8 @@ namespace Ulearn.Core.Markdown
 
 	public static class Markdown
 	{
+		private static readonly Regex rxExtractLanguage = new("^({{(.+)}}[\r\n])", RegexOptions.Compiled);
+
 		public static string RenderMarkdown(this string markdown, MarkdownRenderContext context)
 		{
 			var texReplacer = new TexReplacer(markdown);
@@ -20,7 +22,7 @@ namespace Ulearn.Core.Markdown
 				NewWindowForExternalLinks = true,
 				ExtraMode = true,
 				SafeMode = false,
-				MarkdownInHtml = false,
+				MarkdownInHtml = false
 			};
 
 			markdownObject.FormatCodeBlock += FormatCodePrettyPrint;
@@ -38,7 +40,7 @@ namespace Ulearn.Core.Markdown
 				NewWindowForExternalLinks = true,
 				ExtraMode = true,
 				SafeMode = false,
-				MarkdownInHtml = false,
+				MarkdownInHtml = false
 			};
 
 			var staticFiles = new List<StaticFileForEdx>();
@@ -57,12 +59,10 @@ namespace Ulearn.Core.Markdown
 			return new HtmlString(texReplacer.PlaceTexInsertsBack(html));
 		}
 
-		private static readonly Regex rxExtractLanguage = new("^({{(.+)}}[\r\n])", RegexOptions.Compiled);
-
 		private static string FormatCodePrettyPrint(MarkdownDeep.Markdown m, string code, string language)
 		{
 			code = code.TrimEnd();
-			
+
 			if (string.IsNullOrEmpty(language))
 			{
 				// Try to extract the language from the first line
@@ -95,8 +95,8 @@ namespace Ulearn.Core.Markdown
 				language = "cpp";
 
 			// Wrap code in pre/code tags and add PrettyPrint attributes if necessary
-			return string.IsNullOrEmpty(language) 
-				? $"<pre><code>{code}</code></pre>\n" 
+			return string.IsNullOrEmpty(language)
+				? $"<pre><code>{code}</code></pre>\n"
 				: $"<textarea class='code code-sample' data-lang='{language.ToLowerInvariant()}'>{code}</textarea>\n";
 		}
 	}

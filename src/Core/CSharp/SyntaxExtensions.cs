@@ -26,13 +26,12 @@ namespace Ulearn.Core.CSharp
 		{
 			return node.DescendantNodes()
 				.OfType<MemberDeclarationSyntax>()
-				.Where(n => n is BaseTypeDeclarationSyntax || n is MethodDeclarationSyntax || n is DelegateDeclarationSyntax);
+				.Where(n => n is BaseTypeDeclarationSyntax or MethodDeclarationSyntax or DelegateDeclarationSyntax);
 		}
 
 		public static SyntaxList<SyntaxNode> GetBody(this SyntaxNode node)
 		{
-			var method = node as BaseMethodDeclarationSyntax;
-			if (method != null)
+			if (node is BaseMethodDeclarationSyntax method)
 			{
 				var body = method.Body;
 				if (body != null)
@@ -40,19 +39,17 @@ namespace Ulearn.Core.CSharp
 				return new SyntaxList<SyntaxNode>();
 			}
 
-			var type = node as TypeDeclarationSyntax;
-			if (type != null)
+			if (node is TypeDeclarationSyntax type)
 				return type.Members;
 
-			var localFunction = node as LocalFunctionStatementSyntax;
-			if (localFunction != null)
+			if (node is LocalFunctionStatementSyntax localFunction)
 			{
 				var body = localFunction.Body;
 				if (body != null)
 					return body.Statements;
 				return new SyntaxList<SyntaxNode>();
 			}
-			
+
 			return new SyntaxList<SyntaxNode>();
 		}
 
@@ -75,9 +72,7 @@ namespace Ulearn.Core.CSharp
 		public static SyntaxToken Identifier(this MemberDeclarationSyntax syntax)
 		{
 			if (syntax is FieldDeclarationSyntax fieldDeclarationSyntax)
-			{
-				return fieldDeclarationSyntax.Declaration.Variables.FirstOrDefault().Identifier;
-			}
+				return fieldDeclarationSyntax.Declaration.Variables.First().Identifier;
 
 			return ((dynamic)syntax).Identifier;
 		}
@@ -89,8 +84,8 @@ namespace Ulearn.Core.CSharp
 
 		public static object GetObjArgument(this AttributeSyntax attribute, int index)
 		{
-			var expr = (LiteralExpressionSyntax)attribute.ArgumentList.Arguments[index].Expression;
-			return expr.Token.Value;
+			var expr = (LiteralExpressionSyntax)attribute.ArgumentList?.Arguments[index].Expression;
+			return expr?.Token.Value;
 		}
 
 		public static string GetArgument(this AttributeSyntax attribute, int index)
@@ -115,7 +110,7 @@ namespace Ulearn.Core.CSharp
 		public static string GetAttributeShortName<TAttr>()
 		{
 			var attrName = typeof(TAttr).Name;
-			return attrName.EndsWith("Attribute") ? attrName.Substring(0, attrName.Length - "Attribute".Length) : attrName;
+			return attrName.EndsWith("Attribute") ? attrName[..^"Attribute".Length] : attrName;
 		}
 
 		public static MethodDeclarationSyntax WithoutAttributes(this MethodDeclarationSyntax node)
@@ -130,16 +125,16 @@ namespace Ulearn.Core.CSharp
 
 		private static string PrettyString(SyntaxNode node, SyntaxToken tokenToAlignLeft)
 		{
-			int bodyNestingSize = node.SyntaxTree.GetLineSpan(tokenToAlignLeft.Span).StartLinePosition.Character;
+			var bodyNestingSize = node.SyntaxTree.GetLineSpan(tokenToAlignLeft.Span).StartLinePosition.Character;
 			return (new string('\t', bodyNestingSize) + node).RemoveCommonNesting();
 		}
 
-		private static string PrettyString(MethodDeclarationSyntax node)
+		private static string PrettyString(BaseMethodDeclarationSyntax node)
 		{
 			var body = node.Body;
-			if (body == null)
-				return node.ToFullString().RemoveCommonNesting();
-			return PrettyString(node, body.CloseBraceToken);
+			return body is null
+				? node.ToFullString().RemoveCommonNesting()
+				: PrettyString(node, body.CloseBraceToken);
 		}
 
 		private static string PrettyString(BaseTypeDeclarationSyntax node)
@@ -149,14 +144,20 @@ namespace Ulearn.Core.CSharp
 
 		private static string PrettyString(MemberDeclarationSyntax node)
 		{
-			if (node is FieldDeclarationSyntax)
-				return node.ToString().RemoveCommonNesting();
-			return node.ToFullString().RemoveCommonNesting();
+			return node is FieldDeclarationSyntax
+				? node.ToString().RemoveCommonNesting()
+				: node.ToFullString().RemoveCommonNesting();
 		}
 
 		public static string ToPrettyString(this SyntaxNode node)
 		{
-			return PrettyString((dynamic)node);
+			return node switch
+			{
+				BaseMethodDeclarationSyntax syntax => PrettyString(syntax),
+				BaseTypeDeclarationSyntax syntax => PrettyString(syntax),
+				MemberDeclarationSyntax syntax => PrettyString(syntax),
+				_ => throw new ArgumentOutOfRangeException(nameof(node), node, null)
+			};
 		}
 
 		public static string ToNotIndentedString(this SyntaxNode node)
@@ -168,7 +169,7 @@ namespace Ulearn.Core.CSharp
 		{
 			return method
 				.WithoutAttributes()
-				.WithBody(method.Body.WithStatements(new SyntaxList<StatementSyntax>()));
+				.WithBody(method.Body?.WithStatements(new SyntaxList<StatementSyntax>()));
 		}
 
 		public static int GetLine(this SyntaxToken token)
@@ -182,12 +183,10 @@ namespace Ulearn.Core.CSharp
 				.Where(t => t.IsKind(SyntaxKind.OpenBraceToken) || t.IsKind(SyntaxKind.CloseBraceToken));
 			var openBracesStack = new Stack<SyntaxToken>();
 			foreach (var brace in braces)
-			{
 				if (brace.IsKind(SyntaxKind.OpenBraceToken))
 					openBracesStack.Push(brace);
 				else
 					yield return new BracesPair(openBracesStack.Pop(), brace);
-			}
 		}
 	}
 }

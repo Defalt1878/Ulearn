@@ -4,18 +4,19 @@ using System.Linq;
 using System.Threading.Tasks;
 using Google.Apis.Sheets.v4;
 using Google.Apis.Sheets.v4.Data;
-using Ulearn.Core.GoogleSheet;
+
+namespace Ulearn.Core.GoogleSheet;
 
 public class GSpreadsheet
 {
+	public readonly string SpreadsheetId;
+	public readonly SheetsService SheetsService;
+
 	public GSpreadsheet(string spreadsheetId, SheetsService sheetsService)
 	{
 		SpreadsheetId = spreadsheetId;
 		SheetsService = sheetsService;
 	}
-
-	public readonly string SpreadsheetId;
-	public readonly SheetsService SheetsService;
 
 	public async Task<List<GSheet>> GetSheets()
 	{
@@ -53,13 +54,13 @@ public class GSpreadsheet
 					Properties = new SheetProperties
 					{
 						Title = title,
-						TabColor = new Color {Red = 1}
+						TabColor = new Color { Red = 1 }
 					}
 				}
 			}
 		};
-		var requestBody = new BatchUpdateSpreadsheetRequest {Requests = requests};
+		var requestBody = new BatchUpdateSpreadsheetRequest { Requests = requests };
 		var request = SheetsService.Spreadsheets.BatchUpdate(requestBody, SpreadsheetId);
-		var response = await request.ExecuteAsync();
+		await request.ExecuteAsync();
 	}
 }

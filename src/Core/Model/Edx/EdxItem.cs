@@ -11,16 +11,16 @@ namespace Ulearn.Core.Model.Edx
 		[XmlAttribute("url_name")]
 		public string UrlName { get; set; }
 
-		public virtual bool ShouldSerializeUrlName()
-		{
-			return false;
-		}
-
 		[XmlAttribute("display_name")]
 		public string DisplayName { get; set; }
 
 		[XmlIgnore]
 		public virtual string SubfolderName { get; set; }
+
+		public virtual bool ShouldSerializeUrlName()
+		{
+			return false;
+		}
 
 		public virtual void Save(string folderName)
 		{
@@ -38,9 +38,9 @@ namespace Ulearn.Core.Model.Edx
 			if (originalXDoc != null)
 			{
 				var convertedXDoc = XDocument.Load(new StringReader(converted));
-				foreach (var attribute in originalXDoc.Root.Attributes())
+				foreach (var attribute in originalXDoc.Root!.Attributes())
 				{
-					if (convertedXDoc.Root.Attribute(attribute.Name) == null)
+					if (convertedXDoc.Root!.Attribute(attribute.Name) is null)
 						convertedXDoc.Root.SetAttributeValue(attribute.Name, attribute.Value);
 					converted = convertedXDoc.ToString();
 				}
@@ -64,13 +64,14 @@ namespace Ulearn.Core.Model.Edx
 				if (!fileInfo.Exists)
 				{
 					if (options.FailOnNonExistingItem)
-						throw new FileNotFoundException($"File {fileInfo.FullName} not found.");
-					else
 					{
-						options.HandleNonExistentItemTypeName?.Invoke(type, urlName);
-						return null;
+						throw new FileNotFoundException($"File {fileInfo.FullName} not found.");
 					}
+
+					options.HandleNonExistentItemTypeName?.Invoke(type, urlName);
+					return null;
 				}
+
 				options.OnLoadExistingEdxItem?.Invoke(new FileInEdxCourse(type, urlName, "xml"));
 
 				var component = customDeserialize == null

@@ -16,10 +16,8 @@ namespace Ulearn.Core.Extensions
 			if (string.IsNullOrEmpty(dictionaryPath))
 				return Array.Empty<string>();
 
-			using (var spellchecker = new SpellChecker(dictionaryPath))
-			{
-				return spellchecker.SpellCheckCourse(course);
-			}
+			using var spellchecker = new SpellChecker(dictionaryPath);
+			return spellchecker.SpellCheckCourse(course);
 		}
 
 		public static string[] SpellCheckCourse(this SpellChecker spellchecker, Course course)
@@ -52,7 +50,7 @@ namespace Ulearn.Core.Extensions
 
 		public static string ToPrettyString(this SpellingError error)
 		{
-			return $"Найдено '{error.Mispelling}', возможные варианты: [{string.Join(", ", error.Suggestions)}]";
+			return $"Найдено '{error.Misspelling}', возможные варианты: [{string.Join(", ", error.Suggestions)}]";
 		}
 
 		private static string ToPrettyMessage(string title, IList<string> errors)

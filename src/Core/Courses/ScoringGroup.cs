@@ -7,6 +7,9 @@ namespace Ulearn.Core.Courses
 		private const int defaultMaxAdditionalScore = 0;
 		private const bool defaultEnabledForEveryone = false;
 
+		[XmlAttribute("enableForEveryone")]
+		public string enabledForEveryone;
+
 		[XmlAttribute("id")]
 		public string Id { get; set; }
 
@@ -23,57 +26,53 @@ namespace Ulearn.Core.Courses
 		public bool CanBeSetByInstructor => MaxAdditionalScore > 0;
 
 		[XmlAttribute("maxAdditionalScore")]
-		public string _maxAdditionalScore { get; set; }
+		public string maxAdditionalScore { get; set; }
 
 		[XmlIgnore]
 		public int MaxAdditionalScore
 		{
 			get
 			{
-				if (string.IsNullOrEmpty(_maxAdditionalScore) || _maxAdditionalScore.Trim().Length == 0)
+				if (string.IsNullOrEmpty(maxAdditionalScore) || maxAdditionalScore.Trim().Length == 0)
 					return defaultMaxAdditionalScore;
 
-				int result;
-				return int.TryParse(_maxAdditionalScore, out result) ? result : defaultMaxAdditionalScore;
+				return int.TryParse(maxAdditionalScore, out var result) ? result : defaultMaxAdditionalScore;
 			}
-			set => _maxAdditionalScore = value.ToString();
+			set => maxAdditionalScore = value.ToString();
 		}
 
 		[XmlIgnore]
-		public bool IsMaxAdditionalScoreSpecified => !string.IsNullOrEmpty(_maxAdditionalScore);
+		public bool IsMaxAdditionalScoreSpecified => !string.IsNullOrEmpty(maxAdditionalScore);
 
 		[XmlIgnore]
 		/* Calculates automatically by slides's scores */
 		// Считается только по нескрытым слайдам
 		public int MaxNotAdditionalScore { get; set; }
 
-		[XmlAttribute("enableForEveryone")]
-		public string _enabledForEveryone;
-
 		[XmlIgnore]
 		public bool EnabledForEveryone
 		{
 			get
 			{
-				if (string.IsNullOrEmpty(_enabledForEveryone) || _enabledForEveryone.Trim().Length == 0)
+				if (string.IsNullOrEmpty(enabledForEveryone) || enabledForEveryone.Trim().Length == 0)
 					return defaultEnabledForEveryone;
 
-				return bool.TryParse(_enabledForEveryone, out bool value) ? value : defaultEnabledForEveryone;
+				return bool.TryParse(enabledForEveryone, out var value) && value;
 			}
-			set => _enabledForEveryone = value.ToString();
+			set => enabledForEveryone = value.ToString();
 		}
 
 		[XmlIgnore]
-		public bool IsEnabledForEveryoneSpecified => !string.IsNullOrEmpty(_enabledForEveryone);
+		public bool IsEnabledForEveryoneSpecified => !string.IsNullOrEmpty(enabledForEveryone);
 
 		[XmlText]
 		public string Name { get; set; }
 
 		public void CopySettingsFrom(ScoringGroup otherScoringGroup)
 		{
-			_maxAdditionalScore = string.IsNullOrEmpty(_maxAdditionalScore) ? otherScoringGroup._maxAdditionalScore : _maxAdditionalScore;
-			_enabledForEveryone = string.IsNullOrEmpty(_enabledForEveryone) ? otherScoringGroup._enabledForEveryone : _enabledForEveryone;
-			Abbreviation = Abbreviation ?? otherScoringGroup.Abbreviation;
+			maxAdditionalScore = string.IsNullOrEmpty(maxAdditionalScore) ? otherScoringGroup.maxAdditionalScore : maxAdditionalScore;
+			enabledForEveryone = string.IsNullOrEmpty(enabledForEveryone) ? otherScoringGroup.enabledForEveryone : enabledForEveryone;
+			Abbreviation ??= otherScoringGroup.Abbreviation;
 			Name = string.IsNullOrEmpty(Name) ? otherScoringGroup.Name : Name;
 			Description = string.IsNullOrEmpty(Description) ? otherScoringGroup.Description : Description;
 		}

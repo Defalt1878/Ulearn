@@ -1,22 +1,21 @@
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.CodeAnalysis;
 
 namespace Ulearn.Core.CSharp.Validators.IndentsValidation.Reporters
 {
 	internal static class BracesNotIndentedReporter
 	{
-		public static IEnumerable<SolutionStyleError> Report(BracesPair[] bracesPairs)
+		public static IEnumerable<SolutionStyleError> Report(IEnumerable<BracesPair> bracesPairs)
 		{
 			foreach (var braces in bracesPairs.Where(pair => pair.Open.GetLine() != pair.Close.GetLine() &&
 															Indent.TokenIsFirstAtLine(pair.Open)))
 			{
-				var correctOpenbraceParent = braces.Open.GetFirstTokenOfCorrectOpenbraceParent();
-				if (correctOpenbraceParent == default(SyntaxToken))
+				var correctOpenBraceParent = braces.Open.GetFirstTokenOfCorrectOpenBraceParent();
+				if (correctOpenBraceParent == default)
 					continue;
-				var parentLineIndent = new Indent(correctOpenbraceParent);
-				var openbraceLineIndent = new Indent(braces.Open);
-				if (openbraceLineIndent.LengthInSpaces < parentLineIndent.LengthInSpaces)
+				var parentLineIndent = new Indent(correctOpenBraceParent);
+				var openBraceLineIndent = new Indent(braces.Open);
+				if (openBraceLineIndent.LengthInSpaces < parentLineIndent.LengthInSpaces)
 					yield return new SolutionStyleError(StyleErrorType.Indents04, braces.Open, braces);
 			}
 		}

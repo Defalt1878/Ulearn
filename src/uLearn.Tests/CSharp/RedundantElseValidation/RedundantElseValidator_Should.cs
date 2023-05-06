@@ -7,7 +7,7 @@ using ApprovalTests.Namers;
 using ApprovalTests.Reporters;
 using FluentAssertions;
 using NUnit.Framework;
-using uLearn.CSharp.Validators;
+using Ulearn.Core.CSharp.Validators;
 using Ulearn.Common.Extensions;
 
 namespace uLearn.CSharp.RedundantElseValidation

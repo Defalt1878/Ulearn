@@ -40,7 +40,7 @@ namespace Ulearn.Core.CSharp
 
 		private static FileLinePositionSpan GetFileLinePositionSpan(SyntaxToken token)
 		{
-			return token.SyntaxTree.GetLineSpan(token.Span);
+			return token.SyntaxTree!.GetLineSpan(token.Span);
 		}
 
 		public override string ToString()
@@ -50,11 +50,9 @@ namespace Ulearn.Core.CSharp
 
 		public string GetMessageWithPositions()
 		{
-			string positionInfo;
-			if (Span.StartLinePosition.Line == Span.EndLinePosition.Line)
-				positionInfo = $"Строка {Span.StartLinePosition.Line + 1}, позиция {Span.StartLinePosition.Character}";
-			else
-				positionInfo = $"Строки {Span.StartLinePosition.Line + 1}—{Span.EndLinePosition.Line + 1}";
+			var positionInfo = Span.StartLinePosition.Line == Span.EndLinePosition.Line
+				? $"Строка {Span.StartLinePosition.Line + 1}, позиция {Span.StartLinePosition.Character}"
+				: $"Строки {Span.StartLinePosition.Line + 1}—{Span.EndLinePosition.Line + 1}";
 			return $"{positionInfo}: {Message}";
 		}
 
@@ -221,11 +219,11 @@ namespace Ulearn.Core.CSharp
 		RedundantElse01,
 
 		[MessageTemplate("Возможно, в слове {0} есть ошибка в написании. {1}")]
-		Misspeling01,
+		Misspelling01
 	}
 
-	[AttributeUsage(AttributeTargets.Field, Inherited = false, AllowMultiple = false)]
-	sealed class MessageTemplateAttribute : Attribute
+	[AttributeUsage(AttributeTargets.Field)]
+	internal sealed class MessageTemplateAttribute : Attribute
 	{
 		public string Template { get; set; }
 

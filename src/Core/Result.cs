@@ -11,7 +11,7 @@ namespace Ulearn.Core
 
 	public struct Result<T>
 	{
-		public Result(string error, T value = default(T))
+		public Result(string error, T value = default)
 		{
 			Error = error;
 			Value = value;
@@ -89,6 +89,7 @@ namespace Ulearn.Core
 			return input.Then(inp => Of(() => continuation(inp)));
 		}
 
+		// ReSharper disable once UnusedTypeParameter
 		public static Result<None> Then<TInput, TOutput>(
 			this Result<TInput> input,
 			Action<TInput> continuation)

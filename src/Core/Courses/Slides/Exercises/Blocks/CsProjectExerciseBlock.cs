@@ -7,7 +7,6 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml.Serialization;
 using Microsoft.Build.Evaluation;
-using Vostok.Logging.Abstractions;
 using Ulearn.Common;
 using Ulearn.Common.Extensions;
 using Ulearn.Core.Courses.Manager;
@@ -17,6 +16,7 @@ using Ulearn.Core.Helpers;
 using Ulearn.Core.NUnitTestRunning;
 using Ulearn.Core.Properties;
 using Ulearn.Core.RunCheckerJobApi;
+using Vostok.Logging.Abstractions;
 
 namespace Ulearn.Core.Courses.Slides.Exercises.Blocks
 {
@@ -27,17 +27,6 @@ namespace Ulearn.Core.Courses.Slides.Exercises.Blocks
 		public const string BuildingTargetNetCoreFrameworkVersion = "3.1";
 		public const string BuildingToolsVersion = null;
 
-		private static ILog log => LogProvider.Get().ForContext(typeof(CsProjectExerciseBlock));
-
-		public static string SolutionFilepathToUserCodeFilepath(string solutionFilepath)
-		{
-			// cut .solution.cs
-			var userCodeFilenameWithoutExt = Path.GetFileNameWithoutExtension(Path.GetFileNameWithoutExtension(solutionFilepath));
-			var userCodeFilename = $"{userCodeFilenameWithoutExt}.cs";
-			var path = Path.GetDirectoryName(solutionFilepath);
-			return path == null ? userCodeFilename : Path.Combine(path, userCodeFilename);
-		}
-
 		public CsProjectExerciseBlock()
 		{
 			HideExpectedOutputOnError = true;
@@ -46,9 +35,11 @@ namespace Ulearn.Core.Courses.Slides.Exercises.Blocks
 			{
 				TargetFrameworkVersion = BuildingTargetFrameworkVersion,
 				TargetNetCoreFrameworkVersion = BuildingTargetNetCoreFrameworkVersion,
-				ToolsVersion = BuildingToolsVersion,
+				ToolsVersion = BuildingToolsVersion
 			};
 		}
+
+		private static ILog log => LogProvider.Get().ForContext(typeof(CsProjectExerciseBlock));
 
 		[XmlAttribute("csproj")]
 		public string CsProjFilePath { get; set; }
@@ -87,26 +78,40 @@ namespace Ulearn.Core.Courses.Slides.Exercises.Blocks
 		[XmlIgnore]
 		public string UnitDirectoryPathRelativeToCourse { get; set; }
 
-		public bool IsWrongAnswer(string name) => WrongAnswersAndSolutionNameRegex.IsMatch(name) && !name.Contains(".Solution.");
-
 		public BuildEnvironmentOptions BuildEnvironmentOptions { get; set; }
-		
+
 		[XmlIgnore]
 		public Slide Slide { get; private set; }
 
 		[XmlIgnore]
 		public string CourseId { get; private set; }
 
-		public override bool HasAutomaticChecking() => Language == Common.Language.CSharp;
+		public static string SolutionFilepathToUserCodeFilepath(string solutionFilepath)
+		{
+			// cut .solution.cs
+			var userCodeFilenameWithoutExt = Path.GetFileNameWithoutExtension(Path.GetFileNameWithoutExtension(solutionFilepath));
+			var userCodeFilename = $"{userCodeFilenameWithoutExt}.cs";
+			var path = Path.GetDirectoryName(solutionFilepath);
+			return path == null ? userCodeFilename : Path.Combine(path, userCodeFilename);
+		}
+
+		public bool IsWrongAnswer(string name)
+		{
+			return WrongAnswersAndSolutionNameRegex.IsMatch(name) && !name.Contains(".Solution.");
+		}
+
+		public override bool HasAutomaticChecking()
+		{
+			return Language == Common.Language.CSharp;
+		}
 
 		public override IEnumerable<SlideBlock> BuildUp(SlideBuildingContext context, IImmutableSet<string> filesInProgress)
 		{
-			if (!Language.HasValue)
-				Language = context.CourseSettings.DefaultLanguage;
+			Language ??= context.CourseSettings.DefaultLanguage;
 			Slide = context.Slide;
 			CourseId = context.CourseId;
-			ExerciseInitialCode = ExerciseInitialCode ?? "// Вставьте сюда финальное содержимое файла " + UserCodeFilePath;
-			ExpectedOutput = ExpectedOutput ?? "";
+			ExerciseInitialCode ??= "// Вставьте сюда финальное содержимое файла " + UserCodeFilePath;
+			ExpectedOutput ??= "";
 			Validator.ValidatorName = string.Join(" ", Language.GetName(), Validator.ValidatorName ?? "");
 			UnitDirectoryPathRelativeToCourse = context.UnitDirectory.GetRelativePath(context.CourseDirectory);
 
@@ -144,27 +149,28 @@ namespace Ulearn.Core.Courses.Slides.Exercises.Blocks
 		public override RunnerSubmission CreateSubmission(string submissionId, string code, string courseDirectory)
 		{
 			var exerciseCheckerZipBuilder = new ExerciseCheckerZipBuilder(this, GetFilesProvider(courseDirectory));
-			using (var stream = exerciseCheckerZipBuilder.GetZipForChecker(code))
+			using var stream = exerciseCheckerZipBuilder.GetZipForChecker(code);
+			return new ProjRunnerSubmission
 			{
-				return new ProjRunnerSubmission
-				{
-					Id = submissionId,
-					ZipFileData = stream.ToArray(),
-					ProjectFileName = CsprojFileName,
-					Input = "",
-					NeedRun = true,
-					TimeLimit = TimeLimit
-				};
-			}
+				Id = submissionId,
+				ZipFileData = stream.ToArray(),
+				ProjectFileName = CsprojFileName,
+				Input = "",
+				NeedRun = true,
+				TimeLimit = TimeLimit
+			};
 		}
 
-		public FilesProvider GetFilesProvider(string courseDirectory) => new(this, courseDirectory);
+		public FilesProvider GetFilesProvider(string courseDirectory)
+		{
+			return new FilesProvider(this, courseDirectory);
+		}
 
 		public class FilesProvider
 		{
-			public string CourseDirectory;
+			public readonly string CourseDirectory;
 
-			private CsProjectExerciseBlock exerciseBlock;
+			private readonly CsProjectExerciseBlock exerciseBlock;
 
 			public FilesProvider(CsProjectExerciseBlock exerciseBlock, string courseDirectory)
 			{
@@ -190,40 +196,40 @@ namespace Ulearn.Core.Courses.Slides.Exercises.Blocks
 
 		private class ExerciseCheckerZipBuilder : IExerciseCheckerZipBuilder
 		{
+			private readonly CsProjectExerciseBlock exerciseBlock;
+			private readonly FilesProvider filesProvider;
+
+			public ExerciseCheckerZipBuilder(CsProjectExerciseBlock exerciseBlock, FilesProvider filesProvider)
+			{
+				this.exerciseBlock = exerciseBlock;
+				this.filesProvider = filesProvider;
+			}
+
 			public Slide Slide => exerciseBlock.Slide;
 			public string CourseId => exerciseBlock.CourseId;
 
-			private CsProjectExerciseBlock exerciseBlock;
-			private FilesProvider fp;
-
-			public ExerciseCheckerZipBuilder(CsProjectExerciseBlock exerciseBlock, FilesProvider fp)
+			public MemoryStream GetZipForChecker()
 			{
-				this.exerciseBlock = exerciseBlock;
-				this.fp = fp;
+				log.Info($"Собираю zip-архив для проверки: курс {CourseId}, слайд «{Slide?.Title}» ({Slide?.Id})");
+				var excluded = (exerciseBlock.PathsToExcludeForChecker ?? Array.Empty<string>())
+					.Concat(new[] { "/bin/", "/obj/", ".idea/", ".vs/" })
+					.ToList();
+
+				using (CourseLock.AcquireReaderLockAsync(CourseId).Result)
+				{
+					var toUpdate = GetAdditionalFiles(excluded, filesProvider).ToList();
+					log.Info($"Собираю zip-архив для проверки: дополнительные файлы [{string.Join(", ", toUpdate.Select(c => c.Path))}]");
+
+					var ms = ZipUtils.CreateZipFromDirectory(new List<string> { filesProvider.ExerciseDirectory.FullName }, excluded, toUpdate);
+					log.Info($"Собираю zip-архив для проверки: zip-архив собран, {ms.Length} байтов");
+					return ms;
+				}
 			}
 
 			public MemoryStream GetZipForChecker(string code)
 			{
 				var codeFile = GetCodeFile(code);
-				return ExerciseCheckerZipsCache.GetZip(this, codeFile.Path, codeFile.Data, fp.CourseDirectory);
-			}
-
-			public MemoryStream GetZipForChecker()
-			{
-					log.Info($"Собираю zip-архив для проверки: курс {CourseId}, слайд «{Slide?.Title}» ({Slide?.Id})");
-					var excluded = (exerciseBlock.PathsToExcludeForChecker ?? new string[0])
-						.Concat(new[] { "/bin/", "/obj/", ".idea/", ".vs/" })
-						.ToList();
-
-				using (CourseLock.AcquireReaderLockAsync(CourseId).Result)
-				{
-					var toUpdate = GetAdditionalFiles(excluded, fp).ToList();
-					log.Info($"Собираю zip-архив для проверки: дополнительные файлы [{string.Join(", ", toUpdate.Select(c => c.Path))}]");
-
-					var ms = ZipUtils.CreateZipFromDirectory(new List<string> { fp.ExerciseDirectory.FullName }, excluded, toUpdate);
-					log.Info($"Собираю zip-архив для проверки: zip-архив собран, {ms.Length} байтов");
-					return ms;
-				}
+				return ExerciseCheckerZipsCache.GetZip(this, codeFile.Path, codeFile.Data, filesProvider.CourseDirectory);
 			}
 
 			private FileContent GetCodeFile(string code)
@@ -235,17 +241,17 @@ namespace Ulearn.Core.Courses.Slides.Exercises.Blocks
 			{
 				var useNUnitLauncher = exerciseBlock.NUnitTestClasses != null;
 
-				using (var stream = ProjModifier.ModifyCsproj(fp.CsprojFile, ModifyCsproj(excluded, useNUnitLauncher, fp), toolsVersion: exerciseBlock.BuildEnvironmentOptions.ToolsVersion))
+				using (var stream = ProjModifier.ModifyCsproj(fp.CsprojFile, ModifyCsproj(excluded, useNUnitLauncher, fp), exerciseBlock.BuildEnvironmentOptions.ToolsVersion))
+				{
 					yield return new FileContent
 					{
 						Path = exerciseBlock.CsprojFileName,
 						Data = stream.ToArray()
 					};
+				}
 
 				if (useNUnitLauncher)
-				{
 					yield return new FileContent { Path = GetNUnitTestRunnerFilename(), Data = CreateTestLauncherFile() };
-				}
 
 				foreach (var fileContent in ExerciseStudentZipBuilder.ResolveCsprojLinks(exerciseBlock, fp))
 					yield return fileContent;

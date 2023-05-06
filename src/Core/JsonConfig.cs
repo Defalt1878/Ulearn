@@ -13,7 +13,7 @@ namespace Ulearn.Core
 			{
 				TypeNameHandling = TypeNameHandling.Auto,
 				SerializationBinder = new DisplayNameSerializationBinder(DisplayNameSerializationBinder.GetSubtypes(baseTypes)),
-				Converters = new List<JsonConverter>{ new StringEnumConverter() }
+				Converters = new List<JsonConverter> { new StringEnumConverter() }
 			};
 		}
 	}

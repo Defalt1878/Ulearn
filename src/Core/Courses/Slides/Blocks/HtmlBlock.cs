@@ -10,9 +10,7 @@ namespace Ulearn.Core.Courses.Slides.Blocks
 	//[XmlType("html")]
 	public class HtmlBlock : SlideBlock, IXmlSerializable, IConvertibleToEdx
 	{
-		public static readonly string BaseUrlApiPlaceholder = "%BaseUrlApiPlaceholder%";
-
-		private string Content { get; set; } = "";
+		public const string BaseUrlApiPlaceholder = "%BaseUrlApiPlaceholder%";
 
 		public HtmlBlock()
 		{
@@ -23,15 +21,7 @@ namespace Ulearn.Core.Courses.Slides.Blocks
 			Content = content;
 		}
 
-		public string GetContent(string ulearnBaseUrlApi)
-		{
-			return Content.Replace(BaseUrlApiPlaceholder, ulearnBaseUrlApi);
-		}
-
-		public override string ToString()
-		{
-			return $"Html {Content.Substring(0, 50)}";
-		}
+		private string Content { get; set; } = "";
 
 		public Component ToEdxComponent(EdxComponentBuilderContext context)
 		{
@@ -62,8 +52,25 @@ namespace Ulearn.Core.Courses.Slides.Blocks
 			Content = RemoveXmlNamespacesAndAutoExpandEmptyTags(innerXml.RemoveCommonNesting());
 		}
 
+		public void WriteXml(XmlWriter writer)
+		{
+			if (Hide)
+				writer.WriteAttributeString("hide", "true");
+			writer.WriteRaw(Content);
+		}
+
+		public string GetContent(string ulearnBaseUrlApi)
+		{
+			return Content.Replace(BaseUrlApiPlaceholder, ulearnBaseUrlApi);
+		}
+
+		public override string ToString()
+		{
+			return $"Html {Content[..50]}";
+		}
+
 		/* Андрей Гейн: We need to remove xml namespaces (which are inherited from ulearn's xml) and
-		   to expand empty tags (i.e. replace auto-collapsed <iframe ... /> to <iframe ...></iframe>) */
+			to expand empty tags (i.e. replace auto-collapsed <iframe ... /> to <iframe ...></iframe>) */
 		/* Антон Федоров: Не понял, чем мешают теги вида <tag/>. Браузер понимает тег <br></br> как два. */
 		private string RemoveXmlNamespacesAndAutoExpandEmptyTags(string innerXmlContent)
 		{
@@ -80,13 +87,6 @@ namespace Ulearn.Core.Courses.Slides.Blocks
 				resultXml = resultXml.Remove(resultXml.Length - "</node>".Length);
 
 			return resultXml;
-		}
-
-		public void WriteXml(XmlWriter writer)
-		{
-			if (Hide)
-				writer.WriteAttributeString("hide", "true");
-			writer.WriteRaw(Content);
 		}
 	}
 }

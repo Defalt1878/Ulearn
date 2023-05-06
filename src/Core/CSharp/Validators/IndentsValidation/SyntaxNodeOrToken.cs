@@ -40,11 +40,9 @@ namespace Ulearn.Core.CSharp.Validators.IndentsValidation
 		{
 			get
 			{
-				if (SyntaxToken != default(SyntaxToken))
+				if (SyntaxToken != default)
 					return SyntaxToken.Kind();
-				if (SyntaxNode != null)
-					return SyntaxNode.Kind();
-				return SyntaxKind.None;
+				return SyntaxNode?.Kind() ?? SyntaxKind.None;
 			}
 		}
 
@@ -53,11 +51,11 @@ namespace Ulearn.Core.CSharp.Validators.IndentsValidation
 			Location location = null;
 			if (SyntaxNode != null)
 				location = SyntaxNode.GetLocation();
-			else if (SyntaxToken != default(SyntaxToken))
+			else if (SyntaxToken != default)
 				location = SyntaxToken.GetLocation();
 
 			if (location == null)
-				return default(FileLinePositionSpan);
+				return default;
 			return location.GetLineSpan();
 		}
 
@@ -65,7 +63,7 @@ namespace Ulearn.Core.CSharp.Validators.IndentsValidation
 		{
 			if (SyntaxNode != null)
 				return Create(RootTree, SyntaxNode.Parent);
-			if (SyntaxToken != default(SyntaxToken))
+			if (SyntaxToken != default)
 				return Create(RootTree, SyntaxToken.Parent);
 			return null;
 		}
@@ -74,16 +72,16 @@ namespace Ulearn.Core.CSharp.Validators.IndentsValidation
 		{
 			if (SyntaxNode != null)
 				return SyntaxNode.GetLeadingTrivia();
-			if (SyntaxToken != default(SyntaxToken))
+			if (SyntaxToken != default)
 				return SyntaxToken.LeadingTrivia;
-			return default(SyntaxTriviaList);
+			return default;
 		}
 
 		public override string ToString()
 		{
 			if (SyntaxNode != null)
 				return SyntaxNode.ToString();
-			if (SyntaxToken != default(SyntaxToken))
+			if (SyntaxToken != default)
 				return SyntaxToken.ToString();
 			return base.ToString();
 		}

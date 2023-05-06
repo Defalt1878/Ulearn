@@ -8,7 +8,7 @@ namespace Ulearn.Core.Courses.Slides.Exercises.Blocks
 	[XmlType("exercise.polygon")]
 	public class PolygonExerciseBlock : UniversalExerciseBlock
 	{
-		public static Dictionary<Language, LanguageLaunchInfo> LanguagesInfo = new()
+		public static readonly Dictionary<Language, LanguageLaunchInfo> LanguagesInfo = new()
 		{
 			[Common.Language.Java] = new LanguageLaunchInfo
 			{
@@ -25,13 +25,13 @@ namespace Ulearn.Core.Courses.Slides.Exercises.Blocks
 			{
 				Compiler = "Node.js v14.15",
 				RunCommand = "node {source}"
-			} ,
+			},
 			[Common.Language.Cpp] = new LanguageLaunchInfo
 			{
 				Compiler = "G++ 10.2",
 				CompileCommand = "g++ -o {name-executable-file} -O2 {source}",
 				RunCommand = "./{name-executable-file}"
-			} ,
+			},
 			[Common.Language.CSharp] = new LanguageLaunchInfo
 			{
 				Compiler = "C# .Net 5.0",
@@ -45,7 +45,7 @@ namespace Ulearn.Core.Courses.Slides.Exercises.Blocks
 				RunCommand = "./{name-executable-file}"
 			}
 		};
-		
+
 		public override string DockerImageName => "algorithms-sandbox";
 		public override bool NoStudentZip => true;
 		public override bool CheckInitialSolution => false;
@@ -55,14 +55,14 @@ namespace Ulearn.Core.Courses.Slides.Exercises.Blocks
 
 		[XmlElement("showTestDescription")]
 		public bool ShowTestDescription { get; set; }
-		
+
 		[XmlElement("pythonVisualizerEnabled")]
 		public bool PythonVisualizerEnabled { get; set; }
-		
+
 		public RunnerSubmission CreateSubmission(string submissionId, string code, Language language, string courseDirectory)
 		{
 			var submission = base.CreateSubmission(submissionId, code, courseDirectory);
-			if (!(submission is CommandRunnerSubmission commandRunnerSubmission))
+			if (submission is not CommandRunnerSubmission commandRunnerSubmission)
 				return submission;
 
 			commandRunnerSubmission.RunCommand = RunCommandWithArguments(language);

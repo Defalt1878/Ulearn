@@ -1,12 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace Ulearn.Core.GoogleSheet
 {
-    public class GoogleSheetModel
-    {
-        public readonly List<List<IGoogleSheetCell>> Cells;
-        public readonly int ListId;
+	public class GoogleSheetModel
+	{
+		public readonly List<List<IGoogleSheetCell>> Cells;
+		public readonly int ListId;
 
 		public GoogleSheetModel(int listId)
 		{
@@ -15,7 +14,7 @@ namespace Ulearn.Core.GoogleSheet
 		}
 
 		public void GoToNewLine() => Cells.Add(new List<IGoogleSheetCell>());
-		
+
 		public void AddCell<T>(int row, T value) => Cells[row].Add(new GoogleSheetCell<T>(value));
 	}
 }

@@ -11,6 +11,6 @@ namespace Ulearn.Core.Courses.Slides.Quizzes.Blocks
 		False,
 
 		[XmlEnum("maybe")]
-		Maybe,
+		Maybe
 	}
 }

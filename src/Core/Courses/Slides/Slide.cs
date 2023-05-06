@@ -26,14 +26,20 @@ namespace Ulearn.Core.Courses.Slides
 	[XmlRoot("slide", IsNullable = false, Namespace = "https://ulearn.me/schema/v2")]
 	public class Slide : ISlide
 	{
-		[XmlAttribute("id")]
-		public Guid Id { get; set; }
+		[XmlIgnore]
+		public BlockType[] DefineBlockType;
+
+		public Slide()
+		{
+		}
+
+		public Slide(params SlideBlock[] blocks)
+		{
+			Blocks = blocks;
+		}
 
 		[XmlIgnore]
 		public string NormalizedGuid => Id.GetNormalizedGuid();
-
-		[XmlAttribute("title")]
-		public string Title { get; set; }
 
 		[XmlElement("meta")]
 		public SlideMetaDescription Meta { get; set; }
@@ -48,41 +54,6 @@ namespace Ulearn.Core.Courses.Slides
 
 		[XmlElement("defaultIncludeCodeFile")]
 		public string DefaultIncludeCodeFile { get; set; }
-
-		/* If you add new block type, don't forget to:
-		 * 1. Add it to AllowedBlockTypes of Slide, QuizSlide or ExerciseSlide
-		 * 2. If it's a common block, add it inside of SpoilerBlock tags too
-		 * 3. Add definition for new block type in BlockType.cs
-		 */
-
-		/* Common blocks */
-		[XmlElement(typeof(YoutubeBlock))]
-		[XmlElement("markdown", typeof(MarkdownBlock))]
-		[XmlElement(typeof(CodeBlock))]
-		[XmlElement(typeof(TexBlock))]
-		[XmlElement(typeof(ImageGalleryBlock))]
-		[XmlElement(typeof(IncludeCodeBlock))]
-		[XmlElement(typeof(IncludeMarkdownBlock))]
-		[XmlElement(typeof(IncludeImageGalleryBlock))]
-		[XmlElement("html", typeof(HtmlBlock))]
-		[XmlElement(typeof(SpoilerBlock))]
-		[XmlElement(typeof(SelfCheckupsBlock))]
-		/* Quiz blocks */
-		[XmlElement(typeof(IsTrueBlock))]
-		[XmlElement(typeof(ChoiceBlock))]
-		[XmlElement(typeof(FillInBlock))]
-		[XmlElement(typeof(OrderingBlock))]
-		[XmlElement(typeof(MatchingBlock))]
-		/* Exercise blocks */
-		[XmlElement(typeof(CsProjectExerciseBlock))]
-		[XmlElement(typeof(SingleFileExerciseBlock))]
-		[XmlElement(typeof(UniversalExerciseBlock))]
-		[XmlElement(typeof(PolygonExerciseBlock))]
-		[XmlChoiceIdentifier(nameof(DefineBlockType))]
-		public SlideBlock[] Blocks { get; set; }
-
-		[XmlIgnore]
-		public BlockType[] DefineBlockType;
 
 		/* This property is extended by QuizSlide and ExerciseSlide */
 		[XmlIgnore]
@@ -121,17 +92,46 @@ namespace Ulearn.Core.Courses.Slides
 		[XmlIgnore]
 		public virtual string ScoringGroup { get; protected set; } = "";
 
-		public Slide()
-		{
-		}
+		[XmlAttribute("id")]
+		public Guid Id { get; set; }
 
-		public Slide(params SlideBlock[] blocks)
-		{
-			Blocks = blocks;
-		}
+		[XmlAttribute("title")]
+		public string Title { get; set; }
+
+		/* If you add new block type, don't forget to:
+		* 1. Add it to AllowedBlockTypes of Slide, QuizSlide or ExerciseSlide
+		* 2. If it's a common block, add it inside of SpoilerBlock tags too
+		* 3. Add definition for new block type in BlockType.cs
+		*/
+
+		/* Common blocks */
+		[XmlElement(typeof(YoutubeBlock))]
+		[XmlElement("markdown", typeof(MarkdownBlock))]
+		[XmlElement(typeof(CodeBlock))]
+		[XmlElement(typeof(TexBlock))]
+		[XmlElement(typeof(ImageGalleryBlock))]
+		[XmlElement(typeof(IncludeCodeBlock))]
+		[XmlElement(typeof(IncludeMarkdownBlock))]
+		[XmlElement(typeof(IncludeImageGalleryBlock))]
+		[XmlElement("html", typeof(HtmlBlock))]
+		[XmlElement(typeof(SpoilerBlock))]
+		[XmlElement(typeof(SelfCheckupsBlock))]
+		/* Quiz blocks */
+		[XmlElement(typeof(IsTrueBlock))]
+		[XmlElement(typeof(ChoiceBlock))]
+		[XmlElement(typeof(FillInBlock))]
+		[XmlElement(typeof(OrderingBlock))]
+		[XmlElement(typeof(MatchingBlock))]
+		/* Exercise blocks */
+		[XmlElement(typeof(CsProjectExerciseBlock))]
+		[XmlElement(typeof(SingleFileExerciseBlock))]
+		[XmlElement(typeof(UniversalExerciseBlock))]
+		[XmlElement(typeof(PolygonExerciseBlock))]
+		[XmlChoiceIdentifier(nameof(DefineBlockType))]
+		public SlideBlock[] Blocks { get; set; }
 
 		/// <summary>
-		/// Validate slide. We guarantee that Validate() will be called after BuildUp() 
+		///     Validate slide. We guarantee that Validate() will be called after BuildUp()
 		/// </summary>
 		public virtual void Validate(SlideLoadingContext context)
 		{
@@ -141,14 +141,13 @@ namespace Ulearn.Core.Courses.Slides
 		}
 
 		/// <summary>
-		/// Building slide and blocks, fill properties, initialize some values. Any work we need to do before work with slide.
+		///     Building slide and blocks, fill properties, initialize some values. Any work we need to do before work with slide.
 		/// </summary>
 		public virtual void BuildUp(SlideLoadingContext context)
 		{
 			Unit = context.Unit;
 			SlideFilePathRelativeToCourse = context.SlideFilePathRelativeToCourse;
-			if (Blocks == null)
-				Blocks = new SlideBlock[0];
+			Blocks ??= Array.Empty<SlideBlock>();
 
 			/* Validate block types. We should do it before building up blocks */
 			CheckBlockTypes();
@@ -169,13 +168,11 @@ namespace Ulearn.Core.Courses.Slides
 		public void CheckBlockTypes()
 		{
 			foreach (var block in Blocks)
-			{
 				if (!AllowedBlockTypes.Any(type => type.IsInstanceOfType(block)))
 					throw new CourseLoadingException(
 						$"Недопустимый тип блока в слайде {SlideFilePathRelativeToCourse}: <{block.GetType().GetXmlType()}>. " +
 						$"В этом слайде разрешены только следующие блоки: {string.Join(", ", AllowedBlockTypes.Select(t => $"<{t.GetXmlType()}>"))}"
 					);
-			}
 		}
 
 		public AbstractQuestionBlock FindBlockById(string id)
@@ -217,14 +214,12 @@ namespace Ulearn.Core.Courses.Slides
 
 			var visibleSlideBlocks = slide.Blocks.Where(b => !b.Hide).ToArray();
 			while (visibleSlideBlocks.Any(b => b is SpoilerBlock))
-			{
 				visibleSlideBlocks = visibleSlideBlocks.SelectMany(block =>
 				{
 					if (block is SpoilerBlock sb)
 						return sb.Blocks.Where(b => !b.Hide);
 					return new[] { block };
 				}).ToArray();
-			}
 
 			var staticFilesFromMarkdown = new List<StaticFileForEdx>();
 			visibleSlideBlocks = visibleSlideBlocks.SelectMany(b =>
@@ -236,6 +231,7 @@ namespace Ulearn.Core.Courses.Slides
 					staticFilesFromMarkdown.AddRange(staticFiles);
 					return blocks;
 				}
+
 				return new List<SlideBlock> { b };
 			}).ToArray();
 
@@ -255,7 +251,7 @@ namespace Ulearn.Core.Courses.Slides
 						}
 						else
 						{
-							Console.WriteLine($"Slide {slide.Id} {block.GetType().Name} block NotSupportedException");
+							Console.WriteLine($@"Slide {slide.Id} {block.GetType().Name} block NotSupportedException");
 						}
 
 						componentIndex++;
@@ -294,12 +290,15 @@ namespace Ulearn.Core.Courses.Slides
 					var videoComponent = youtubeBlock.ToEdxComponent(context with { ComponentIndex = componentIndex, DisplayName = componentIndex == 0 ? slide.Title : "" });
 					components.Add(videoComponent);
 				}
+
 				componentIndex++;
 			}
 
 			var exBlock = visibleSlideBlocks.OfType<AbstractExerciseBlock>().FirstOrDefault();
 			if (exBlock == null)
+			{
 				yield return new Vertical(slide.NormalizedGuid, slide.Title, components.ToArray());
+			}
 			else
 			{
 				var exerciseSlide = (ExerciseSlide)slide;
@@ -348,7 +347,7 @@ namespace Ulearn.Core.Courses.Slides
 		Flashcards
 	}
 
-	class EdxScoringGroupsHack
+	internal class EdxScoringGroupsHack
 	{
 		public static string ToEdxName(string scoringGroup)
 		{

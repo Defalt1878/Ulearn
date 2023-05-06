@@ -21,9 +21,8 @@ namespace Web.Api.Configuration
 		public bool ForceNotificationBar { get; set; } // запретить скрытие плашки]
 
 		public SuperGroupCacheConfiguration SuperGroupCache { get; set; } // настройки кэша для супер-групп
-		
 	}
-	
+
 	public class SuperGroupCacheConfiguration
 	{
 		public int Capacity { get; set; } = 50;
@@ -72,11 +71,10 @@ namespace Web.Api.Configuration
 		public int LifeTimeHours { get; set; }
 	}
 
-
 	/*
-	  DataContract and DataMembers is needed only for FrontendConfiguration, because backend
-	  should serializer JSON with this config for frontend's index.html
-	 */
+	DataContract and DataMembers is needed only for FrontendConfiguration, because backend
+	should serializer JSON with this config for frontend's index.html
+	*/
 	[DataContract]
 	public class FrontendConfiguration
 	{

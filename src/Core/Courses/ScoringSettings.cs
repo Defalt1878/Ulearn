@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Serialization;
@@ -9,25 +10,25 @@ namespace Ulearn.Core.Courses
 	public class ScoringSettings
 	{
 		public const string VisitsGroupId = "visits";
-		
+
 		public ScoringSettings()
 		{
-			_groups = new ScoringGroup[0];
+			_groups = Array.Empty<ScoringGroup>();
 		}
 
 		[XmlAttribute("defaultQuiz")]
-		public string _defaultScoringGroupForQuiz { get; set; }
+		public string defaultScoringGroupForQuiz { get; set; }
 
 		[XmlIgnore]
 		public string DefaultScoringGroupForQuiz =>
-			string.IsNullOrEmpty(_defaultScoringGroupForQuiz) ? DefaultScoringGroup : _defaultScoringGroupForQuiz;
+			string.IsNullOrEmpty(defaultScoringGroupForQuiz) ? DefaultScoringGroup : defaultScoringGroupForQuiz;
 
 		[XmlAttribute("defaultExercise")]
-		public string _defaultScoringGroupForExercise { get; set; }
+		public string defaultScoringGroupForExercise { get; set; }
 
 		[XmlIgnore]
 		public string DefaultScoringGroupForExercise =>
-			string.IsNullOrEmpty(_defaultScoringGroupForExercise) ? DefaultScoringGroup : _defaultScoringGroupForExercise;
+			string.IsNullOrEmpty(defaultScoringGroupForExercise) ? DefaultScoringGroup : defaultScoringGroupForExercise;
 
 		[XmlAttribute("default")]
 		public string DefaultScoringGroup { get; set; } = "";
@@ -42,23 +43,29 @@ namespace Ulearn.Core.Courses
 		[NotNull]
 		public SortedDictionary<string, ScoringGroup> Groups
 		{
-			get { return groupsCache ?? (groupsCache = _groups.Where(g => g.Id != VisitsGroupId).ToDictionary(g => g.Id, g => g).ToSortedDictionary()); }
+			get
+			{
+				return groupsCache ??= _groups
+					.Where(g => g.Id != VisitsGroupId)
+					.ToDictionary(g => g.Id, g => g)
+					.ToSortedDictionary();
+			}
 		}
 
 		[CanBeNull]
 		public ScoringGroup VisitsGroup
 		{
 			get { return _groups.FirstOrDefault(g => g.Id == VisitsGroupId); }
-		} 
+		}
 
 		public void CopySettingsFrom(ScoringSettings otherScoringSettings)
 		{
-			_defaultScoringGroupForQuiz = string.IsNullOrEmpty(_defaultScoringGroupForQuiz) && string.IsNullOrEmpty(DefaultScoringGroup)
+			defaultScoringGroupForQuiz = string.IsNullOrEmpty(defaultScoringGroupForQuiz) && string.IsNullOrEmpty(DefaultScoringGroup)
 				? otherScoringSettings.DefaultScoringGroupForQuiz
-				: _defaultScoringGroupForQuiz;
-			_defaultScoringGroupForExercise = string.IsNullOrEmpty(_defaultScoringGroupForExercise) && string.IsNullOrEmpty(DefaultScoringGroup)
+				: defaultScoringGroupForQuiz;
+			defaultScoringGroupForExercise = string.IsNullOrEmpty(defaultScoringGroupForExercise) && string.IsNullOrEmpty(DefaultScoringGroup)
 				? otherScoringSettings.DefaultScoringGroupForExercise
-				: _defaultScoringGroupForExercise;
+				: defaultScoringGroupForExercise;
 			DefaultScoringGroup = string.IsNullOrEmpty(DefaultScoringGroup) ? otherScoringSettings.DefaultScoringGroup : DefaultScoringGroup;
 
 			/* Copy missing scoring groups */

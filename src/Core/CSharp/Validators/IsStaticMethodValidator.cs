@@ -17,8 +17,7 @@ namespace Ulearn.Core.CSharp.Validators
 
 		private SolutionStyleError FindSingleError(SyntaxTree userSolution)
 		{
-			var cu = userSolution.GetRoot() as CompilationUnitSyntax;
-			if (cu == null)
+			if (userSolution.GetRoot() is not CompilationUnitSyntax cu)
 				return new SolutionStyleError(StyleErrorType.Static01, userSolution.GetRoot());
 			if (cu.Members.Count > 1)
 				return new SolutionStyleError(StyleErrorType.Static02, cu.Members[1]);

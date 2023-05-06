@@ -2,13 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Xml.Serialization;
 using JetBrains.Annotations;
 using Ulearn.Common;
 using Ulearn.Common.Extensions;
-using Ulearn.Core.Courses.Slides.Blocks;
 using Ulearn.Core.RunCheckerJobApi;
 
 namespace Ulearn.Core.Courses.Slides.Exercises.Blocks
@@ -22,35 +22,13 @@ namespace Ulearn.Core.Courses.Slides.Exercises.Blocks
 
 		[XmlAttribute("type")]
 		public ExerciseType ExerciseType { get; set; } = ExerciseType.CheckOutput;
-		
+
 		[XmlElement("checkup")]
 		public List<string> Checkups { get; set; }
 
 		/* .NET XML Serializer doesn't understand nullable fields, so we use this hack to make Language? field */
 		[XmlIgnore]
 		public virtual Language? Language { get; set; }
-
-		#region NullableLanguageHack
-
-		[XmlAttribute("language")]
-		[Browsable(false), EditorBrowsable(EditorBrowsableState.Never)]
-		public Language LanguageSerialized
-		{
-			get
-			{
-				Debug.Assert(Language != null, nameof(Language) + " != null");
-				return Language.Value;
-			}
-			set => Language = value;
-		}
-
-		[Browsable(false), EditorBrowsable(EditorBrowsableState.Never)]
-		public bool ShouldSerializeLanguageSerialized()
-		{
-			return Language.HasValue;
-		}
-
-		#endregion
 
 		[XmlElement("initialCode")]
 		public string ExerciseInitialCode { get; set; }
@@ -64,12 +42,12 @@ namespace Ulearn.Core.Courses.Slides.Exercises.Blocks
 		[XmlElement("expected")]
 		// Ожидаемый корректный вывод программы
 		public string ExpectedOutput { get; set; }
-		
+
 		[XmlElement("passingPoints")] // проходной балл, включительно. Для ExerciseType.CheckPoints
 		public float? PassingPoints { get; set; }
 
 		[XmlElement("smallPointsIsBetter")] // по умолчанию false. Для ExerciseType.CheckPoints
-		public bool SmallPointsIsBetter { get; set; } = false;
+		public bool SmallPointsIsBetter { get; set; }
 
 		[XmlElement("hideExpectedOutput")]
 		public bool HideExpectedOutputOnError { get; set; }
@@ -102,6 +80,72 @@ namespace Ulearn.Core.Courses.Slides.Exercises.Blocks
 		public abstract RunnerSubmission CreateSubmission(string submissionId, string code, string courseDirectory);
 		public abstract bool HasAutomaticChecking();
 
+		public override string ToString()
+		{
+			return $"Exercise: {ExerciseInitialCode}, Hints: {string.Join("; ", HintsMd)}, Checkups: {string.Join("; ", Checkups)}";
+		}
+
+		public override string TryGetText()
+		{
+			return (ExerciseInitialCode ?? "") + '\n'
+												+ string.Join("\n", HintsMd) + '\n'
+												+ (CommentAfterExerciseIsSolved ?? "");
+		}
+
+		public bool IsCorrectRunResult(RunningResults result)
+		{
+			if (result.Verdict != Verdict.Ok)
+				return false;
+
+			switch (ExerciseType)
+			{
+				case ExerciseType.CheckExitCode:
+				{
+					return true;
+				}
+				case ExerciseType.CheckOutput:
+				{
+					var expectedOutput = ExpectedOutput.NormalizeEoln();
+					return result.Output.NormalizeEoln().Equals(expectedOutput);
+				}
+				case ExerciseType.CheckPoints when !result.Points.HasValue:
+				{
+					return false;
+				}
+				case ExerciseType.CheckPoints:
+				{
+					const float eps = 0.00001f;
+					return SmallPointsIsBetter ? result.Points.Value < PassingPoints + eps : result.Points.Value > PassingPoints - eps;
+				}
+				default:
+				{
+					throw new InvalidOperationException($"Unknown exercise type for checking: {ExerciseType}");
+				}
+			}
+		}
+
+		#region NullableLanguageHack
+
+		[XmlAttribute("language")]
+		[Browsable(false)] [EditorBrowsable(EditorBrowsableState.Never)]
+		public Language LanguageSerialized
+		{
+			get
+			{
+				Debug.Assert(Language != null, nameof(Language) + " != null");
+				return Language.Value;
+			}
+			set => Language = value;
+		}
+
+		[Browsable(false)] [EditorBrowsable(EditorBrowsableState.Never)]
+		public bool ShouldSerializeLanguageSerialized()
+		{
+			return Language.HasValue;
+		}
+
+		#endregion
+
 		#region equals
 
 		private bool Equals(AbstractExerciseBlock other)
@@ -118,6 +162,7 @@ namespace Ulearn.Core.Courses.Slides.Exercises.Blocks
 			return obj.GetType() == GetType() && Equals((AbstractExerciseBlock)obj);
 		}
 
+		[SuppressMessage("ReSharper", "NonReadonlyMemberInGetHashCode")]
 		public override int GetHashCode()
 		{
 			unchecked
@@ -131,52 +176,17 @@ namespace Ulearn.Core.Courses.Slides.Exercises.Blocks
 		}
 
 		#endregion
-
-		public override string ToString()
-		{
-			return $"Exercise: {ExerciseInitialCode}, Hints: {string.Join("; ", HintsMd)}, Checkupss: {string.Join("; ", Checkups)}";
-		}
-
-		public override string TryGetText()
-		{
-			return (ExerciseInitialCode ?? "") + '\n'
-												+ string.Join("\n", HintsMd) + '\n'
-												+ (CommentAfterExerciseIsSolved ?? "");
-		}
-
-		public bool IsCorrectRunResult(RunningResults result)
-		{
-			if (result.Verdict != Verdict.Ok)
-				return false;
-
-			if (ExerciseType == ExerciseType.CheckExitCode)
-				return true;
-
-			if (ExerciseType == ExerciseType.CheckOutput)
-			{
-				var expectedOutput = ExpectedOutput.NormalizeEoln();
-				return result.Output.NormalizeEoln().Equals(expectedOutput);
-			}
-
-			if (ExerciseType == ExerciseType.CheckPoints)
-			{
-				if (!result.Points.HasValue)
-					return false;
-				const float eps = 0.00001f;
-				return SmallPointsIsBetter ? result.Points.Value < PassingPoints + eps : result.Points.Value > PassingPoints - eps;
-			}
-
-			throw new InvalidOperationException($"Unknown exercise type for checking: {ExerciseType}");
-		}
 	}
 
 	public interface IExerciseCheckerZipBuilder
 	{
-		MemoryStream GetZipForChecker();
 		[CanBeNull] // Для тестов
 		Slide Slide { get; }
+
 		[CanBeNull] // Для тестов
 		string CourseId { get; }
+
+		MemoryStream GetZipForChecker();
 	}
 
 	public class ExerciseTexts
@@ -216,8 +226,8 @@ namespace Ulearn.Core.Courses.Slides.Exercises.Blocks
 
 		[XmlEnum("check-output")]
 		CheckOutput,
-		
-		[XmlEnum("check-points")] // Поддержиавется для UniversalExerciseBlock
+
+		[XmlEnum("check-points")] // Поддерживается для UniversalExerciseBlock
 		CheckPoints
 	}
 

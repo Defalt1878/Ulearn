@@ -38,7 +38,7 @@ namespace Ulearn.Core.Courses.Slides
 
 		[XmlEnum("html")]
 		Html,
-		
+
 		[XmlEnum("selfCheckups")]
 		SelfCheckups,
 
@@ -68,7 +68,7 @@ namespace Ulearn.Core.Courses.Slides
 
 		[XmlEnum("exercise.universal")]
 		UniversalExercise,
-		
+
 		[XmlEnum("exercise.polygon")]
 		PolygonExercise
 	}
@@ -77,32 +77,29 @@ namespace Ulearn.Core.Courses.Slides
 	{
 		public static BlockType GetBlockType(SlideBlock block)
 		{
-			switch (block)
+			return block switch
 			{
-				case YoutubeBlock _: return BlockType.YouTube;
-				case CodeBlock _: return BlockType.Code;
-				case ImageGalleryBlock _: return BlockType.GalleryImages;
-				case IncludeCodeBlock _: return BlockType.IncludeCode;
-				case IncludeImageGalleryBlock _: return BlockType.IncludeImageGallery;
-				case IncludeMarkdownBlock _: return BlockType.IncludeMarkdown;
-				case MarkdownBlock _: return BlockType.Markdown;
-				case TexBlock _: return BlockType.Tex;
-				case HtmlBlock _: return BlockType.Html;
-				case SpoilerBlock _: return BlockType.Spoiler;
-				case SelfCheckupsBlock _: return BlockType.SelfCheckups;
-
-				case FillInBlock _: return BlockType.TextQuestion;
-				case ChoiceBlock _: return BlockType.ChoiceQuestion;
-				case MatchingBlock _: return BlockType.MatchQuestion;
-				case OrderingBlock _: return BlockType.OrderQuestion;
-				case IsTrueBlock _: return BlockType.IsTrueQuestion;
-
-				case CsProjectExerciseBlock _: return BlockType.CsProjectExercise;
-				case SingleFileExerciseBlock _: return BlockType.SingleFileExercise;
-				case UniversalExerciseBlock _: return BlockType.UniversalExercise;
-
-				default: throw new Exception("Unknown slide block " + block);
-			}
+				YoutubeBlock _ => BlockType.YouTube,
+				CodeBlock _ => BlockType.Code,
+				ImageGalleryBlock _ => BlockType.GalleryImages,
+				IncludeCodeBlock _ => BlockType.IncludeCode,
+				IncludeImageGalleryBlock _ => BlockType.IncludeImageGallery,
+				IncludeMarkdownBlock _ => BlockType.IncludeMarkdown,
+				MarkdownBlock _ => BlockType.Markdown,
+				TexBlock _ => BlockType.Tex,
+				HtmlBlock _ => BlockType.Html,
+				SpoilerBlock _ => BlockType.Spoiler,
+				SelfCheckupsBlock _ => BlockType.SelfCheckups,
+				FillInBlock _ => BlockType.TextQuestion,
+				ChoiceBlock _ => BlockType.ChoiceQuestion,
+				MatchingBlock _ => BlockType.MatchQuestion,
+				OrderingBlock _ => BlockType.OrderQuestion,
+				IsTrueBlock _ => BlockType.IsTrueQuestion,
+				CsProjectExerciseBlock _ => BlockType.CsProjectExercise,
+				SingleFileExerciseBlock _ => BlockType.SingleFileExercise,
+				UniversalExerciseBlock _ => BlockType.UniversalExercise,
+				_ => throw new Exception("Unknown slide block " + block)
+			};
 		}
 	}
 }

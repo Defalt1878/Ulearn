@@ -28,7 +28,7 @@ namespace Ulearn.Core.Courses.Slides.Exercises
 		public override void BuildUp(SlideLoadingContext context)
 		{
 			Blocks = GetBlocksProblem(context.CourseId, Id, context.CourseDirectory, context.UnitDirectory.GetRelativePath(context.CourseDirectory))
-				.Concat(Blocks.Where(block => !(block is MarkdownBlock)))
+				.Concat(Blocks.Where(block => block is not MarkdownBlock))
 				.ToArray();
 
 			var polygonExercise = Blocks.Single(block => block is PolygonExerciseBlock) as PolygonExerciseBlock;
@@ -87,12 +87,12 @@ namespace Ulearn.Core.Courses.Slides.Exercises
 		{
 			var imagesDirectoryRelativeToUnit = Path.Combine(PolygonPath, "statements", ".html", "russian");
 			var imagesDirectory = Path.Combine(courseDirectory.FullName, unitPathRelativeToCourse, imagesDirectoryRelativeToUnit);
-			var matches = imageRegex.Matches(html).Cast<Match>().ToList();
+			var matches = imageRegex.Matches(html).ToList();
 			var originalToReplacement = new Dictionary<string, string>();
 			foreach (var match in matches)
 			{
 				var fileName = match.Groups["src"].Value;
-				if (fileName.Contains("/") || fileName.Contains("\\"))
+				if (fileName.Contains('/') || fileName.Contains('\\'))
 					continue;
 				var imageFile = new FileInfo(Path.Combine(imagesDirectory, fileName));
 				if (imageFile.Exists)
@@ -101,9 +101,9 @@ namespace Ulearn.Core.Courses.Slides.Exercises
 					originalToReplacement.Add(fileName, link);
 				}
 			}
-			foreach (var kvp in originalToReplacement)
-				html = html.Replace(kvp.Key, kvp.Value);
-			return html;
+
+			return originalToReplacement
+				.Aggregate(html, (current, kvp) => current.Replace(kvp.Key, kvp.Value));
 		}
 
 		private static MarkdownBlock GetLinkOnPdf(string courseId, string slideId)
@@ -116,12 +116,12 @@ namespace Ulearn.Core.Courses.Slides.Exercises
 		{
 			var document = new XmlDocument();
 			document.Load(pathToXml);
-			
+
 			var nameNodeList = document.SelectNodes(@"/problem/names/name");
 			var name = GetNodes(nameNodeList)
-				.First(node => node.Attributes!["language"].Value == "russian")
-				.Attributes!["value"]!.Value ?? "";
-			
+				.First(node => node.Attributes?["language"]?.Value is "russian")
+				.Attributes?["value"]?.Value ?? "";
+
 			var timeLimit = document.SelectSingleNode(@"/problem/judging/testset/time-limit")!.InnerText;
 			var testCount = document.SelectSingleNode(@"/problem/judging/testset/test-count")!.InnerText;
 			var solutionPath = GetSolutionPath(document, defaultLanguage);
@@ -140,8 +140,8 @@ namespace Ulearn.Core.Courses.Slides.Exercises
 			var solutions = GetNodes(solutionNodeList)
 				.Select(node => new
 				{
-					Tag = node.Attributes!["tag"].Value,
-					Path = node.ChildNodes.Item(0)!.Attributes!["path"].Value
+					Tag = node.Attributes!["tag"]?.Value,
+					Path = node.ChildNodes.Item(0)!.Attributes!["path"]?.Value
 				})
 				.ToArray();
 			var mainSolution = solutions.First(s => s.Tag == "main");
@@ -150,14 +150,16 @@ namespace Ulearn.Core.Courses.Slides.Exercises
 			var solutionWithLanguageAsDefaultInCourse = new[] { mainSolution }
 				.Concat(acceptedSolution)
 				.FirstOrDefault(s => LanguageHelpers.GuessByExtension(new FileInfo(s.Path)) == defaultLanguage);
-			
+
 			return solutionWithLanguageAsDefaultInCourse?.Path ?? mainSolution.Path;
 		}
 
 		private static IEnumerable<XmlNode> GetNodes(XmlNodeList nodeList)
-			=> Enumerable.Range(0, nodeList!.Count).Select(nodeList.Item);
-		
-		private void PrepareSolution(string solutionFilename)
+		{
+			return Enumerable.Range(0, nodeList!.Count).Select(nodeList.Item);
+		}
+
+		private static void PrepareSolution(string solutionFilename)
 		{
 			var solution = File.ReadAllText(solutionFilename);
 			if (solution.Contains("//region Task") && solution.Contains("//endregion Task"))
@@ -174,5 +176,4 @@ namespace Ulearn.Core.Courses.Slides.Exercises
 		public string Title { get; set; }
 		public string PathAuthorSolution { get; set; }
 	}
-	
 }

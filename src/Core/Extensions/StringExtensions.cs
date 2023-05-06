@@ -11,10 +11,10 @@ namespace Ulearn.Core.Extensions
 				return s;
 
 			if (ellipsis.Length > maxLength)
-				throw new ArgumentOutOfRangeException("length", maxLength, "length must be at least as long as ellipsis.");
+				throw new ArgumentOutOfRangeException(nameof(maxLength), maxLength, @"length must be at least as long as ellipsis.");
 
 			if (s.Length > maxLength - ellipsis.Length)
-				return s.Substring(0, maxLength - ellipsis.Length).TrimEnd() + ellipsis;
+				return s[..(maxLength - ellipsis.Length)].TrimEnd() + ellipsis;
 
 			return s;
 		}

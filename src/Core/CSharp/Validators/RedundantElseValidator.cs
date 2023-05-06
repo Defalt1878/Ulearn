@@ -2,10 +2,8 @@
 using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Ulearn.Core.CSharp;
-using Ulearn.Core.CSharp.Validators;
 
-namespace uLearn.CSharp.Validators
+namespace Ulearn.Core.CSharp.Validators
 {
 	public class RedundantElseValidator : BaseStyleValidator
 	{
@@ -14,7 +12,7 @@ namespace uLearn.CSharp.Validators
 			return InspectAll<IfStatementSyntax>(userSolution, InspectIfStatement).ToList();
 		}
 
-		private IEnumerable<SolutionStyleError> InspectIfStatement(IfStatementSyntax ifStatementSyntax)
+		private static IEnumerable<SolutionStyleError> InspectIfStatement(IfStatementSyntax ifStatementSyntax)
 		{
 			var childNodes = ifStatementSyntax
 				.ChildNodes()

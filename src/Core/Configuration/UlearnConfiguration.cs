@@ -1,9 +1,8 @@
 ﻿using System;
-using System.Linq;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Configuration.Json;
-using Microsoft.Extensions.FileProviders;
+// ReSharper disable UnusedAutoPropertyAccessor.Global
+// ReSharper disable ClassNeverInstantiated.Global
 
 namespace Ulearn.Core.Configuration
 {
@@ -31,17 +30,10 @@ namespace Ulearn.Core.Configuration
 
 		public static void BuildAppSettingsConfiguration(IConfigurationBuilder configurationBuilder)
 		{
-			configurationBuilder.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+			configurationBuilder.AddJsonFile("appsettings.json", false, true);
 			var environmentName = Environment.GetEnvironmentVariable("UlearnEnvironmentName");
 			if (environmentName != null && environmentName.ToLower().Contains("local"))
-				configurationBuilder.AddJsonFile("appsettings.local.json", optional: true, reloadOnChange: true);
-		}
-
-		private static void DisposeConfiguration(IConfigurationRoot configuration) // https://github.com/aspnet/Extensions/issues/786
-		{
-			foreach (var provider in configuration.Providers.OfType<JsonConfigurationProvider>())
-				if (provider.Source.FileProvider is PhysicalFileProvider pfp)
-					pfp.Dispose();
+				configurationBuilder.AddJsonFile("appsettings.local.json", true, true);
 		}
 	}
 
@@ -54,23 +46,19 @@ namespace Ulearn.Core.Configuration
 			var otherProperties = other.GetType().GetProperties();
 
 			foreach (var otherProperty in otherProperties)
-			{
-				foreach (var thisProperty in thisProperties)
+			foreach (var thisProperty in thisProperties)
+				if (otherProperty.Name == thisProperty.Name && otherProperty.PropertyType == thisProperty.PropertyType)
 				{
-					if (otherProperty.Name == thisProperty.Name && otherProperty.PropertyType == thisProperty.PropertyType)
-					{
-						thisProperty.SetValue(this, otherProperty.GetValue(other));
-						break;
-					}
+					thisProperty.SetValue(this, otherProperty.GetValue(other));
+					break;
 				}
-			}
 		}
 	}
 
 	public class HostLogConfiguration
 	{
 		public bool Console { get; set; } // Печатать ли логи на консоль
-		
+
 		public string DropRequestRegex { get; set; } // Какие логи запросов не логировать (например notifications)
 
 		public bool ErrorLogsToTelegram { get; set; } // Отправлять ли логи в телеграм
@@ -80,11 +68,6 @@ namespace Ulearn.Core.Configuration
 		public string MinimumLevel { get; set; } // Минимальный уровень логирования
 
 		public string DbMinimumLevel { get; set; } // Минимальный уровень логирования событий, связанных с базой данных. Debug заставляет вываодть SQL код отправленных запросов
-	}
-
-	public class DatabaseConfiguration : UlearnConfigurationBase // Класс настроек, используемый в проекте Database
-	{
-		public string Database { get; set; } // Connection string к базе
 	}
 
 	public class UlearnConfiguration : UlearnConfigurationBase
@@ -105,7 +88,7 @@ namespace Ulearn.Core.Configuration
 
 		public bool ExerciseCheckerZipsCacheDisabled { get; set; } // Отключает кэш архивов с чеккерами
 
-		public CertificateConfiguration Certificates { get; set; } 
+		public CertificateConfiguration Certificates { get; set; }
 
 		public string GraphiteServiceName { get; set; } // Имя сервиса. Используется в метриках и др.
 

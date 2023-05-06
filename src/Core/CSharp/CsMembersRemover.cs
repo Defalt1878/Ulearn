@@ -12,20 +12,6 @@ namespace Ulearn.Core.CSharp
 	{
 		public const string Pragma = "\r\n#line 1\r\n";
 
-		private static bool Remove(Label label, ref SyntaxNode tree)
-		{
-			var members = tree.GetMembers()
-				.Where(node => node.Identifier().ValueText == label.Name)
-				.ToList();
-			if (!members.Any())
-				return false;
-			if (label.OnlyBody)
-				tree = tree.RemoveNodes(members.SelectMany(syntax => syntax.GetBody()), SyntaxRemoveOptions.KeepNoTrivia);
-			else
-				tree = tree.RemoveNodes(members, SyntaxRemoveOptions.KeepExteriorTrivia);
-			return true;
-		}
-
 		public string Remove(string code, IEnumerable<Label> labels, out IEnumerable<Label> notRemoved)
 		{
 			var tree = CSharpSyntaxTree.ParseText(code).GetRoot();
@@ -55,7 +41,7 @@ namespace Ulearn.Core.CSharp
 				tree = tree.RemoveNode(solution, SyntaxRemoveOptions.KeepExteriorTrivia);
 			}
 
-			code = tree.ToFullString();
+			code = tree!.ToFullString();
 			return code;
 		}
 
@@ -64,11 +50,24 @@ namespace Ulearn.Core.CSharp
 			return RemoveUsings(code);
 		}
 
+		private static bool Remove(Label label, ref SyntaxNode tree)
+		{
+			var members = tree.GetMembers()
+				.Where(node => node.Identifier().ValueText == label.Name)
+				.ToList();
+			if (!members.Any())
+				return false;
+			tree = label.OnlyBody 
+				? tree.RemoveNodes(members.SelectMany(syntax => syntax.GetBody()), SyntaxRemoveOptions.KeepNoTrivia) 
+				: tree.RemoveNodes(members, SyntaxRemoveOptions.KeepExteriorTrivia);
+			return true;
+		}
+
 		public static string RemoveUsings(string code)
 		{
 			var tree = CSharpSyntaxTree.ParseText(code).GetRoot();
 			var usings = tree.DescendantNodes().OfType<UsingDirectiveSyntax>();
-			return tree.RemoveNodes(usings, SyntaxRemoveOptions.KeepExteriorTrivia).ToFullString();
+			return tree.RemoveNodes(usings, SyntaxRemoveOptions.KeepExteriorTrivia)!.ToFullString();
 		}
 	}
 }

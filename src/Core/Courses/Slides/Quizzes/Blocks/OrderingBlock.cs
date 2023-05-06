@@ -19,10 +19,8 @@ namespace Ulearn.Core.Courses.Slides.Quizzes.Blocks
 
 		public override bool HasEqualStructureWith(SlideBlock other)
 		{
-			var block = other as OrderingBlock;
-			if (block == null)
-				return false;
-			return Items.SequenceEqual(block.Items);
+			return other is OrderingBlock block &&
+					Items.SequenceEqual(block.Items);
 		}
 	}
 }

@@ -1,21 +1,18 @@
 ﻿using System;
 using System.Linq;
+using System.Reflection;
 using JetBrains.Annotations;
-using Vostok.Logging.Abstractions;
 using StatsdClient;
 using Ulearn.Core.Configuration;
+using Vostok.Logging.Abstractions;
 
 namespace Ulearn.Core.Metrics
 {
 	public class MetricSender
 	{
-		private static ILog log => LogProvider.Get().ForContext(typeof(MetricSender));
-
 		private readonly string prefix;
 		private readonly string service;
-		private static string MachineName { get; } = Environment.MachineName.Replace(".", "_").ToLower();
 		private readonly Statsd statsd;
-		private bool IsEnabled => statsd != null;
 
 		public MetricSender([CanBeNull] string service)
 		{
@@ -25,10 +22,14 @@ namespace Ulearn.Core.Metrics
 
 			var config = StatsdConfiguration.CreateFrom(connectionString);
 			prefix = config.Prefix;
-			this.service = service ?? System.Reflection.Assembly.GetExecutingAssembly().GetName().Name.ToLower();
+			this.service = service ?? Assembly.GetExecutingAssembly().GetName().Name?.ToLower();
 
 			statsd = CreateStatsd(config);
 		}
+
+		private static ILog Log => LogProvider.Get().ForContext(typeof(MetricSender));
+		private static string MachineName { get; } = Environment.MachineName.Replace(".", "_").ToLower();
+		private bool IsEnabled => statsd != null;
 
 		private static Statsd CreateStatsd(StatsdConfiguration config)
 		{
@@ -53,14 +54,14 @@ namespace Ulearn.Core.Metrics
 				return;
 
 			var builtKey = BuildKey(prefix, service, key);
-			log.Info($"Send count metric {builtKey}, value {value}");
+			Log.Info($"Send count metric {builtKey}, value {value}");
 			try
 			{
 				statsd.Send<Statsd.Counting>(builtKey, value);
 			}
 			catch (Exception e)
 			{
-				log.Warn(e, $"Can't send count metric {builtKey}, value {value}");
+				Log.Warn(e, $"Can't send count metric {builtKey}, value {value}");
 			}
 		}
 
@@ -70,14 +71,14 @@ namespace Ulearn.Core.Metrics
 				return;
 
 			var builtKey = BuildKey(prefix, service, key);
-			log.Info($"Send timing metric {builtKey}, value {value}");
+			Log.Info($"Send timing metric {builtKey}, value {value}");
 			try
 			{
 				statsd.Send<Statsd.Timing>(builtKey, value);
 			}
 			catch (Exception e)
 			{
-				log.Warn(e, $"Can't send timing metric {builtKey}, value {value}");
+				Log.Warn(e, $"Can't send timing metric {builtKey}, value {value}");
 			}
 		}
 
@@ -87,14 +88,14 @@ namespace Ulearn.Core.Metrics
 				return;
 
 			var builtKey = BuildKey(prefix, service, key);
-			log.Info($"Send gauge metric {builtKey}, value {value}");
+			Log.Info($"Send gauge metric {builtKey}, value {value}");
 			try
 			{
 				statsd.Send<Statsd.Gauge>(builtKey, value);
 			}
 			catch (Exception e)
 			{
-				log.Warn(e, $"Can't send gauge metric {builtKey}, value {value}");
+				Log.Warn(e, $"Can't send gauge metric {builtKey}, value {value}");
 			}
 		}
 	}

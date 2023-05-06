@@ -12,7 +12,7 @@ namespace Ulearn.Core.Helpers
 {
 	public class ExerciseStudentZipsCache
 	{
-		private static ILog log => LogProvider.Get().ForContext(typeof(ExerciseStudentZipsCache));
+		private static ILog Log => LogProvider.Get().ForContext(typeof(ExerciseStudentZipsCache));
 
 		private readonly DirectoryInfo cacheDirectory;
 		private readonly ExerciseStudentZipBuilder builder;
@@ -40,7 +40,7 @@ namespace Ulearn.Core.Helpers
 			if (!zipFile.Exists)
 			{
 				cacheCourseDirectory.EnsureExists();
-				log.Info($"Собираю zip-архив с упражнением: курс {courseId}, слайд «{slide.Title}» ({slide.Id}), файл {zipFile.FullName}");
+				Log.Info($"Собираю zip-архив с упражнением: курс {courseId}, слайд «{slide.Title}» ({slide.Id}), файл {zipFile.FullName}");
 				using (await CourseLock.AcquireReaderLockAsync(courseId))
 				{
 					builder.BuildStudentZip(slide, zipFile, courseDirectory);
@@ -52,7 +52,7 @@ namespace Ulearn.Core.Helpers
 
 		public void DeleteCourseZips(string courseId)
 		{
-			log.Info($"Очищаю папку со сгенерированными zip-архивами для упражнений из курса {courseId}");
+			Log.Info($"Очищаю папку со сгенерированными zip-архивами для упражнений из курса {courseId}");
 
 			var courseDirectory = cacheDirectory.GetSubdirectory(courseId);
 			courseDirectory.EnsureExists();

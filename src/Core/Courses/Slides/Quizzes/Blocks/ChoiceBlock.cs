@@ -30,8 +30,8 @@ namespace Ulearn.Core.Courses.Slides.Quizzes.Blocks
 			if (Items.Deprecated_DistinctBy(i => i.Id).Count() != Items.Length)
 				throw new FormatException("Duplicate choice id in quizBlock " + Id);
 			if (!Multiple && Items.Count(i => i.IsCorrect == ChoiceItemCorrectness.True) != 1)
-				throw new FormatException("Should be exaclty one correct item for non-multiple choice. BlockId=" + Id);
-			if (!Multiple && Items.Count(i => i.IsCorrect == ChoiceItemCorrectness.Maybe) != 0)
+				throw new FormatException("Should be exactly one correct item for non-multiple choice. BlockId=" + Id);
+			if (!Multiple && Items.Any(i => i.IsCorrect == ChoiceItemCorrectness.Maybe))
 				throw new FormatException("'Maybe' items are not allowed for for non-multiple choice. BlockId=" + Id);
 		}
 
@@ -42,8 +42,7 @@ namespace Ulearn.Core.Courses.Slides.Quizzes.Blocks
 
 		public override bool HasEqualStructureWith(SlideBlock other)
 		{
-			var block = other as ChoiceBlock;
-			if (block == null)
+			if (other is not ChoiceBlock block)
 				return false;
 			if (Items.Length != block.Items.Length || Multiple != block.Multiple)
 				return false;

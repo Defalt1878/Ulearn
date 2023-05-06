@@ -9,14 +9,14 @@ namespace Ulearn.Core.Markdown
 		private readonly DirectoryInfo courseDirectory;
 		private readonly string edxBaseUrl;
 
-		public event Action<StaticFileForEdx> OnStaticFile;
-
 		public ExtendedMarkdownDeepForEdx(MarkdownRenderContext context, DirectoryInfo courseDirectory, string edxBaseUrl)
 			: base(context)
 		{
 			this.courseDirectory = courseDirectory;
 			this.edxBaseUrl = edxBaseUrl;
 		}
+
+		public event Action<StaticFileForEdx> OnStaticFile;
 
 		protected override string GetLinkToFile(string pathFromUnit)
 		{

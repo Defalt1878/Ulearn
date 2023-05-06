@@ -15,7 +15,7 @@ namespace Ulearn.Core.CSharp.Validators
 			return InspectAll<InvocationExpressionSyntax>(userSolution, semanticModel, InspectMethod).ToList();
 		}
 
-		private IEnumerable<SolutionStyleError> InspectMethod(InvocationExpressionSyntax methodInvocation, SemanticModel semanticModel)
+		private static IEnumerable<SolutionStyleError> InspectMethod(InvocationExpressionSyntax methodInvocation, SemanticModel semanticModel)
 		{
 			var symbol = semanticModel.GetSymbolInfo(methodInvocation).Symbol;
 			if (methodInvocation.IsMathPow(symbol) &&

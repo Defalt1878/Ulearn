@@ -23,9 +23,9 @@ namespace Ulearn.Core
 								XmlSchemaValidationFlags.ProcessIdentityConstraints |
 								XmlSchemaValidationFlags.ProcessInlineSchema |
 								XmlSchemaValidationFlags.ProcessSchemaLocation,
-				XmlResolver = new XmlUrlResolver(),
+				XmlResolver = new XmlUrlResolver()
 			};
-			
+
 			using (var r = XmlReader.Create(schemaPath))
 			{
 				xmlReaderSettings.Schemas.Add(XmlSchema.Read(r, null));
@@ -36,13 +36,18 @@ namespace Ulearn.Core
 
 		public string ValidateSlideFile(FileInfo file)
 		{
-			var log = new List<string>();
-			log.Add(file.Directory != null ? $"Ошибки в слайде {file.Directory.Name}/{file.Name}:" : $"Ошибки в слайде {file.FullName}:");
+			var log = new List<string>
+			{
+				file.Directory != null
+					? $"Ошибки в слайде {file.Directory.Name}/{file.Name}:"
+					: $"Ошибки в слайде {file.FullName}:"
+			};
 
 			void Action(object sender, ValidationEventArgs e)
 			{
-				var text = $"	[Line: {e.Exception?.LineNumber}, Column: {e.Exception?.LinePosition}]: {e.Message}";
-				log.Add(text);
+				// ReSharper disable once ConditionIsAlwaysTrueOrFalse
+				if (e.Exception is not null)
+					log.Add($"	[Line: {e.Exception.LineNumber}, Column: {e.Exception.LinePosition}]: {e.Message}");
 			}
 
 			settings.ValidationEventHandler += Action;

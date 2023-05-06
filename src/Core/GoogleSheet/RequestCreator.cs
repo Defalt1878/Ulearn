@@ -36,26 +36,28 @@ namespace Ulearn.Core.GoogleSheet
 			return requests;
 		}
 
-		private static List<CellData> CreateEmptyCells(int count) =>
-			Enumerable
+		private static List<CellData> CreateEmptyCells(int count)
+		{
+			return Enumerable
 				.Range(0, count)
 				.Select(_ => CreateCellDataForString("", new CellData
 				{
 					UserEnteredValue = new ExtendedValue(),
-					UserEnteredFormat = new CellFormat(),
+					UserEnteredFormat = new CellFormat()
 				}))
 				.ToList();
+		}
 
 		private static Request CreateRowUpdateRequest(int listId, IList<CellData> values, int rowIndex, string fields = "*")
 		{
-			return new()
+			return new Request
 			{
 				UpdateCells = new UpdateCellsRequest
 				{
 					Start = new GridCoordinate
 					{
 						SheetId = listId,
-						RowIndex = rowIndex,
+						RowIndex = rowIndex
 					},
 					Rows = new List<RowData> { new() { Values = values } },
 					Fields = fields
@@ -68,7 +70,7 @@ namespace Ulearn.Core.GoogleSheet
 			var data = new CellData
 			{
 				UserEnteredValue = new ExtendedValue(),
-				UserEnteredFormat = new CellFormat(),
+				UserEnteredFormat = new CellFormat()
 			};
 			data = googleSheetCell switch
 			{
@@ -111,8 +113,8 @@ namespace Ulearn.Core.GoogleSheet
 
 		private static double? GetDateValue(DateTime dateTimeInLocal)
 		{
-			var localZone = TimeZone.CurrentTimeZone;
-			var currentUtc = localZone.ToUniversalTime(dateTimeInLocal);
+			var localZone = TimeZoneInfo.Local;
+			var currentUtc = TimeZoneInfo.ConvertTimeToUtc(dateTimeInLocal, localZone);
 			var startTime = new DateTime(1899, 12, 30, 0, 0, 0, 0, DateTimeKind.Utc);
 			var tsInterval = currentUtc.Subtract(startTime);
 			return tsInterval.TotalDays;

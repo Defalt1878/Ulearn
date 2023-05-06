@@ -1,24 +1,24 @@
 using System;
+using System.Reflection;
 using System.Threading.Tasks;
-using Vostok.Logging.Abstractions;
 using Telegram.Bot.Types.Enums;
 using Ulearn.Common.Extensions;
 using Ulearn.Core.Configuration;
-using MetricSender = Ulearn.Core.Metrics.MetricSender;
+using Ulearn.Core.Metrics;
+using Vostok.Logging.Abstractions;
 
 namespace Ulearn.Core.Telegram
 {
 	public class ErrorsBot : TelegramBot
 	{
-		private static ILog log => LogProvider.Get().ForContext(typeof(ErrorsBot));
-		private readonly MetricSender metricSender;
 		private readonly string host;
+		private readonly MetricSender metricSender;
 
 		public ErrorsBot(string host = "https://ulearn.me")
 		{
 			var configuration = ApplicationConfiguration.Read<UlearnConfiguration>();
 			channel = configuration.Telegram?.Errors?.Channel;
-			var serviceName = configuration.GraphiteServiceName ?? System.Reflection.Assembly.GetExecutingAssembly().GetName().Name.ToLower();
+			var serviceName = configuration.GraphiteServiceName ?? Assembly.GetExecutingAssembly().GetName().Name?.ToLower();
 			metricSender = new MetricSender(serviceName);
 			this.host = host;
 		}
@@ -30,27 +30,29 @@ namespace Ulearn.Core.Telegram
 			this.host = host;
 		}
 
+		private static ILog Log => LogProvider.Get().ForContext(typeof(ErrorsBot));
+
 		public async Task PostToChannelAsync(string message, ParseMode parseMode = ParseMode.Default)
 		{
 			if (!IsBotEnabled)
 				return;
 
 			metricSender.SendCount("errors");
-			log.Info($"Отправляю в телеграм-канал {channel} сообщение об ошибке:\n{message}");
+			Log.Info($"Отправляю в телеграмм-канал {channel} сообщение об ошибке:\n{message}");
 			if (message.Length > MaxMessageSize)
 			{
-				log.Info($"Сообщение слишком длинное, отправлю только первые {MaxMessageSize} байтов");
-				message = message.Substring(0, MaxMessageSize);
+				Log.Info($"Сообщение слишком длинное, отправлю только первые {MaxMessageSize} байтов");
+				message = message[..MaxMessageSize];
 			}
 
 			try
 			{
-				await telegramClient.SendTextMessageAsync(channel, message, parseMode: parseMode, disableWebPagePreview: true).ConfigureAwait(false);
+				await telegramClient.SendTextMessageAsync(channel, message, parseMode, disableWebPagePreview: true).ConfigureAwait(false);
 			}
 			catch (Exception e)
 			{
 				/* Not error because it may cause recursive fails */
-				log.Info(e, $"Не могу отправить сообщение в телеграм-канал {channel}");
+				Log.Info(e, $"Не могу отправить сообщение в телеграмм-канал {channel}");
 			}
 		}
 

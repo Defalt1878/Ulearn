@@ -8,11 +8,11 @@ namespace Ulearn.Core.Courses.Manager
 {
 	public class UpdateCoursesWorker : VostokScheduledApplication
 	{
-		private readonly ICourseUpdater courseUpdater;
+		public const string UpdateCoursesJobName = "UpdateCoursesJob";
+		public const string UpdateTempCoursesJobName = "UpdateTempCoursesJob";
 		private readonly TimeSpan coursesUpdatePeriod = TimeSpan.FromMilliseconds(1000);
+		private readonly ICourseUpdater courseUpdater;
 		private readonly TimeSpan tempCoursesUpdatePeriod = TimeSpan.FromMilliseconds(500);
-		public static readonly string UpdateCoursesJobName = "UpdateCoursesJob";
-		public static readonly string UpdateTempCoursesJobName = "UpdateTempCoursesJob";
 
 		public UpdateCoursesWorker(ICourseUpdater courseUpdater)
 		{
@@ -26,7 +26,7 @@ namespace Ulearn.Core.Courses.Manager
 
 		private void RunUpdateCoursesWorker(IScheduledActionsBuilder builder)
 		{
-			var updateCoursesScheduler = Scheduler.Multi(Scheduler.Periodical(coursesUpdatePeriod), Scheduler.OnDemand(out var updateCourses));
+			var updateCoursesScheduler = Scheduler.Multi(Scheduler.Periodical(coursesUpdatePeriod), Scheduler.OnDemand(out _));
 			builder.Schedule(UpdateCoursesJobName, updateCoursesScheduler, courseUpdater.UpdateCoursesAsync);
 
 			var updateTempCoursesScheduler = Scheduler.Multi(Scheduler.Periodical(tempCoursesUpdatePeriod), Scheduler.OnDemand(out var updateTempCourses));
@@ -52,6 +52,7 @@ namespace Ulearn.Core.Courses.Manager
 				await courseUpdater.UpdateCoursesAsync();
 				await Task.Delay(coursesUpdatePeriod);
 			}
+			// ReSharper disable once FunctionNeverReturns
 		}
 
 		private async void UpdateTempCoursesLoop()
@@ -61,6 +62,7 @@ namespace Ulearn.Core.Courses.Manager
 				await courseUpdater.UpdateTempCoursesAsync();
 				await Task.Delay(tempCoursesUpdatePeriod);
 			}
+			// ReSharper disable once FunctionNeverReturns
 		}
 	}
 }

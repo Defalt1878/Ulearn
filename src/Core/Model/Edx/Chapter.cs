@@ -17,8 +17,8 @@ namespace Ulearn.Core.Model.Edx
 		[XmlIgnore]
 		public DateTime? Start
 		{
-			get { return StartDateAsString == null ? null : (DateTime?)DateTime.Parse(StartDateAsString, CultureInfo.InvariantCulture); }
-			set { StartDateAsString = value?.ToString("O"); }
+			get => StartDateAsString == null ? null : DateTime.Parse(StartDateAsString, CultureInfo.InvariantCulture);
+			set => StartDateAsString = value?.ToString("O");
 		}
 
 		[XmlIgnore]
@@ -27,8 +27,8 @@ namespace Ulearn.Core.Model.Edx
 		[XmlElement("sequential")]
 		public SequentialReference[] SequentialReferences
 		{
-			get { return sequentialReferences = sequentialReferences ?? new SequentialReference[0]; }
-			set { sequentialReferences = value; }
+			get { return sequentialReferences ??= Array.Empty<SequentialReference>(); }
+			set => sequentialReferences = value;
 		}
 
 		[XmlIgnore]

@@ -9,7 +9,7 @@ namespace Ulearn.Core.CSharp.Validators
 	{
 		public override List<SolutionStyleError> FindErrors(SyntaxTree userSolution, SemanticModel semanticModel)
 		{
-			var hasCode = userSolution.GetRoot().DescendantNodes().Any(n => n is StatementSyntax || n is MemberDeclarationSyntax);
+			var hasCode = userSolution.GetRoot().DescendantNodes().Any(n => n is StatementSyntax or MemberDeclarationSyntax);
 			if (!hasCode)
 				return new List<SolutionStyleError>
 				{

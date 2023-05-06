@@ -34,16 +34,16 @@ namespace Ulearn.Core.Courses
 			var originalSlidesIds = OriginalCourse.GetSlidesNotSafe().Select(s => s.Id).ToImmutableHashSet();
 			var changedSlidesIds = ChangedCourse.GetSlidesNotSafe().Select(s => s.Id).ToImmutableHashSet();
 			foreach (var slide in OriginalCourse.GetSlidesNotSafe())
-			{
 				if (!changedSlidesIds.Contains(slide.Id))
+				{
 					RemovedSlides.Add(slide);
+				}
 				else
 				{
 					var slideDiff = new SlideDiff(slide, ChangedCourse.GetSlideByIdNotSafe(slide.Id));
 					if (!slideDiff.IsEmptyChangeset)
 						SlideDiffs.Add(slideDiff);
 				}
-			}
 
 			InsertedSlides.AddRange(ChangedCourse.GetSlidesNotSafe().Where(slide => !originalSlidesIds.Contains(slide.Id)));
 		}
@@ -74,13 +74,19 @@ namespace Ulearn.Core.Courses
 			FindDifferences();
 		}
 
+		public bool IsTitleChanged => OriginalSlide.Title != ChangedSlide.Title;
+
+		public bool IsAtLeastOneBlockChanged => RemovedBlocks.Count + InsertedBlocks.Count + SlideBlockDiffs.Count != 0;
+
+		public bool IsEmptyChangeset => !IsTitleChanged && !IsAtLeastOneBlockChanged;
+
 		private void FindDifferences()
 		{
-			FindDifferencesInNonquestionBlocks();
+			FindDifferencesInNonQuestionBlocks();
 			FindDifferencesInQuestionBlocks();
 		}
 
-		private void FindDifferencesInNonquestionBlocks()
+		private void FindDifferencesInNonQuestionBlocks()
 		{
 			var originalBlocks = OriginalSlide.Blocks.NotOfType<SlideBlock, AbstractQuestionBlock>().ToList();
 			var changedBlocks = ChangedSlide.Blocks.NotOfType<SlideBlock, AbstractQuestionBlock>().ToList();
@@ -106,7 +112,9 @@ namespace Ulearn.Core.Courses
 			{
 				var otherBlock = changedBlocks.FirstOrDefault(b => b.Id == block.Id);
 				if (otherBlock == null)
+				{
 					RemovedBlocks.Add(block);
+				}
 				else if (block.XmlSerialize(true) != otherBlock.XmlSerialize(true))
 				{
 					var slideBlockDiff = new SlideBlockDiff(block, otherBlock);
@@ -116,12 +124,6 @@ namespace Ulearn.Core.Courses
 
 			InsertedBlocks.AddRange(changedBlocks.Where(b => !originalBlocksIds.Contains(b.Id)));
 		}
-
-		public bool IsTitleChanged => OriginalSlide.Title != ChangedSlide.Title;
-
-		public bool IsAtLeastOneBlockChanged => RemovedBlocks.Count + InsertedBlocks.Count + SlideBlockDiffs.Count != 0;
-
-		public bool IsEmptyChangeset => !IsTitleChanged && !IsAtLeastOneBlockChanged;
 	}
 
 	public class SlideBlockDiff

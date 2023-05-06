@@ -7,11 +7,6 @@ namespace Ulearn.Core.Model.Edx.EdxComponents
 	[XmlRoot("lti")]
 	public class LtiComponent : Component
 	{
-		public override bool ShouldSerializeUrlName()
-		{
-			return true;
-		}
-
 		[XmlAttribute("has_score")]
 		public bool HasScore;
 
@@ -28,10 +23,7 @@ namespace Ulearn.Core.Model.Edx.EdxComponents
 		public string Weight;
 
 		[XmlIgnore]
-		public override string SubfolderName
-		{
-			get { return "lti"; }
-		}
+		public override string SubfolderName => "lti";
 
 		public LtiComponent()
 		{
@@ -47,6 +39,8 @@ namespace Ulearn.Core.Model.Edx.EdxComponents
 			Weight = weight.ToString("0.0", CultureInfo.InvariantCulture);
 			OpenInNewPage = openInNewPage;
 		}
+
+		public override bool ShouldSerializeUrlName() => true;
 
 		public override EdxReference GetReference()
 		{

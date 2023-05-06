@@ -26,7 +26,6 @@ namespace Ulearn.Core.Courses.Units
 			if (unitFile.Exists)
 				unitSettings = UnitSettings.Load(unitFile, context.CourseSettings);
 			else
-			{
 				try
 				{
 					unitSettings = UnitSettings.CreateByTitle(GetUnitTitleFromFile(unitDirectory), context.CourseSettings);
@@ -37,7 +36,6 @@ namespace Ulearn.Core.Courses.Units
 						$"Не удалось прочитать настройки курса. Скорее всего, отсутствует или неправильно заполнен файл модуля {unitFile.Name} ({unitFile.GetRelativePath(context.CourseDirectory)})."
 					);
 				}
-			}
 
 			var unit = new Unit(unitSettings, unitDirectory.GetRelativePath(context.CourseDirectory));
 
@@ -54,12 +52,8 @@ namespace Ulearn.Core.Courses.Units
 
 			var flashcardSlides = unit.GetSlides(true).OfType<FlashcardSlide>();
 			foreach (var flashcardSlide in flashcardSlides)
-			{
-				foreach (var flashcard in flashcardSlide.FlashcardsList)
-				{
-					unit.Flashcards.Add(flashcard);
-				}
-			}
+			foreach (var flashcard in flashcardSlide.FlashcardsList)
+				unit.Flashcards.Add(flashcard);
 
 			LoadInstructorNote(unit, unitDirectory, context);
 
@@ -81,7 +75,7 @@ namespace Ulearn.Core.Courses.Units
 			}
 		}
 
-		private void LoadInstructorNote(Unit unit, DirectoryInfo unitDirectory, CourseLoadingContext context)
+		private static void LoadInstructorNote(Unit unit, DirectoryInfo unitDirectory, CourseLoadingContext context)
 		{
 			var instructorNoteFile = unitDirectory.GetFile("InstructorNotes.md");
 			if (instructorNoteFile.Exists)

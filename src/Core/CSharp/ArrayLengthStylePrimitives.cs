@@ -8,10 +8,11 @@ namespace Ulearn.Core.CSharp
 	{
 		public static bool IsCycle(this SyntaxNode syntaxNode)
 		{
-			return syntaxNode is ForStatementSyntax
-					|| syntaxNode is WhileStatementSyntax
-					|| syntaxNode is DoStatementSyntax
-					|| syntaxNode is ForEachStatementSyntax;
+			return syntaxNode is
+				ForStatementSyntax or
+				WhileStatementSyntax or
+				DoStatementSyntax or
+				ForEachStatementSyntax;
 		}
 
 		public static bool ContainsAssignmentOf(this StatementSyntax statementSyntax, string variableName,
@@ -46,15 +47,13 @@ namespace Ulearn.Core.CSharp
 			return false;
 		}
 
-		public static bool HasName(this SyntaxNode node, string variableName,
-			SemanticModel semanticModel)
+		public static bool HasName(this SyntaxNode node, string variableName, SemanticModel semanticModel)
 		{
 			var symbol = semanticModel.GetSymbolInfo(node).Symbol;
 			return symbol?.ToString() == variableName;
 		}
 
-		public static bool HasVariableAsArgument(this InvocationExpressionSyntax methodInvocation,
-			string variableName, SemanticModel semanticModel)
+		public static bool HasVariableAsArgument(this InvocationExpressionSyntax methodInvocation, string variableName, SemanticModel semanticModel)
 		{
 			var arguments = methodInvocation.ArgumentList.Arguments;
 			return arguments

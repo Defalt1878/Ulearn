@@ -9,25 +9,25 @@ using Google.Apis.Auth.OAuth2;
 using Google.Apis.Services;
 using Google.Apis.Sheets.v4;
 using Google.Apis.Sheets.v4.Data;
-using JetBrains.Annotations;
 
 namespace Ulearn.Core.GoogleSheet
 {
 	public class GoogleApiClient
 	{
+		public static readonly Regex urlRegex = new("https://docs.google.com/spreadsheets/d/(.+)/edit#gid=(.+)", RegexOptions.Compiled);
 		private readonly SheetsService service;
 
 		public GoogleApiClient(string credentials)
 		{
 			service = new SheetsService(new BaseClientService.Initializer
 			{
-				HttpClientInitializer = GoogleCredential.FromStream(new MemoryStream(Encoding.UTF8.GetBytes(credentials))).CreateScoped(SheetsService.Scope.Spreadsheets),
+				HttpClientInitializer = GoogleCredential.FromStream(new MemoryStream(Encoding.UTF8.GetBytes(credentials))).CreateScoped(SheetsService.Scope.Spreadsheets)
 			});
 		}
 
 		public void FillSpreadSheet(string spreadsheetId, GoogleSheetModel googleSheetModel)
 		{
-			var (width, height) = UpdateAndGetNewSizes(spreadsheetId, googleSheetModel);
+			Update(spreadsheetId, googleSheetModel);
 
 			var requests = RequestCreator.GetRequests(googleSheetModel);
 
@@ -35,8 +35,6 @@ namespace Ulearn.Core.GoogleSheet
 				.BatchUpdate(new BatchUpdateSpreadsheetRequest { Requests = requests }, spreadsheetId)
 				.Execute();
 		}
-
-		public static Regex urlRegex = new Regex("https://docs.google.com/spreadsheets/d/(.+)/edit#gid=(.+)", RegexOptions.Compiled);
 
 
 		public async Task<GSheet> GetSheetByUrl(string url)
@@ -64,7 +62,7 @@ namespace Ulearn.Core.GoogleSheet
 			}
 		}
 
-		private (int width, int height) UpdateAndGetNewSizes(string spreadsheetId, GoogleSheetModel googleSheetModel, bool removeUnused = false)
+		private void Update(string spreadsheetId, GoogleSheetModel googleSheetModel, bool removeUnused = false)
 		{
 			var spreadsheet = service.Spreadsheets.Get(spreadsheetId).Execute();
 			var listId = googleSheetModel.ListId;
@@ -93,14 +91,9 @@ namespace Ulearn.Core.GoogleSheet
 				service.Spreadsheets
 					.BatchUpdate(new BatchUpdateSpreadsheetRequest { Requests = requests }, spreadsheetId)
 					.Execute();
-
-			return (
-				removeUnused ? width : Math.Max(width, oldWidth),
-				removeUnused ? height : Math.Max(height, oldHeight)
-			);
 		}
 
-		Request CreateInsertDimensionRequest(string dimensionName, int sheetId, int startIndex, int endIndex) => new()
+		private static Request CreateInsertDimensionRequest(string dimensionName, int sheetId, int startIndex, int endIndex) => new()
 		{
 			InsertDimension = new InsertDimensionRequest
 			{
@@ -114,7 +107,7 @@ namespace Ulearn.Core.GoogleSheet
 			}
 		};
 
-		private Request CreateDeleteDimensionRequest(string dimensionName, int sheetId, int startIndex, int endIndex) => new()
+		private static Request CreateDeleteDimensionRequest(string dimensionName, int sheetId, int startIndex, int endIndex) => new()
 		{
 			DeleteDimension = new DeleteDimensionRequest
 			{
@@ -171,11 +164,6 @@ namespace Ulearn.Core.GoogleSheet
 			return res;
 		}
 
-		public GSheetEditsBuilder Edit()
-		{
-			return new GSheetEditsBuilder(SheetsService, SpreadsheetId, SheetId);
-		}
-
 		public void ClearRange(string sheetName, (int top, int left) rangeStart, (int top, int left) rangeEnd)
 		{
 			var (top, left) = rangeStart;
@@ -188,7 +176,7 @@ namespace Ulearn.Core.GoogleSheet
 			var fullRange = $"{sheetName}!{range}";
 			var requestBody = new ClearValuesRequest();
 			var deleteRequest = SheetsService.Spreadsheets.Values.Clear(requestBody, SpreadsheetId, fullRange);
-			var deleteResponse = deleteRequest.Execute();
+			deleteRequest.Execute();
 		}
 
 		private string Read((int top, int left) rangeStart)

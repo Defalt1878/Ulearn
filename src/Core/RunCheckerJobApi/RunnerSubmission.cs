@@ -48,6 +48,7 @@ namespace Ulearn.Core.RunCheckerJobApi
 	{
 		[DataMember]
 		public byte[] ZipFileData { get; set; }
+
 		[DataMember]
 		public string ProjectFileName { get; set; }
 	}

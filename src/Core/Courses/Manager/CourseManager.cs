@@ -17,8 +17,8 @@ namespace Ulearn.Core.Courses.Manager
 {
 	public abstract class CourseManager
 	{
-		public static ICourseStorage CourseStorageInstance => courseStorage;
-		public static ICourseStorageUpdater CourseStorageUpdaterInstance => courseStorage;
+		public const string ExampleCourseId = "Help";
+		public const string CourseLoadingErrorCourseId = "course-loading-error";
 
 		public static readonly DirectoryInfo CoursesDirectory;
 		public static readonly DirectoryInfo ExtractedCoursesDirectory;
@@ -33,11 +33,6 @@ namespace Ulearn.Core.Courses.Manager
 		private static readonly CourseLoader loader = new(new UnitLoader(new XmlSlideLoader()));
 		private static readonly CourseStorage courseStorage = new();
 
-		public const string ExampleCourseId = "Help";
-		public const string CourseLoadingErrorCourseId = "course-loading-error";
-
-		private static ILog log => LogProvider.Get().ForContext(typeof(CourseManager));
-
 		static CourseManager()
 		{
 			CoursesDirectory = GetCoursesDirectory();
@@ -45,6 +40,11 @@ namespace Ulearn.Core.Courses.Manager
 			tempCourseStagingDirectory = CoursesDirectory.GetSubdirectory("TempCourseStaging");
 			EnsureDirectoriesExist();
 		}
+
+		public static ICourseStorage CourseStorageInstance => courseStorage;
+		public static ICourseStorageUpdater CourseStorageUpdaterInstance => courseStorage;
+
+		private static ILog log => LogProvider.Get().ForContext(typeof(CourseManager));
 
 		public static void EnsureDirectoriesExist()
 		{
@@ -93,6 +93,7 @@ namespace Ulearn.Core.Courses.Manager
 		}
 
 		private static readonly Random randomGenerator = new();
+
 		private TempDirectory CreateCourseTempDirectory(string courseId, CourseVersionToken versionToken)
 		{
 			// @ — разделитель courseId и остального. используется CourseLoader
@@ -140,7 +141,9 @@ namespace Ulearn.Core.Courses.Manager
 				BrokenVersions.TryAdd(publishedVersionToken, true);
 				var message = $"Не смог загрузить с диска в память курс {courseId} версии {publishedVersionToken}";
 				if (publishedVersionToken.IsTempCourse())
+				{
 					log.Warn(ex, message);
+				}
 				else
 				{
 					log.Error(ex, message);
@@ -154,22 +157,20 @@ namespace Ulearn.Core.Courses.Manager
 			var courseDirectory = GetExtractedCourseDirectory(courseId);
 			if (!courseDirectory.Exists)
 				return;
-			using (var courseLock = await CourseLock.TryAcquireReaderLockAsync(courseId, courseLockLimit))
+			using var courseLock = await CourseLock.TryAcquireReaderLockAsync(courseId, courseLockLimit);
+			if (!courseLock.IsLocked)
 			{
-				if (!courseLock.IsLocked)
-				{
-					log.Warn($"Не дождался разблокировки курса {courseId} за {courseLockLimit ?? TimeSpan.Zero}");
-					return;
-				}
-
-				var courseVersionToken = CourseVersionToken.Load(courseDirectory);
-				if (courseVersionToken != publishedVersionToken)
-					return;
-				if (!courseDirectory.Exists)
-					return;
-				var course = loader.Load(courseDirectory, courseId);
-				CourseStorageUpdaterInstance.AddOrUpdateCourse(course);
+				log.Warn($"Не дождался разблокировки курса {courseId} за {courseLockLimit ?? TimeSpan.Zero}");
+				return;
 			}
+
+			var courseVersionToken = CourseVersionToken.Load(courseDirectory);
+			if (courseVersionToken != publishedVersionToken)
+				return;
+			if (!courseDirectory.Exists)
+				return;
+			var course = loader.Load(courseDirectory, courseId);
+			CourseStorageUpdaterInstance.AddOrUpdateCourse(course);
 		}
 
 		#endregion

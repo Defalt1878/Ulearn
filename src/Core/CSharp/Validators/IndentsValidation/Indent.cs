@@ -18,7 +18,7 @@ namespace Ulearn.Core.CSharp.Validators.IndentsValidation
 			LengthInSpaces = GetLengthInSpaces(firstTokenInLine);
 		}
 
-		private int GetLengthInSpaces(SyntaxToken firstTokenInLine)
+		private static int GetLengthInSpaces(SyntaxToken firstTokenInLine)
 		{
 			var lastTrivia = firstTokenInLine.LeadingTrivia.LastOrDefault();
 			if (!lastTrivia.IsKind(SyntaxKind.WhitespaceTrivia))
@@ -43,7 +43,7 @@ namespace Ulearn.Core.CSharp.Validators.IndentsValidation
 
 		public static SyntaxToken GetFirstTokenAtLine(SyntaxToken token)
 		{
-			var tokenLineSpanStart = token.SyntaxTree.GetText().Lines[token.GetLine()].Start;
+			var tokenLineSpanStart = token.SyntaxTree!.GetText().Lines[token.GetLine()].Start;
 			return token.SyntaxTree.GetRoot().FindToken(tokenLineSpanStart);
 		}
 

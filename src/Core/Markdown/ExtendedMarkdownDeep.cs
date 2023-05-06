@@ -7,14 +7,14 @@ namespace Ulearn.Core.Markdown
 {
 	internal class ExtendedMarkdownDeep : MarkdownDeep.Markdown
 	{
-		protected MarkdownRenderContext context;
+		private readonly Regex fileLinkRegex = new(@".*\.\w{1,5}(?:$|#|\?|&)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+		private readonly Regex fileToDownloadLinkRegex = new(@".*\.(zip|odp|pptx|docx|xlsx|pdf|mmap|xmind)$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+		protected readonly MarkdownRenderContext context;
 
 		public ExtendedMarkdownDeep(MarkdownRenderContext context)
 		{
 			this.context = context;
 		}
-
-		private readonly Regex fileToDownloadLinkRegex = new(@".*\.(zip|odp|pptx|docx|xlsx|pdf|mmap|xmind)$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
 		public override void OnPrepareLink(HtmlTag tag)
 		{
@@ -66,8 +66,6 @@ namespace Ulearn.Core.Markdown
 			return url.Contains(context.BaseUrlApi, StringComparison.OrdinalIgnoreCase) ||
 					url.Contains(context.BaseUrlWeb, StringComparison.OrdinalIgnoreCase);
 		}
-
-		private readonly Regex fileLinkRegex = new(@".*\.\w{1,5}(?:$|#|\?|&)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
 		private bool IsFile(string url)
 		{

@@ -11,7 +11,7 @@ namespace Ulearn.Core.Courses.Manager
 	{
 		private readonly ConcurrentDictionary<string, Course> courses = new(StringComparer.InvariantCultureIgnoreCase);
 
-		private static ILog log => LogProvider.Get().ForContext(typeof(CourseStorage));
+		private static ILog Log => LogProvider.Get().ForContext(typeof(CourseStorage));
 
 		public event CourseChangedEventHandler CourseChangedEvent;
 
@@ -33,22 +33,22 @@ namespace Ulearn.Core.Courses.Manager
 			return FindCourse(courseId) != null;
 		}
 
+		public IEnumerable<Course> GetCourses()
+		{
+			return courses.Select(kvp => kvp.Value).OrderBy(c => c.Title, StringComparer.OrdinalIgnoreCase);
+		}
+
 		public void AddOrUpdateCourse(Course course)
 		{
 			courses.AddOrUpdate(course.Id, _ => course, (_, _) => course);
-			log.Info($"В CourseStorage загружен курс {course.Id} версии {course.CourseVersionToken}");
+			Log.Info($"В CourseStorage загружен курс {course.Id} версии {course.CourseVersionToken}");
 			CourseChangedEvent?.Invoke(course.Id);
 		}
 
 		public void TryRemoveCourse(string courseId)
 		{
 			if (courses.TryRemove(courseId, out _))
-				log.Warn($"Из CourseStorage удален курс {courseId}");
-		}
-
-		public IEnumerable<Course> GetCourses()
-		{
-			return courses.Select(kvp => kvp.Value).OrderBy(c => c.Title, StringComparer.OrdinalIgnoreCase);
+				Log.Warn($"Из CourseStorage удален курс {courseId}");
 		}
 	}
 }

@@ -13,7 +13,7 @@ namespace Ulearn.Core.CSharp.Validators
 			return InspectAll<VariableDeclarationSyntax>(userSolution, semanticModel, Inspect).ToList();
 		}
 
-		private IEnumerable<SolutionStyleError> Inspect(VariableDeclarationSyntax variableDeclarationSyntax, SemanticModel semanticModel)
+		private static IEnumerable<SolutionStyleError> Inspect(VariableDeclarationSyntax variableDeclarationSyntax, SemanticModel semanticModel)
 		{
 			if (!NeedToCheckDeclaration(variableDeclarationSyntax))
 				yield break;
@@ -33,19 +33,19 @@ namespace Ulearn.Core.CSharp.Validators
 				if (variableTypeInfo.IsPrimitive())
 					yield break;
 
-				if (Equals(initializerTypeInfo.Type, variableTypeInfo.Type))
+				if (SymbolEqualityComparer.Default.Equals(initializerTypeInfo.Type, variableTypeInfo.Type))
 					yield return new SolutionStyleError(StyleErrorType.VarInVariableDeclaration01, variable);
 			}
 		}
 
-		private bool NeedToCheckDeclaration(VariableDeclarationSyntax variableDeclarationSyntax)
+		private static bool NeedToCheckDeclaration(VariableDeclarationSyntax variableDeclarationSyntax)
 		{
 			if (variableDeclarationSyntax.Type.IsVar)
 				return false;
 
 			var parent = variableDeclarationSyntax.Parent;
-			if (parent is LocalDeclarationStatementSyntax localDeclarationStatment)
-				return !localDeclarationStatment.IsConst;
+			if (parent is LocalDeclarationStatementSyntax localDeclarationStatement)
+				return !localDeclarationStatement.IsConst;
 
 			return variableDeclarationSyntax.Parent is ForStatementSyntax;
 		}

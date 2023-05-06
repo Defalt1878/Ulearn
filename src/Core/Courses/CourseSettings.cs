@@ -1,3 +1,5 @@
+using System;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -8,46 +10,11 @@ using Ulearn.Common.Extensions;
 namespace Ulearn.Core.Courses
 {
 	/*
-	 * These settings are loading from course.xml from the root folder of the course. 
-	 */
+* These settings are loading from course.xml from the root folder of the course. 
+*/
 	[XmlRoot("course", IsNullable = false, Namespace = "https://ulearn.me/schema/v2")]
 	public class CourseSettings
 	{
-		[XmlAttribute("title")]
-		public string Title { get; set; }
-
-		[XmlElement("defaultLanguage")]
-		public Language? DefaultLanguage { get; set; }
-
-		[XmlElement("videoAnnotationsGoogleDoc")]
-		public string VideoAnnotationsGoogleDoc { get; set; }
-
-		[XmlElement("enableCodeReviewAndQuizManualCheckForEveryone")]
-		public bool IsManualCheckingEnabled { get; set; }
-
-		[XmlElement("scoring")]
-		public ScoringSettings Scoring { get; set; } = new();
-
-		[XmlArray("units")]
-		[XmlArrayItem("add")]
-		public string[] UnitPaths { get; set; } = new string[0];
-
-		[XmlArray("preludes")]
-		[XmlArrayItem("prelude")]
-		public PreludeFile[] Preludes { get; set; }
-
-		[XmlElement("dictionaryFile")]
-		public string DictionaryFile { get; set; }
-
-		[XmlElement("description")]
-		public string Description { get; set; }
-
-		public static CourseSettings DefaultSettings => new(
-			null,
-			null,
-			new PreludeFile[0]
-		);
-
 		[XmlIgnore]
 		private static readonly Regex scoringGroupIdRegex = new("^[a-z0-9_]+$", RegexOptions.IgnoreCase);
 
@@ -72,6 +39,41 @@ namespace Ulearn.Core.Courses
 			DictionaryFile = other.DictionaryFile;
 		}
 
+		[XmlAttribute("title")]
+		public string Title { get; set; }
+
+		[XmlElement("defaultLanguage")]
+		public Language? DefaultLanguage { get; set; }
+
+		[XmlElement("videoAnnotationsGoogleDoc")]
+		public string VideoAnnotationsGoogleDoc { get; set; }
+
+		[XmlElement("enableCodeReviewAndQuizManualCheckForEveryone")]
+		public bool IsManualCheckingEnabled { get; set; }
+
+		[XmlElement("scoring")]
+		public ScoringSettings Scoring { get; set; } = new();
+
+		[XmlArray("units")]
+		[XmlArrayItem("add")]
+		public string[] UnitPaths { get; set; } = Array.Empty<string>();
+
+		[XmlArray("preludes")]
+		[XmlArrayItem("prelude")]
+		public PreludeFile[] Preludes { get; set; }
+
+		[XmlElement("dictionaryFile")]
+		public string DictionaryFile { get; set; }
+
+		[XmlElement("description")]
+		public string Description { get; set; }
+
+		public static CourseSettings DefaultSettings => new(
+			null,
+			null,
+			Array.Empty<PreludeFile>()
+		);
+
 		public static CourseSettings Load(DirectoryInfo dir)
 		{
 			var file = dir.GetFile("course.xml");
@@ -79,18 +81,15 @@ namespace Ulearn.Core.Courses
 				return new CourseSettings(DefaultSettings);
 
 			var settings = file.DeserializeXml<CourseSettings>();
-			if (settings.Preludes == null)
-				settings.Preludes = new PreludeFile[0];
+			settings.Preludes ??= Array.Empty<PreludeFile>();
 
 			foreach (var scoringGroup in settings.Scoring.Groups.Values)
-			{
 				if (!scoringGroupIdRegex.IsMatch(scoringGroup.Id))
 					throw new CourseLoadingException(
 						$"Некорректный идентификатор группы баллов <group id={scoringGroup.Id}> (файл course.xml). " +
 						"Идентификатор группы баллов может состоить только из латинских букв, цифр и подчёркивания, а также не может быть пустым. " +
 						"Понятное человеку название используйте в аббревиатуре и имени группы."
 					);
-			}
 
 			return settings;
 		}
@@ -135,11 +134,12 @@ namespace Ulearn.Core.Courses
 				return false;
 			if (ReferenceEquals(this, obj))
 				return true;
-			if (obj.GetType() != this.GetType())
+			if (obj.GetType() != GetType())
 				return false;
 			return Equals((PreludeFile)obj);
 		}
 
+		[SuppressMessage("ReSharper", "NonReadonlyMemberInGetHashCode")]
 		public override int GetHashCode()
 		{
 			unchecked

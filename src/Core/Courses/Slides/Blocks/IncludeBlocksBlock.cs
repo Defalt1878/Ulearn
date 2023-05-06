@@ -32,7 +32,7 @@ namespace Ulearn.Core.Courses.Slides.Blocks
 			var serializer = new XmlSerializer(typeof(SlideBlock[]));
 			var slideBlocks = (SlideBlock[])serializer.Deserialize(xmlStream);
 			var newInProgress = filesInProgress.Add(File);
-			return slideBlocks.SelectMany(b => b.BuildUp(context, newInProgress));
+			return slideBlocks?.SelectMany(b => b.BuildUp(context, newInProgress)).EmptyIfNull();
 		}
 	}
 }

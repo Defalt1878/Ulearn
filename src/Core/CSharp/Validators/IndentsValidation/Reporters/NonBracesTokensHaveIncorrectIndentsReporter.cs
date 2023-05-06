@@ -23,7 +23,7 @@ namespace Ulearn.Core.CSharp.Validators.IndentsValidation.Reporters
 			var parent = rootStatementSyntax.GetParent();
 			var rootStart = rootStatementSyntax.GetValidationStartIndexInSpaces();
 
-			if (parent != null && parent.Kind == SyntaxKind.Block)
+			if (parent is { Kind: SyntaxKind.Block })
 			{
 				var parentLine = parent.GetStartLine();
 				if (parentLine == rootLine)
@@ -112,13 +112,15 @@ namespace Ulearn.Core.CSharp.Validators.IndentsValidation.Reporters
 			SyntaxNodeOrToken statementClause)
 		{
 			return rootEndLine == statementLine &&
-					(rootStatementSyntax.Kind == SyntaxKind.IfStatement ||
-					rootStatementSyntax.Kind == SyntaxKind.ElseClause) &&
-					statementClause.Kind != SyntaxKind.IfStatement &&
-					statementClause.Kind != SyntaxKind.ForStatement &&
-					statementClause.Kind != SyntaxKind.ForEachStatement &&
-					statementClause.Kind != SyntaxKind.WhileStatement &&
-					statementClause.Kind != SyntaxKind.DoStatement;
+					rootStatementSyntax.Kind is
+						SyntaxKind.IfStatement or
+						SyntaxKind.ElseClause &&
+					statementClause.Kind is not
+						SyntaxKind.IfStatement and not
+						SyntaxKind.ForStatement and not
+						SyntaxKind.ForEachStatement and not
+						SyntaxKind.WhileStatement and not
+						SyntaxKind.DoStatement;
 		}
 
 		private static StyleErrorType? GetIndentErrorType(int statementStart,
@@ -127,20 +129,14 @@ namespace Ulearn.Core.CSharp.Validators.IndentsValidation.Reporters
 			int rootLine)
 		{
 			if (statementLine == rootLine)
-			{
 				return StyleErrorType.Indents07;
-			}
 
 			if (statementStart <= rootStart)
-			{
 				return StyleErrorType.Indents08;
-			}
 
 			var delta = statementStart - rootStart;
 			if (delta < 4)
-			{
 				return StyleErrorType.Indents09;
-			}
 
 			return null;
 		}
@@ -148,12 +144,13 @@ namespace Ulearn.Core.CSharp.Validators.IndentsValidation.Reporters
 		private static bool NeedToValidateNonBracesTokens(SyntaxNode syntaxNode)
 		{
 			var syntaxKind = syntaxNode.Kind();
-			return syntaxKind == SyntaxKind.IfStatement
-					|| syntaxKind == SyntaxKind.WhileStatement
-					|| syntaxKind == SyntaxKind.ForStatement
-					|| syntaxKind == SyntaxKind.ForEachStatement
-					|| syntaxKind == SyntaxKind.DoStatement
-					|| syntaxKind == SyntaxKind.UsingStatement;
+			return syntaxKind is
+				SyntaxKind.IfStatement or
+				SyntaxKind.WhileStatement or
+				SyntaxKind.ForStatement or
+				SyntaxKind.ForEachStatement or
+				SyntaxKind.DoStatement or
+				SyntaxKind.UsingStatement;
 		}
 	}
 }

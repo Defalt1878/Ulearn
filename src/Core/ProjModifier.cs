@@ -78,11 +78,12 @@ namespace Ulearn.Core
 
 		private static bool IsChecking(ProjectItem item)
 		{
-			return item.EvaluatedInclude.StartsWith("checking" + Path.DirectorySeparatorChar) && item.UnevaluatedInclude != "**/*$(DefaultLanguageSourceExtension)"
-				|| item.DirectMetadata.Any(md => md.Name == "Link" && md.UnevaluatedValue != "**/*$(DefaultLanguageSourceExtension)" && md.EvaluatedValue.StartsWith("checking" + Path.DirectorySeparatorChar));
-			return
-				item.EvaluatedInclude.StartsWith("checking" + Path.DirectorySeparatorChar)
-				|| item.DirectMetadata.Any(md => md.Name == "Link" && md.EvaluatedValue.StartsWith("checking" + Path.DirectorySeparatorChar));
+			return (item.EvaluatedInclude.StartsWith("checking" + Path.DirectorySeparatorChar) &&
+					item.UnevaluatedInclude != "**/*$(DefaultLanguageSourceExtension)") ||
+					item.DirectMetadata.Any(md => md.Name == "Link" &&
+												md.UnevaluatedValue != "**/*$(DefaultLanguageSourceExtension)" &&
+												md.EvaluatedValue.StartsWith("checking" + Path.DirectorySeparatorChar)
+					);
 		}
 
 		public static void PrepareForCheckingUserCode(Project proj, CsProjectExerciseBlock ex, List<string> excludedPaths, CsProjectExerciseBlock.FilesProvider fp)

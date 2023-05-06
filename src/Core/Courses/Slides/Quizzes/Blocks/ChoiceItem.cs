@@ -11,20 +11,20 @@ namespace Ulearn.Core.Courses.Slides.Quizzes.Blocks
 		public ChoiceItemCorrectness IsCorrect = ChoiceItemCorrectness.False;
 
 		[XmlAttribute("explanation")]
-		public string _explanation;
+		public string explanation;
 
 		[XmlIgnore]
 		public string Explanation
 		{
 			get
 			{
-				if (!string.IsNullOrEmpty(_explanation))
-					return _explanation;
-				if (IsCorrect == ChoiceItemCorrectness.Maybe)
-					return "Это опциональный вариант: его можно было как выбрать, так и не выбирать";
-				return "";
+				if (!string.IsNullOrEmpty(explanation))
+					return explanation;
+				return IsCorrect is ChoiceItemCorrectness.Maybe
+					? "Это опциональный вариант: его можно было как выбрать, так и не выбирать"
+					: "";
 			}
-			set => _explanation = value;
+			set => explanation = value;
 		}
 
 		[XmlText]

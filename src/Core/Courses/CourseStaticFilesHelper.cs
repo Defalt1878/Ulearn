@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Ulearn.Core.Courses
 {
-	public class CourseStaticFilesHelper
+	public static class CourseStaticFilesHelper
 	{
 		public static readonly Dictionary<string, string> AllowedExtensions
 			= new(StringComparer.OrdinalIgnoreCase)

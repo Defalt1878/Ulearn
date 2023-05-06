@@ -29,7 +29,7 @@ namespace Ulearn.Core.Courses.Slides.Exercises
 		private int? CodeReviewScoreBack { get; set; }
 
 		[XmlAttribute("codeReviewScore")]
-		[Browsable(false), EditorBrowsable(EditorBrowsableState.Never)]
+		[Browsable(false)] [EditorBrowsable(EditorBrowsableState.Never)]
 		public int CodeReviewScoreSerialized
 		{
 			get
@@ -40,7 +40,7 @@ namespace Ulearn.Core.Courses.Slides.Exercises
 			set => CodeReviewScoreBack = value;
 		}
 
-		[Browsable(false), EditorBrowsable(EditorBrowsableState.Never)]
+		[Browsable(false)] [EditorBrowsable(EditorBrowsableState.Never)]
 		public bool ShouldSerializeCodeReviewScoreSerialized()
 		{
 			return CodeReviewScoreBack.HasValue;

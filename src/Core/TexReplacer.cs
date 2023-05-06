@@ -7,15 +7,6 @@ namespace Ulearn.Core
 {
 	public class TexReplacer
 	{
-		public string ReplacedText { get; private set; }
-
-		public TexReplacer(string text)
-		{
-			id = Guid.NewGuid().ToString("N");
-			backRegex = new Regex(id + @"\[\d+\]");
-			ReplacedText = ReplaceTexInserts(text);
-		}
-
 		public enum InsertionType
 		{
 			Span,
@@ -29,6 +20,15 @@ namespace Ulearn.Core
 		private readonly string id;
 		private readonly Dictionary<string, Tuple<string, InsertionType>> texInserts = new();
 		private int counter;
+
+		public TexReplacer(string text)
+		{
+			id = Guid.NewGuid().ToString("N");
+			backRegex = new Regex(id + @"\[\d+\]");
+			ReplacedText = ReplaceTexInserts(text);
+		}
+
+		public string ReplacedText { get; }
 
 		private string ReplaceTexInserts(string md)
 		{
@@ -70,7 +70,7 @@ namespace Ulearn.Core
 
 		private string MakeInsertId(Match match, InsertionType insertionType)
 		{
-			var insertId = id + "[" + (counter++) + "]";
+			var insertId = id + "[" + counter++ + "]";
 			texInserts.Add(insertId, Tuple.Create(match.Groups[2].Value, insertionType));
 			return match.Groups[1].Value + "" + insertId + match.Groups[3].Value;
 		}

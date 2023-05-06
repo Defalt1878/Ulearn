@@ -16,7 +16,7 @@ namespace Ulearn.Core.CSharp.Validators
 
 		public static FileLinePositionSpan GetSpan(SyntaxToken syntaxNode)
 		{
-			return syntaxNode.SyntaxTree.GetLineSpan(syntaxNode.Span);
+			return syntaxNode.SyntaxTree!.GetLineSpan(syntaxNode.Span);
 		}
 
 		public static FileLinePositionSpan GetSpan(SyntaxNodeOrToken syntaxNode)

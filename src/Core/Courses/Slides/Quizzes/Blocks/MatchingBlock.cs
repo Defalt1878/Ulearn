@@ -22,16 +22,14 @@ namespace Ulearn.Core.Courses.Slides.Quizzes.Blocks
 
 		public List<MatchingMatch> GetMatches(bool shuffle = false)
 		{
-			if (shuffle)
-				return Matches.Shuffle(random).ToList();
-
-			return Matches.ToList();
+			return shuffle
+				? Matches.Shuffle(random).ToList()
+				: Matches.ToList();
 		}
 
 		public override bool HasEqualStructureWith(SlideBlock other)
 		{
-			var block = other as MatchingBlock;
-			if (block == null)
+			if (other is not MatchingBlock block)
 				return false;
 			if (Matches.Length != block.Matches.Length)
 				return false;

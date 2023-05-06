@@ -1,5 +1,4 @@
 ﻿using System.Linq;
-using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 
 namespace Ulearn.Core.CSharp.Validators.IndentsValidation
@@ -9,15 +8,13 @@ namespace Ulearn.Core.CSharp.Validators.IndentsValidation
 		public static int GetConditionEndLine(this SyntaxNodeOrToken nodeOrToken)
 		{
 			var condition = nodeOrToken.SyntaxNode.GetCondition();
-			if (condition == null)
-				return nodeOrToken.GetStartLine();
-			return condition.GetEndLine();
+			return condition?.GetEndLine() ?? nodeOrToken.GetStartLine();
 		}
 
 		public static int GetEndLine(this SyntaxNodeOrToken nodeOrToken)
 		{
 			var linePositionSpan = nodeOrToken.GetFileLinePositionSpan();
-			if (linePositionSpan.Equals(default(FileLinePositionSpan)))
+			if (linePositionSpan.Equals(default))
 				return -1;
 			return linePositionSpan.EndLinePosition.Line + 1;
 		}
@@ -25,7 +22,7 @@ namespace Ulearn.Core.CSharp.Validators.IndentsValidation
 		public static int GetStartLine(this SyntaxNodeOrToken nodeOrToken)
 		{
 			var linePositionSpan = nodeOrToken.GetFileLinePositionSpan();
-			if (linePositionSpan.Equals(default(FileLinePositionSpan)))
+			if (linePositionSpan.Equals(default))
 				return -1;
 			return linePositionSpan.StartLinePosition.Line + 1;
 		}
@@ -36,8 +33,7 @@ namespace Ulearn.Core.CSharp.Validators.IndentsValidation
 			var parent = nodeOrToken.GetParent();
 			var parentLine = parent.GetStartLine();
 			if (parent.Kind == SyntaxKind.ElseClause
-				&& (nodeOrToken.Kind == SyntaxKind.IfStatement
-					|| nodeOrToken.Kind == SyntaxKind.ExpressionStatement)
+				&& nodeOrToken.Kind is SyntaxKind.IfStatement or SyntaxKind.ExpressionStatement
 				&& currentLine == parentLine)
 				return parent.GetValidationStartIndexInSpaces();
 			var sourceText = nodeOrToken.RootTree.GetText();
@@ -59,9 +55,9 @@ namespace Ulearn.Core.CSharp.Validators.IndentsValidation
 		{
 			var count = 0;
 			var currentTabSpaces = 0;
-			for (var i = 0; i < trivia.Length; ++i)
+			foreach (var t in trivia)
 			{
-				if (trivia[i] == '\t')
+				if (t == '\t')
 				{
 					if (currentTabSpaces == 0)
 						count += 4;
@@ -69,7 +65,7 @@ namespace Ulearn.Core.CSharp.Validators.IndentsValidation
 						count += currentTabSpaces + (4 - currentTabSpaces);
 					currentTabSpaces = 0;
 				}
-				else if (trivia[i] == ' ')
+				else if (t == ' ')
 				{
 					currentTabSpaces++;
 				}

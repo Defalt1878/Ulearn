@@ -28,8 +28,7 @@ namespace Ulearn.Core.Model
 			}
 
 			regionRemovers.Add(new CommonRegionRemover());
-			if (pragma == null)
-				pragma = "";
+			pragma ??= "";
 		}
 
 		public string Remove(string code, IEnumerable<Label> labels, out IEnumerable<Label> notRemoved)

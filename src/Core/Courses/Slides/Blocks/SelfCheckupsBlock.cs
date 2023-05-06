@@ -13,8 +13,8 @@ public class SelfCheckupsBlock : SlideBlock
 	public SelfCheckupsBlock()
 	{
 	}
-	
-	public SelfCheckupsBlock(string[] checkups)
+
+	public SelfCheckupsBlock(IEnumerable<string> checkups)
 	{
 		Checkups = checkups.ToList();
 	}

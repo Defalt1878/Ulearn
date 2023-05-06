@@ -1,3 +1,4 @@
+using System;
 using System.Xml.Serialization;
 
 namespace Ulearn.Core.Courses.Slides.Quizzes.Blocks
@@ -13,7 +14,7 @@ namespace Ulearn.Core.Courses.Slides.Quizzes.Blocks
 
 		public bool IsRight(string text)
 		{
-			return text.ToLower() == Answer.ToString().ToLower();
+			return string.Equals(text, Answer.ToString(), StringComparison.OrdinalIgnoreCase);
 		}
 
 		public override void Validate(SlideBuildingContext slideBuildingContext)
@@ -27,10 +28,7 @@ namespace Ulearn.Core.Courses.Slides.Quizzes.Blocks
 
 		public override bool HasEqualStructureWith(SlideBlock other)
 		{
-			var block = other as IsTrueBlock;
-			if (block == null)
-				return false;
-			return Answer == block.Answer;
+			return other is IsTrueBlock block && Answer == block.Answer;
 		}
 	}
 }

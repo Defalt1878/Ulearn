@@ -14,7 +14,7 @@ namespace Ulearn.Core.CSharp.Validators
 			return methodErrors.Concat(localFunctionErrors).ToList();
 		}
 
-		private IEnumerable<SolutionStyleError> InspectMethod(LocalFunctionStatementSyntax method)
+		private static IEnumerable<SolutionStyleError> InspectMethod(LocalFunctionStatementSyntax method)
 		{
 			var name = method?.Identifier.Text;
 			if (name == null || method.AttributeLists.Any())
@@ -31,7 +31,7 @@ namespace Ulearn.Core.CSharp.Validators
 				yield return new SolutionStyleError(StyleErrorType.NamingStyle04, method.Identifier);
 		}
 
-		private IEnumerable<SolutionStyleError> InspectMethod(MethodDeclarationSyntax method)
+		private static IEnumerable<SolutionStyleError> InspectMethod(MethodDeclarationSyntax method)
 		{
 			var name = method?.Identifier.Text;
 			if (name == null || method.AttributeLists.Any())

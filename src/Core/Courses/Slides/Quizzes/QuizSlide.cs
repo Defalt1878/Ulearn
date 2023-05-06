@@ -18,7 +18,7 @@ namespace Ulearn.Core.Courses.Slides.Quizzes
 		public QuizScoringSettings Scoring { get; set; } = new()
 		{
 			ManualChecking = false,
-			MaxTriesCount = 2,
+			MaxTriesCount = 2
 		};
 
 		protected override Type[] AllowedBlockTypes => base.AllowedBlockTypes
@@ -32,14 +32,13 @@ namespace Ulearn.Core.Courses.Slides.Quizzes
 
 		public override int MaxScore => (Blocks ?? Array.Empty<SlideBlock>()).OfType<AbstractQuestionBlock>().Sum(b => b.MaxScore);
 
-		/* TODO (andgein): remove MaxTriesCount and ManualChecking and use Scoring's fields implicitly */
 		[XmlIgnore]
 		public int MaxTriesCount => Scoring.MaxTriesCount;
 
 		[XmlIgnore]
 		public bool ManualChecking => Scoring.ManualChecking;
 
-		public string QuizNormalizedXml => this.XmlSerialize(removeWhitespaces: true);
+		public string QuizNormalizedXml => this.XmlSerialize(true);
 
 		public override void Validate(SlideLoadingContext context)
 		{

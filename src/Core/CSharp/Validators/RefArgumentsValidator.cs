@@ -14,7 +14,7 @@ namespace Ulearn.Core.CSharp.Validators
 		{
 			var validationResult = userSolution.GetRoot()
 				.DescendantNodes()
-				.Where(node => node.Kind() == SyntaxKind.MethodDeclaration)
+				.Where(node => node.IsKind(SyntaxKind.MethodDeclaration))
 				.Cast<MethodDeclarationSyntax>()
 				.Where(MethodHasRefParameter)
 				.SelectMany(t => ValidateRefs(t, semanticModel))
@@ -33,18 +33,18 @@ namespace Ulearn.Core.CSharp.Validators
 			return parameterSyntax.Modifiers.Any(x => x.IsKind(SyntaxKind.RefKeyword));
 		}
 
-		private IEnumerable<SolutionStyleError> ValidateRefs(
+		private static IEnumerable<SolutionStyleError> ValidateRefs(
 			BaseMethodDeclarationSyntax methodDeclaration,
 			SemanticModel semanticModel)
 		{
-			SolutionStyleError GetErrorForParameter(ParameterSyntax parameter)
+			SolutionStyleError GetErrorForParameter(CSharpSyntaxNode parameter)
 			{
 				return new SolutionStyleError(StyleErrorType.RefArguments01, parameter.GetFirstToken());
 			}
 
 			return methodDeclaration.ParameterList.Parameters
 				.Where(ArgumentIsRef)
-				.Select(it => (Parameter: it, TypeInfo: semanticModel.GetTypeInfo(it.Type)))
+				.Select(it => (Parameter: it, TypeInfo: semanticModel.GetTypeInfo(it.Type!)))
 				.Where(it => !it.TypeInfo.IsPrimitive())
 				.Select(it => GetErrorForParameter(it.Parameter));
 		}

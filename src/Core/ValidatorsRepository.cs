@@ -5,7 +5,7 @@ using Ulearn.Core.CSharp.Validators.VerbInMethodNameValidation;
 
 namespace Ulearn.Core
 {
-	public class ValidatorsRepository
+	public static class ValidatorsRepository
 	{
 		public static ISolutionValidator Get(ValidatorDescription validatorDescription)
 		{

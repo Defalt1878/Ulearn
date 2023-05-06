@@ -6,6 +6,48 @@ namespace Ulearn.Core
 {
 	public static class RegionsParser
 	{
+		public static Dictionary<string, Region> GetRegions(string code)
+		{
+			var regions = new Dictionary<string, Region>();
+			var opened = new Dictionary<string, Tuple<int, int>>();
+			var current = 0;
+
+			foreach (var line in code.SplitToLinesWithEoln())
+			{
+				if (line.Contains("endregion"))
+				{
+					var name = GetRegionName(line);
+					if (opened.ContainsKey(name))
+					{
+						var start = opened[name];
+						regions[name] = new Region(start.Item1, current - start.Item1, start.Item2, current - start.Item2 + line.Length);
+						opened.Remove(name);
+					}
+
+					current += line.Length;
+					continue;
+				}
+
+				current += line.Length;
+
+				if (line.Contains("region"))
+				{
+					var name = GetRegionName(line);
+					opened[name] = Tuple.Create(current, current - line.Length);
+				}
+			}
+
+			return regions;
+		}
+
+		private static string GetRegionName(string line)
+		{
+			var regionIndex = line.LastIndexOf("region ", StringComparison.Ordinal);
+			if (regionIndex == -1)
+				return "";
+			return line[(regionIndex + "region ".Length)..].Trim();
+		}
+
 		public class Region : IEquatable<Region>
 		{
 			public readonly int dataStart;
@@ -57,52 +99,10 @@ namespace Ulearn.Core
 
 			public override string ToString()
 			{
-				return string.Format("data: ({0}, {1}); full: ({2}, {3})", dataStart, dataLength, fullStart, fullLength);
+				return $"data: ({dataStart}, {dataLength}); full: ({fullStart}, {fullLength})";
 			}
 
 			#endregion
-		}
-
-		public static Dictionary<string, Region> GetRegions(string code)
-		{
-			var regions = new Dictionary<string, Region>();
-			var opened = new Dictionary<string, Tuple<int, int>>();
-			var current = 0;
-
-			foreach (var line in code.SplitToLinesWithEoln())
-			{
-				if (line.Contains("endregion"))
-				{
-					var name = GetRegionName(line);
-					if (opened.ContainsKey(name))
-					{
-						var start = opened[name];
-						regions[name] = new Region(start.Item1, current - start.Item1, start.Item2, current - start.Item2 + line.Length);
-						opened.Remove(name);
-					}
-
-					current += line.Length;
-					continue;
-				}
-
-				current += line.Length;
-
-				if (line.Contains("region"))
-				{
-					var name = GetRegionName(line);
-					opened[name] = Tuple.Create(current, current - line.Length);
-				}
-			}
-
-			return regions;
-		}
-
-		private static string GetRegionName(string line)
-		{
-			var regionIndex = line.LastIndexOf("region ", StringComparison.Ordinal);
-			if (regionIndex == -1)
-				return "";
-			return line.Substring(regionIndex + "region ".Length).Trim();
 		}
 	}
 }

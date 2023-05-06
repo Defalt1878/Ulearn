@@ -5,11 +5,10 @@ namespace Ulearn.Core.Telegram
 {
 	public class TelegramBot
 	{
+		protected const int MaxMessageSize = 2048;
 		private readonly string token;
 		protected string channel;
 		protected readonly TelegramBotClient telegramClient;
-
-		protected const int MaxMessageSize = 2048;
 
 		protected TelegramBot()
 		{

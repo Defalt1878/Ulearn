@@ -34,7 +34,7 @@ namespace Ulearn.Core.RunCheckerJobApi
 		/// Позиция последнего символа ошибочного кода в строке
 		/// </summary>
 		[DataMember]
-		public StyleErrorSpanPosition EndLinePosition; 
+		public StyleErrorSpanPosition EndLinePosition;
 	}
 
 	[DataContract]

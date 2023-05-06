@@ -5,7 +5,7 @@ using NHunspell;
 using Ulearn.Common.Extensions;
 using Ulearn.Core.Properties;
 
-namespace uLearn.CSharp.Validators.SpellingValidator
+namespace Ulearn.Core.CSharp.Validators.SpellingValidator
 {
 	public class CodeElementSpellChecker
 	{
@@ -49,24 +49,24 @@ namespace uLearn.CSharp.Validators.SpellingValidator
 		{
 			return word.Length <= 2
 					|| Regex.IsMatch(word, @"\p{IsCyrillic}")
-					|| typeAsString != null && typeAsString.StartsWith(word, StringComparison.InvariantCultureIgnoreCase)
+					|| (typeAsString != null && typeAsString.StartsWith(word, StringComparison.InvariantCultureIgnoreCase))
 					|| word.Equals(typeAsString?.MakeTypeNameAbbreviation(), StringComparison.InvariantCultureIgnoreCase);
 		}
 
-		private string RemoveIfySuffix(string word)
+		private static string RemoveIfySuffix(string word)
 		{
 			return word.LastIndexOf("ify", StringComparison.InvariantCultureIgnoreCase) > 0
-				? word.Substring(0, word.Length - 3)
+				? word[..^3]
 				: word;
 		}
 
-		private IEnumerable<string> GetWordInDifferentNumbers(string word)
+		private static IEnumerable<string> GetWordInDifferentNumbers(string word)
 		{
 			yield return word;
 			if (word.Length > 1 && word.EndsWith("s", StringComparison.InvariantCultureIgnoreCase))
-				yield return word.Substring(0, word.Length - 1);
+				yield return word[..^1];
 			if (word.Length > 2 && word.EndsWith("es", StringComparison.InvariantCultureIgnoreCase))
-				yield return word.Substring(0, word.Length - 2);
+				yield return word[..^2];
 		}
 
 		private bool CheckConcatenatedWordsInLowerCaseForError(string concatenatedWords)
@@ -80,18 +80,15 @@ namespace uLearn.CSharp.Validators.SpellingValidator
 				foreach (var symbol in concatenatedWords)
 				{
 					currentCheckingWord += symbol;
-					if (!foundWords.Contains(currentCheckingWord)
-						&& (currentCheckingWord.Length == 1 && isFirstWord
-							|| currentCheckingWord.Length != 1
-							&& IsWordContainedInDictionaries(currentCheckingWord)))
+					if (!foundWords.Contains(currentCheckingWord) &&
+						((currentCheckingWord.Length == 1 && isFirstWord) ||
+						(currentCheckingWord.Length != 1 && IsWordContainedInDictionaries(currentCheckingWord))))
 					{
 						foundWords.Add(currentCheckingWord);
 						if (isFirstWord)
-						{
 							if (IsWordContainedInDictionaries(
-								concatenatedWords.Substring(currentCheckingWord.Length))) // это нужно для переменных типа dfunction b substring
+									concatenatedWords[currentCheckingWord.Length..])) // это нужно для переменных типа dfunction b substring
 								return false;
-						}
 
 						currentCheckingWord = "";
 						isFirstWord = false;
@@ -105,7 +102,7 @@ namespace uLearn.CSharp.Validators.SpellingValidator
 			return true;
 		}
 
-		private bool IsWordContainedInDictionaries(string word) // есть проблема, при которой разные части одного слова проверяются в разных словарях (одна часть - в английском, вторая - в латинском)?
+		private static bool IsWordContainedInDictionaries(string word) // есть проблема, при которой разные части одного слова проверяются в разных словарях (одна часть - в английском, вторая - в латинском)?
 		{
 			return wordsToExcept.Contains(word.ToLowerInvariant())
 					|| hunspellEnUs.Spell(word)

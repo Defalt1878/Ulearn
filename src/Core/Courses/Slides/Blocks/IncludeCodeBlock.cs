@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.ComponentModel;
@@ -28,10 +29,38 @@ namespace Ulearn.Core.Courses.Slides.Blocks
 		[XmlIgnore]
 		public Language? Language { get; set; }
 
+		[XmlElement("display")]
+		public Label[] DisplayLabels { get; set; }
+
+		protected void FillProperties(SlideBuildingContext context)
+		{
+			CodeFile ??= context.Slide.DefaultIncludeCodeFile ?? context.Unit.Settings?.DefaultIncludeCodeFile;
+			if (CodeFile == null)
+				throw new CourseLoadingException("У блока <include-code> не указан атрибут file.");
+
+			Language ??= LanguageHelpers.GuessByExtension(new FileInfo(CodeFile));
+		}
+
+		public override IEnumerable<SlideBlock> BuildUp(SlideBuildingContext context, IImmutableSet<string> filesInProgress)
+		{
+			FillProperties(context);
+			DisplayLabels ??= Array.Empty<Label>();
+
+			if (DisplayLabels.Length == 0)
+			{
+				var content = context.UnitDirectory.GetContent(CodeFile);
+				yield return new CodeBlock(content, Language) { Hide = Hide };
+				yield break;
+			}
+
+			var extractor = context.GetExtractor(CodeFile, Language);
+			yield return new CodeBlock(string.Join("\r\n\r\n", extractor.GetRegions(DisplayLabels, true)), Language) { Hide = Hide };
+		}
+
 		#region NullableLanguageHack
 
 		[XmlAttribute("language")]
-		[Browsable(false), EditorBrowsable(EditorBrowsableState.Never)]
+		[Browsable(false)] [EditorBrowsable(EditorBrowsableState.Never)]
 		public Language LanguageSerialized
 		{
 			get
@@ -42,41 +71,12 @@ namespace Ulearn.Core.Courses.Slides.Blocks
 			set => Language = value;
 		}
 
-		[Browsable(false), EditorBrowsable(EditorBrowsableState.Never)]
+		[Browsable(false)] [EditorBrowsable(EditorBrowsableState.Never)]
 		public bool ShouldSerializeLanguageSerialized()
 		{
 			return Language.HasValue;
 		}
 
 		#endregion
-
-		[XmlElement("display")]
-		public Label[] DisplayLabels { get; set; }
-
-		protected void FillProperties(SlideBuildingContext context)
-		{
-			CodeFile = CodeFile ?? context.Slide.DefaultIncludeCodeFile ?? context.Unit.Settings?.DefaultIncludeCodeFile;
-			if (CodeFile == null)
-				throw new CourseLoadingException($"У блока <include-code> не указан атрибут file.");
-
-			if (!Language.HasValue)
-				Language = LanguageHelpers.GuessByExtension(new FileInfo(CodeFile));
-		}
-
-		public override IEnumerable<SlideBlock> BuildUp(SlideBuildingContext context, IImmutableSet<string> filesInProgress)
-		{
-			FillProperties(context);
-			DisplayLabels = DisplayLabels ?? new Label[0];
-
-			if (DisplayLabels.Length == 0)
-			{
-				var content = context.UnitDirectory.GetContent(CodeFile);
-				yield return new CodeBlock(content, Language) { Hide = Hide };
-				yield break;
-			}
-
-			var extractor = context.GetExtractor(CodeFile, Language);
-			yield return new CodeBlock(string.Join("\r\n\r\n", extractor.GetRegions(DisplayLabels, withoutAttributes: true)), Language) { Hide = Hide };
-		}
 	}
 }

@@ -3,7 +3,7 @@
 	public interface IGoogleSheetCell
 	{
 	}
-	
+
 	public class GoogleSheetCell<T> : IGoogleSheetCell
 	{
 		public readonly T Value;

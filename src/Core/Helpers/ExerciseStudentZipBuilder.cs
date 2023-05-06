@@ -18,6 +18,7 @@ namespace Ulearn.Core.Helpers
 		private static readonly Regex anyWrongAnswerNameRegex = new("(.+)\\.(WrongAnswer|WA)\\.(.+)\\.cs", RegexOptions.IgnoreCase);
 
 		public static bool IsAnyWrongAnswerOrAnySolution(string name) => anyWrongAnswerNameRegex.IsMatch(name) || anySolutionNameRegex.IsMatch(name);
+
 		public static bool IsAnySolution(string name) => anySolutionNameRegex.IsMatch(name);
 
 		public void BuildStudentZip(Slide slide, FileInfo zipFile, string courseDirectory)
@@ -40,9 +41,10 @@ namespace Ulearn.Core.Helpers
 				case UniversalExerciseBlock block:
 				{
 					var zipBuilder = new UniversalExerciseBlock.ExerciseStudentZipBuilder(block, block.GetFilesProvider(courseDirectory));
-					using (var studentZipMemoryStream = zipBuilder.GetZipMemoryStreamForStudent())
-						using (var fs = zipFile.OpenWrite())
-							studentZipMemoryStream.CopyTo(fs);
+					using var studentZipMemoryStream = zipBuilder.GetZipMemoryStreamForStudent();
+					using var fs = zipFile.OpenWrite();
+					studentZipMemoryStream.CopyTo(fs);
+
 					return;
 				}
 				default:
@@ -59,7 +61,7 @@ namespace Ulearn.Core.Helpers
 		public static bool NeedExcludeFromStudentZip(CsProjectExerciseBlock block, string filepath)
 		{
 			return IsAnyWrongAnswerOrAnySolution(filepath) ||
-					block.PathsToExcludeForStudent != null && block.PathsToExcludeForStudent.Any(p => p == filepath);
+					(block.PathsToExcludeForStudent != null && block.PathsToExcludeForStudent.Any(p => p == filepath));
 		}
 
 		private static MemoryStream GetFileContentInStudentZip(CsProjectExerciseBlock block, FileInfo file, CsProjectExerciseBlock.FilesProvider fp)

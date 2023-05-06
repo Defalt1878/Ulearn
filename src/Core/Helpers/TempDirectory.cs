@@ -6,7 +6,7 @@ using Ulearn.Core.Configuration;
 
 namespace Ulearn.Core.Helpers
 {
-	public class TempDirectory: IDisposable
+	public class TempDirectory : IDisposable
 	{
 		public readonly DirectoryInfo DirectoryInfo;
 		public static readonly string TempDirectoryPath;
@@ -34,6 +34,7 @@ namespace Ulearn.Core.Helpers
 					if (DirectoryInfo.Exists)
 						DirectoryInfo.Delete(true);
 				}, 3);
+				GC.SuppressFinalize(this);
 			}
 			catch (Exception ex)
 			{

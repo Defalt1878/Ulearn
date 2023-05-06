@@ -22,6 +22,7 @@ namespace Ulearn.Core.Courses.Units
 		private List<Slide> Slides { get; set; }
 
 		private List<Slide> notHiddenSlides { get; set; }
+
 		private List<Slide> NotHiddenSlides
 		{
 			get { return notHiddenSlides ??= Slides.Where(s => !s.Hide).ToList(); }
@@ -48,9 +49,7 @@ namespace Ulearn.Core.Courses.Units
 
 		public List<Slide> GetSlides(bool withHidden)
 		{
-			if (withHidden)
-				return Slides;
-			return NotHiddenSlides;
+			return withHidden ? Slides : NotHiddenSlides;
 		}
 
 		public List<Slide> GetHiddenSlides()

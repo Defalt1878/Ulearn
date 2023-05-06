@@ -7,15 +7,13 @@ using Ulearn.Core.Courses.Slides;
 using Ulearn.Core.Courses.Slides.Flashcards;
 using Ulearn.Core.Courses.Units;
 using Ulearn.Core.Extensions;
-using Vostok.Logging.Abstractions;
 
 namespace Ulearn.Core.Courses
 {
 	public class CourseLoader : ICourseLoader
 	{
-		private readonly IUnitLoader unitLoader;
 		public const char CourseIdDelimiter = '@'; // После @ в название могут добавляться доп. символы для временных папок
-		private static ILog log => LogProvider.Get().ForContext(typeof(CourseLoader));
+		private readonly IUnitLoader unitLoader;
 
 		public CourseLoader(IUnitLoader unitLoader)
 		{
@@ -53,7 +51,6 @@ namespace Ulearn.Core.Courses
 			}
 
 			if (string.IsNullOrEmpty(settings.Title))
-			{
 				try
 				{
 					settings.Title = GetCourseTitleFromFile(courseDirectory);
@@ -64,12 +61,9 @@ namespace Ulearn.Core.Courses
 						$"Не удалось прочитать настройки курса. Скорее всего, отсутствует или неправильно заполнен файл course.xml. {e.Message}", e.InnerException
 					);
 				}
-			}
 
 			if (string.IsNullOrEmpty(settings.Description))
-			{
 				settings.Description = "";
-			}
 
 			var versionToken = CourseVersionToken.Load(courseDirectory);
 
@@ -80,9 +74,7 @@ namespace Ulearn.Core.Courses
 
 			var validationLog = GetValidationLog(units);
 			if (validationLog != string.Empty)
-			{
 				throw new CourseLoadingException(validationLog);
-			}
 
 			AddDefaultScoringGroupIfNeeded(units, slides, settings);
 			CalculateScoringGroupScores(units, settings);
@@ -105,12 +97,10 @@ namespace Ulearn.Core.Courses
 		private static void CalculateScoringGroupScores(IEnumerable<Unit> units, CourseSettings settings)
 		{
 			foreach (var unit in units)
+			foreach (var slide in unit.GetSlides(false).Where(s => s.ShouldBeSolved))
 			{
-				foreach (var slide in unit.GetSlides(false).Where(s => s.ShouldBeSolved))
-				{
-					unit.Scoring.Groups[slide.ScoringGroup].MaxNotAdditionalScore += slide.MaxScore;
-					settings.Scoring.Groups[slide.ScoringGroup].MaxNotAdditionalScore += slide.MaxScore;
-				}
+				unit.Scoring.Groups[slide.ScoringGroup].MaxNotAdditionalScore += slide.MaxScore;
+				settings.Scoring.Groups[slide.ScoringGroup].MaxNotAdditionalScore += slide.MaxScore;
 			}
 		}
 
@@ -122,7 +112,7 @@ namespace Ulearn.Core.Courses
 				{
 					Id = "",
 					Abbreviation = "Баллы",
-					Name = "Упражнения и тесты",
+					Name = "Упражнения и тесты"
 				};
 				settings.Scoring.Groups.Add(defaultScoringGroup.Id, defaultScoringGroup);
 
@@ -162,10 +152,8 @@ namespace Ulearn.Core.Courses
 					);
 				unitUrls.Add(unit.Url);
 				if (unit.GetSlides(true).OfType<FlashcardSlide>().Count() > 1)
-				{
 					throw new CourseLoadingException($"Ошибка в курсе \"{context.CourseSettings.Title}\" при загрузке модуля \"{unit.Title}\" из {unitFile.FullName}. " +
 													$"Обнаружено более одного слайда с флеш-картами. Слайд с флеш-картами должен быть только один");
-				}
 
 				yield return unit;
 			}
@@ -195,11 +183,9 @@ namespace Ulearn.Core.Courses
 		{
 			var emptyIdSlides = slides.Where(x => x.Id == Guid.Empty).Select(x => x.Title).ToList();
 			if (emptyIdSlides.Any())
-			{
 				return "Идентификаторы слайдов (SlideId) должны быть заполненными.\n" +
 						"Слайды с пустыми идентификаторами:\n	" +
 						string.Join("\n	", emptyIdSlides.Select(x => string.Join("\n", x)));
-			}
 
 			return string.Empty;
 		}
@@ -214,15 +200,11 @@ namespace Ulearn.Core.Courses
 		{
 			var unitsContainsFlashcardsId = new Dictionary<string, List<string>>();
 			foreach (var unit in units)
-			{
-				foreach (var unitFlashcard in unit.Flashcards)
-				{
-					if (unitsContainsFlashcardsId.ContainsKey(unitFlashcard.Id))
-						unitsContainsFlashcardsId[unitFlashcard.Id].Add(unit.Title);
-					else
-						unitsContainsFlashcardsId[unitFlashcard.Id] = new List<string>() { unit.Title };
-				}
-			}
+			foreach (var unitFlashcard in unit.Flashcards)
+				if (unitsContainsFlashcardsId.TryGetValue(unitFlashcard.Id, out var unitsTitles))
+					unitsTitles.Add(unit.Title);
+				else
+					unitsContainsFlashcardsId[unitFlashcard.Id] = new List<string> { unit.Title };
 
 			var badFlashcards =
 				units.SelectMany(x => x.Flashcards)

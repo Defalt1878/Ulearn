@@ -12,7 +12,7 @@ namespace Ulearn.Core.Extensions
 		public static IEnumerable<FileInfo> GetFilesByMask(this DirectoryInfo directory, string mask)
 		{
 			if (mask.Contains(".."))
-				throw new ArgumentException($"{nameof(mask)} can not contain \"..\"", nameof(mask));
+				throw new ArgumentException($@"{nameof(mask)} can not contain ""..""", nameof(mask));
 
 			/* Replace slashes / to backslashes \ on Windows */
 			if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))

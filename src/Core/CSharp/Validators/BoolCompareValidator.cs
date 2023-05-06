@@ -13,7 +13,7 @@ namespace Ulearn.Core.CSharp.Validators
 			return InspectAll<BinaryExpressionSyntax>(userSolution, semanticModel, Inspect).ToList();
 		}
 
-		private IEnumerable<SolutionStyleError> Inspect(BinaryExpressionSyntax binaryExpression, SemanticModel semanticModel)
+		private static IEnumerable<SolutionStyleError> Inspect(BinaryExpressionSyntax binaryExpression, SemanticModel semanticModel)
 		{
 			var operatorKind = binaryExpression.OperatorToken.Kind();
 			if (operatorKind != SyntaxKind.EqualsEqualsToken && operatorKind != SyntaxKind.ExclamationEqualsToken)
@@ -27,14 +27,9 @@ namespace Ulearn.Core.CSharp.Validators
 				yield return new SolutionStyleError(StyleErrorType.BoolCompare01, binaryExpression);
 		}
 
-		private static bool IsBoolLiteral(LiteralExpressionSyntax node)
-		{
-			if (node == null)
-				return false;
-			var token = node.Token.Kind();
-			return token == SyntaxKind.TrueKeyword || token == SyntaxKind.FalseKeyword;
-		}
+		private static bool IsBoolLiteral(LiteralExpressionSyntax node) =>
+			node?.Token.Kind() is SyntaxKind.TrueKeyword or SyntaxKind.FalseKeyword;
 
-		private bool IsBooleanType(TypeInfo node) => node.Type?.Name == "Boolean";
+		private static bool IsBooleanType(TypeInfo node) => node.Type is { Name: "Boolean" };
 	}
 }

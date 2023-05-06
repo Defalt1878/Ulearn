@@ -17,6 +17,7 @@ namespace Ulearn.Core.RunCheckerJobApi
 
 		[IgnoreDataMember]
 		private string compilationOutput;
+
 		[DataMember]
 		[NotNull]
 		public string CompilationOutput
@@ -27,17 +28,19 @@ namespace Ulearn.Core.RunCheckerJobApi
 
 		[IgnoreDataMember]
 		private string output;
+
 		// Для вывода пользователю используется GetOutput()
 		[DataMember]
 		[NotNull]
 		public string Output // Для C# это stdout
 		{
-			get => output ?? ""; 
+			get => output ?? "";
 			set => output = value;
 		}
 
 		[IgnoreDataMember]
 		private string error;
+
 		[DataMember]
 		[NotNull]
 		public string Error // Для C# это stderr
@@ -52,7 +55,7 @@ namespace Ulearn.Core.RunCheckerJobApi
 		[DataMember]
 		[CanBeNull]
 		public List<StyleError> StyleErrors { get; set; }
-		
+
 		[DataMember]
 		[CanBeNull]
 		public string[] Logs { get; set; }
@@ -104,39 +107,64 @@ namespace Ulearn.Core.RunCheckerJobApi
 
 		public string GetOutput(bool withFullDescription = false)
 		{
-			var output = string.Join("\n", new[] { Output, Error }.Where(s => !string.IsNullOrWhiteSpace(s)));
+			var outputLocal = string.Join("\n", new[] { Output, Error }.Where(s => !string.IsNullOrWhiteSpace(s)));
 
-			switch (Verdict)
+			return Verdict switch
 			{
-				case Verdict.Ok:
-					return output;
-				case Verdict.TimeLimit:
-					return output + (TestResultInfo != null ? $"\n{TestResultInfo.FormatTestNumber()}" : "")
-								  + "\nВаше решение не успело пройти" 
-								  + (TestResultInfo?.TestNumber == null ? " все тесты" : " тест") 
-								  + (timeLimit == null ? null : $" за {timeLimit} " + timeLimit.Value.SelectPluralWordInRussian(RussianPluralizationOptions.Seconds))
-								  + (withFullDescription && TestResultInfo != null ? $"\n{TestResultInfo.FormatTestDescription()}" : "");;
-				case Verdict.WrongAnswer:
-					return output + (TestResultInfo != null ? $"\n{TestResultInfo.FormatTestNumber()}" : "") 
-								  + $"\nНеправильный ответ\n" 
-								  + (withFullDescription && TestResultInfo != null ? $"\n{TestResultInfo.FormatTestDescription()}" : "");
-				case Verdict.RuntimeError:
-					return output + (TestResultInfo != null ? $"\n{TestResultInfo.FormatTestNumber()}" : "")
-					              +$"\nПрограмма завершилась с ошибкой"
-								  + (withFullDescription  && TestResultInfo != null ? $"\n{TestResultInfo.FormatTestDescription()}" : "");
-				default:
-					return output + (TestResultInfo != null ? $"\n{TestResultInfo.FormatTestNumber()}" : "") 
-					              + $"\n{Verdict}";
-			}
+				Verdict.Ok => outputLocal,
+				Verdict.TimeLimit => outputLocal +
+									(TestResultInfo != null
+										? $"\n{TestResultInfo.FormatTestNumber()}"
+										: ""
+									) +
+									"\nВаше решение не успело пройти" +
+									(TestResultInfo?.TestNumber == null
+										? " все тесты"
+										: " тест"
+									) +
+									(timeLimit == null
+										? null
+										: $" за {timeLimit} " + timeLimit.Value.SelectPluralWordInRussian(RussianPluralizationOptions.Seconds)
+									) +
+									(withFullDescription && TestResultInfo != null
+										? $"\n{TestResultInfo.FormatTestDescription()}"
+										: ""
+									),
+				Verdict.WrongAnswer => outputLocal +
+										(TestResultInfo != null
+											? $"\n{TestResultInfo.FormatTestNumber()}"
+											: ""
+										) +
+										"\nНеправильный ответ\n" +
+										(withFullDescription && TestResultInfo != null
+											? $"\n{TestResultInfo.FormatTestDescription()}"
+											: ""
+										),
+				Verdict.RuntimeError => outputLocal +
+										(TestResultInfo != null
+											? $"\n{TestResultInfo.FormatTestNumber()}"
+											: ""
+										) +
+										"\nПрограмма завершилась с ошибкой" +
+										(withFullDescription && TestResultInfo != null
+											? $"\n{TestResultInfo.FormatTestDescription()}"
+											: ""
+										),
+				_ => outputLocal +
+					(TestResultInfo != null
+						? $"\n{TestResultInfo.FormatTestNumber()}"
+						: ""
+					) +
+					$"\n{Verdict}"
+			};
 		}
 
 		public string GetLogs()
 		{
-			return Logs != null 
-				? string.Join("\n", Logs) 
+			return Logs != null
+				? string.Join("\n", Logs)
 				: "";
 		}
-
 	}
 
 	[DataContract]
@@ -144,7 +172,7 @@ namespace Ulearn.Core.RunCheckerJobApi
 	{
 		[DataMember]
 		public int? TestNumber { get; set; }
-		
+
 		[DataMember]
 		[CanBeNull]
 		public string Input { get; set; }
@@ -152,7 +180,7 @@ namespace Ulearn.Core.RunCheckerJobApi
 		[DataMember]
 		[CanBeNull]
 		public string CorrectOutput { get; set; }
-		
+
 		[DataMember]
 		[CanBeNull]
 		public string StudentOutput { get; set; }
@@ -167,15 +195,19 @@ namespace Ulearn.Core.RunCheckerJobApi
 					$"Ваш результат:\n" +
 					$"{Truncate(StudentOutput, 500)}\n";
 		}
-		
-		public string FormatTestNumber() 
-			=> TestNumber == null 
-				? null 
+
+		public string FormatTestNumber()
+		{
+			return TestNumber == null
+				? null
 				: $"Тест №{TestNumber}";
-		
+		}
+
 		private static string Truncate(string source, int limit)
-			=> source.Length <= limit
+		{
+			return source.Length <= limit
 				? source
 				: $"{string.Join("", source.Take(limit))}...";
+		}
 	}
 }

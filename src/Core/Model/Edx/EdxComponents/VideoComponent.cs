@@ -5,11 +5,6 @@ namespace Ulearn.Core.Model.Edx.EdxComponents
 	[XmlRoot("video")]
 	public class VideoComponent : Component
 	{
-		public override bool ShouldSerializeUrlName()
-		{
-			return true;
-		}
-
 		[XmlAttribute("youtube")]
 		public string VideoId;
 
@@ -34,6 +29,8 @@ namespace Ulearn.Core.Model.Edx.EdxComponents
 			NormalSpeedVideoId = videoId;
 		}
 
+		public override bool ShouldSerializeUrlName() => true;
+
 		public override EdxReference GetReference()
 		{
 			return new VideoComponentReference { UrlName = UrlName };
@@ -41,7 +38,7 @@ namespace Ulearn.Core.Model.Edx.EdxComponents
 
 		public override string AsHtmlString()
 		{
-			return string.Format(@"<iframe class=""embedded-video"" width=""100%"" height=""530"" src=""//www.youtube.com/embed/{0}"" frameborder=""0"" allowfullscreen=""\""></iframe>", NormalSpeedVideoId);
+			return $@"<iframe class=""embedded-video"" width=""100%"" height=""530"" src=""//www.youtube.com/embed/{NormalSpeedVideoId}"" frameborder=""0"" allowfullscreen=""\""></iframe>";
 		}
 
 		public static VideoComponent Load(string folderName, string urlName, EdxLoadOptions options)

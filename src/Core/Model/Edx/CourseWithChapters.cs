@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Linq;
 using System.Xml;
 using System.Xml.Serialization;
@@ -25,8 +26,8 @@ namespace Ulearn.Core.Model.Edx
 		[XmlElement("chapter", Order = 1)]
 		public ChapterReference[] ChapterReferences
 		{
-			get { return chapterReferences = chapterReferences ?? new ChapterReference[0]; }
-			set { chapterReferences = value; }
+			get { return chapterReferences ??= Array.Empty<ChapterReference>(); }
+			set => chapterReferences = value;
 		}
 
 		[XmlElement("wiki", Order = 2)]
@@ -39,7 +40,7 @@ namespace Ulearn.Core.Model.Edx
 
 		public CourseWithChapters()
 		{
-			ChapterReferences = new ChapterReference[0];
+			ChapterReferences = Array.Empty<ChapterReference>();
 		}
 
 		public CourseWithChapters(string urlName, string displayName, string[] advancedModules, string[] ltiPassports, bool useLatexCompiler, Chapter[] chapters)
@@ -75,6 +76,7 @@ namespace Ulearn.Core.Model.Edx
 					elem.SetAttribute("url_name", chapter.UrlName);
 					root.AppendChild(elem);
 				}
+
 				foreach (var wiki in Wiki.EmptyIfNull())
 				{
 					var elem = doc.CreateElement("wiki");
@@ -87,7 +89,9 @@ namespace Ulearn.Core.Model.Edx
 					SaveAdditional(folderName);
 			}
 			else
+			{
 				base.Save(folderName, withAdditionals);
+			}
 		}
 
 		public override void SaveAdditional(string folderName)

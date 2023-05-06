@@ -15,6 +15,16 @@ namespace Ulearn.Core.Courses.Slides.Blocks
 	{
 		private string code;
 
+		public CodeBlock(string code, Language? language)
+		{
+			Code = code;
+			Language = language;
+		}
+
+		public CodeBlock()
+		{
+		}
+
 		[XmlText]
 		public string Code
 		{
@@ -26,50 +36,17 @@ namespace Ulearn.Core.Courses.Slides.Blocks
 		[XmlIgnore]
 		public Language? Language { get; set; }
 
-		#region NullableLanguageHack
-
-		[XmlAttribute("language")]
-		[Browsable(false), EditorBrowsable(EditorBrowsableState.Never)]
-		public Language LanguageSerialized
-		{
-			get
-			{
-				Debug.Assert(Language != null, nameof(Language) + " != null");
-				return Language.Value;
-			}
-			set => Language = value;
-		}
-
-		[Browsable(false), EditorBrowsable(EditorBrowsableState.Never)]
-		public bool ShouldSerializeLanguageSerialized()
-		{
-			return Language.HasValue;
-		}
-
-		#endregion
-
-		public CodeBlock(string code, Language? language)
-		{
-			Code = code;
-			Language = language;
-		}
-
-		public CodeBlock()
-		{
-		}
-
-		public override IEnumerable<SlideBlock> BuildUp(SlideBuildingContext context, IImmutableSet<string> filesInProgress)
-		{
-			if (!Language.HasValue)
-				Language = context.CourseSettings.DefaultLanguage;
-			yield return this;
-		}
-
 		public Component ToEdxComponent(EdxComponentBuilderContext context)
 		{
 			var urlName = context.Slide.NormalizedGuid + context.ComponentIndex;
 			Debug.Assert(Language != null, nameof(Language) + " != null");
 			return new CodeComponent(urlName, context.DisplayName, urlName, Language.Value, Code);
+		}
+
+		public override IEnumerable<SlideBlock> BuildUp(SlideBuildingContext context, IImmutableSet<string> filesInProgress)
+		{
+			Language ??= context.CourseSettings.DefaultLanguage;
+			yield return this;
 		}
 
 		public override string ToString()
@@ -81,5 +58,27 @@ namespace Ulearn.Core.Courses.Slides.Blocks
 		{
 			return Code;
 		}
+
+		#region NullableLanguageHack
+
+		[XmlAttribute("language")]
+		[Browsable(false)] [EditorBrowsable(EditorBrowsableState.Never)]
+		public Language LanguageSerialized
+		{
+			get
+			{
+				Debug.Assert(Language != null, nameof(Language) + " != null");
+				return Language.Value;
+			}
+			set => Language = value;
+		}
+
+		[Browsable(false)] [EditorBrowsable(EditorBrowsableState.Never)]
+		public bool ShouldSerializeLanguageSerialized()
+		{
+			return Language.HasValue;
+		}
+
+		#endregion
 	}
 }

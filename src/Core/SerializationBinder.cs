@@ -47,23 +47,20 @@ namespace Ulearn.Core
 
 		public override Type BindToType(string assemblyName, string typeName)
 		{
-			if (nameToType.ContainsKey(typeName))
-				return nameToType[typeName];
+			if (nameToType.TryGetValue(typeName, out var type))
+				return type;
 
 			return base.BindToType(assemblyName, typeName);
 		}
 
-		public static IEnumerable<Type> GetSubtypes(params Type[] baseTypes)
-		{
-			foreach (var baseType in baseTypes)
-			{
-				var subclasses = Assembly
-					.GetAssembly(baseType)
-					.GetTypes()
-					.Where(t => t.IsClass && !t.IsAbstract && (baseType.IsInterface ? baseType.IsAssignableFrom(t) : t.IsSubclassOf(baseType)));
-				foreach (var subclass in subclasses)
-					yield return subclass;
-			}
-		}
+		public static IEnumerable<Type> GetSubtypes(params Type[] baseTypes) =>
+			baseTypes
+				.SelectMany(baseType => Assembly.GetAssembly(baseType)?.GetTypes()
+					.EmptyIfNull()
+					.Where(t =>
+						t is { IsClass: true, IsAbstract: false } &&
+						(baseType.IsInterface ? baseType.IsAssignableFrom(t) : t.IsSubclassOf(baseType))
+					)
+				);
 	}
 }

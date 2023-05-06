@@ -1,12 +1,11 @@
 ﻿using System;
-using Vostok.Logging.Abstractions;
 using Telegram.Bot.Exceptions;
 using Telegram.Bot.Types.Enums;
 using Ulearn.Common.Extensions;
 using Ulearn.Core.Telegram;
+using Vostok.Logging.Abstractions;
 using Vostok.Logging.Abstractions.Wrappers;
 using Vostok.Logging.Formatting;
-using LogEvent = Vostok.Logging.Abstractions.LogEvent;
 
 namespace Ulearn.Core.Logging
 {

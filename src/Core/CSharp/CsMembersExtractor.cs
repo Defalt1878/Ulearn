@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.CodeAnalysis;
@@ -34,7 +33,7 @@ namespace Ulearn.Core.CSharp
 				return string.Join("\r\n\r\n", nodes.Select(GetBody));
 			if (withoutAttributes)
 				nodes = nodes.Select(node => node.WithoutAttributes()).ToList();
-			return String.Join("\r\n\r\n", nodes.Select(node => node.ToPrettyString()));
+			return string.Join("\r\n\r\n", nodes.Select(node => node.ToPrettyString()));
 		}
 
 		private static string GetBody(SyntaxNode node)

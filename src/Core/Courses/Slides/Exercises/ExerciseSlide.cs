@@ -12,7 +12,7 @@ namespace Ulearn.Core.Courses.Slides.Exercises
 		[XmlElement("scoring")]
 		public ExerciseScoringSettings Scoring { get; set; } = new()
 		{
-			PassedTestsScore = 5,
+			PassedTestsScore = 5
 		};
 
 		protected override Type[] AllowedBlockTypes => base.AllowedBlockTypes
@@ -61,18 +61,14 @@ namespace Ulearn.Core.Courses.Slides.Exercises
 
 			var exerciseBlocksCount = Blocks.Count(b => b is AbstractExerciseBlock);
 			if (exerciseBlocksCount == 0)
-			{
 				throw new CourseLoadingException(
 					$"Не найдено блоков с упражнениями (<exercise.file>, <exercise.csproj>, <exercise.universal> или <exercise.polygon>) в слайде «{Title}», " +
 					"для которого использован внешний тег <slide.exercise>. Если вы хотите создать обычный слайд без упражнения, используйте тег <slide>");
-			}
 
 			if (exerciseBlocksCount > 1)
-			{
 				throw new CourseLoadingException(
 					"Блок с упражнением (<exercise.file>, <exercise.csproj> или <exercise.universal>) может быть только один на слайде. " +
 					$"Но на слайде «{Title}» найдено {exerciseBlocksCount} таких блока.");
-			}
 
 			base.Validate(context);
 		}

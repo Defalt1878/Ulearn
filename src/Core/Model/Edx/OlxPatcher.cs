@@ -23,7 +23,7 @@ namespace Ulearn.Core.Model.Edx
 			var newVerticals = new List<Vertical>();
 			foreach (var component in components)
 			{
-				var filename = string.Format("{0}/{1}/{2}.xml", OlxPath, component.SubfolderName, component.UrlName);
+				var filename = $"{OlxPath}/{component.SubfolderName}/{component.UrlName}.xml";
 				if (File.Exists(filename))
 				{
 					if (replaceExisting)
@@ -45,7 +45,9 @@ namespace Ulearn.Core.Model.Edx
 					}
 				}
 				else
+				{
 					newVerticals.Add(new Vertical(Utils.NewNormalizedGuid(), component.DisplayName, new[] { component }));
+				}
 			}
 
 			Add(course, newVerticals.ToArray());
@@ -73,7 +75,9 @@ namespace Ulearn.Core.Model.Edx
 					}
 				}
 				else
+				{
 					newVerticals.AddRange(subverticals);
+				}
 			}
 
 			Add(course, newVerticals.ToArray());
@@ -88,12 +92,12 @@ namespace Ulearn.Core.Model.Edx
 		private void SaveSequentialContainingSubverticals(EdxCourse course, IEnumerable<Vertical> verticalsToAdd, Vertical afterThisVertical)
 		{
 			var sequential = course.GetSequentialContainingVertical(afterThisVertical.UrlName);
-			var filename = string.Format("{0}/sequential/{1}.xml", OlxPath, sequential.UrlName);
+			var filename = $"{OlxPath}/sequential/{sequential.UrlName}.xml";
 			var sequentialXml = XDocument.Load(filename).Root ?? new XElement("sequential");
 			var refs = sequentialXml.Elements("vertical").ToList();
 			var insertIndex = refs
-								.Select((v, i) => new { urlName = v.Attribute("url_name").Value, i })
-								.First(v => v.urlName == afterThisVertical.UrlName).i + 1;
+				.Select((v, i) => new { urlName = v.Attribute("url_name").Value, i })
+				.First(v => v.urlName == afterThisVertical.UrlName).i + 1;
 			refs.InsertRange(insertIndex, verticalsToAdd.Select(v => new XElement("vertical", new XAttribute("url_name", v.UrlName))));
 			sequentialXml.ReplaceNodes(refs);
 			sequentialXml.Save(filename);

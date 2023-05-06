@@ -1,10 +1,13 @@
 ﻿using System;
 using System.IO;
+using System.Reflection;
 
 namespace Ulearn.Core
 {
 	public static class Utils
 	{
+		public static string WebApplicationPhysicalPath { get; set; }
+
 		public static string NewNormalizedGuid()
 		{
 			return Guid.NewGuid().ToString("D");
@@ -44,8 +47,8 @@ namespace Ulearn.Core
 			while ((info = Console.ReadKey(true)).Key != ConsoleKey.Enter)
 				if (info.Key != ConsoleKey.Backspace)
 					password += info.KeyChar;
-				else if (!String.IsNullOrEmpty(password))
-					password = password.Substring(0, password.Length - 1);
+				else if (!string.IsNullOrEmpty(password))
+					password = password[..^1];
 			return password;
 		}
 
@@ -67,13 +70,11 @@ namespace Ulearn.Core
 			}
 
 			if (recursive)
-			{
 				foreach (var subDir in dirs)
 				{
 					var tempPath = Path.Combine(dest, subDir.Name);
 					DirectoryCopy(subDir.FullName, tempPath, true);
 				}
-			}
 		}
 
 		public static bool IsInside(this DirectoryInfo baseDir, FileSystemInfo subElement)
@@ -94,9 +95,7 @@ namespace Ulearn.Core
 		{
 			if (WebApplicationPhysicalPath != null)
 				return WebApplicationPhysicalPath;
-			return Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+			return Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 		}
-
-		public static string WebApplicationPhysicalPath { get; set; }
 	}
 }

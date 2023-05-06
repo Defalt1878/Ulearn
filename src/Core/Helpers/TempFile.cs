@@ -4,7 +4,7 @@ using Ulearn.Common;
 
 namespace Ulearn.Core.Helpers
 {
-	public class TempFile: IDisposable
+	public class TempFile : IDisposable
 	{
 		public readonly FileInfo FileInfo;
 
@@ -12,7 +12,10 @@ namespace Ulearn.Core.Helpers
 		{
 			var path = Path.Combine(TempDirectory.TempDirectoryPath, fileName);
 			using (var file = new FileStream(path, FileMode.Create, FileAccess.Write))
+			{
 				stream.CopyTo(file);
+			}
+
 			FileInfo = new FileInfo(path);
 		}
 
@@ -21,6 +24,7 @@ namespace Ulearn.Core.Helpers
 			try
 			{
 				FuncUtils.TrySeveralTimes(() => FileInfo.Delete(), 3);
+				GC.SuppressFinalize(this);
 			}
 			catch (Exception ex)
 			{

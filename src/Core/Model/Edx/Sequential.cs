@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.ComponentModel;
 using System.Linq;
 using System.Xml.Serialization;
 
@@ -15,14 +16,13 @@ namespace Ulearn.Core.Model.Edx
 		[XmlElement("vertical")]
 		public VerticalReference[] VerticalReferences
 		{
-			get { return verticalReferences = verticalReferences ?? new VerticalReference[0]; }
-			set { verticalReferences = value; }
+			get { return verticalReferences ??= Array.Empty<VerticalReference>(); }
+			set => verticalReferences = value;
 		}
 
 		[XmlAttribute("visible_to_staff_only")]
 		[DefaultValue(false)]
 		public bool VisibleToStaffOnly { get; set; }
-
 
 		[XmlIgnore]
 		public Vertical[] Verticals;

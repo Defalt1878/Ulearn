@@ -70,46 +70,42 @@ namespace Ulearn.Core.CSharp.Validators.IndentsValidation
 				case ForStatementSyntax forStatement:
 					var innerForStatement = forStatement.Statement;
 					yield return SyntaxNodeOrToken.Create(rootTree, forStatement.Statement,
-						innerForStatement is ForStatementSyntax ? (bool?)null : false);
+						innerForStatement is ForStatementSyntax ? null : false);
 					yield break;
 				case ForEachStatementSyntax foreachStatement:
 					var innerForeachStatement = foreachStatement.Statement;
 					yield return SyntaxNodeOrToken.Create(rootTree, foreachStatement.Statement,
-						innerForeachStatement is ForEachStatementSyntax ? (bool?)null : false);
+						innerForeachStatement is ForEachStatementSyntax ? null : false);
 					yield break;
 				case WhileStatementSyntax whileStatement:
 					var innerWhileStatement = whileStatement.Statement;
 					yield return SyntaxNodeOrToken.Create(rootTree, whileStatement.Statement,
-						innerWhileStatement is WhileStatementSyntax ? (bool?)null : false);
+						innerWhileStatement is WhileStatementSyntax ? null : false);
 					yield break;
 				case UsingStatementSyntax usingStatementSyntax:
 					var innerUsingStatement = usingStatementSyntax.Statement;
 					yield return SyntaxNodeOrToken.Create(rootTree, usingStatementSyntax.Statement,
-						innerUsingStatement is UsingStatementSyntax ? (bool?)null : false);
+						innerUsingStatement is UsingStatementSyntax ? null : false);
 					yield break;
 				default:
 					yield break;
 			}
 		}
 
-		public static SyntaxToken GetFirstTokenOfCorrectOpenbraceParent(this SyntaxToken openbrace)
+		public static SyntaxToken GetFirstTokenOfCorrectOpenBraceParent(this SyntaxToken openBrace)
 		{
-			if (openbrace.Parent is BaseTypeDeclarationSyntax ||
-				openbrace.Parent is AccessorListSyntax ||
-				openbrace.Parent is SwitchStatementSyntax ||
-				openbrace.Parent is AnonymousObjectCreationExpressionSyntax ||
-				openbrace.Parent.IsKind(SyntaxKind.ComplexElementInitializerExpression))
-			{
-				return openbrace.Parent.GetFirstToken();
-			}
+			if (openBrace.Parent is
+					BaseTypeDeclarationSyntax or
+					AccessorListSyntax or
+					SwitchStatementSyntax or
+					AnonymousObjectCreationExpressionSyntax ||
+				openBrace.Parent.IsKind(SyntaxKind.ComplexElementInitializerExpression))
+				return openBrace.Parent.GetFirstToken();
 
-			if (openbrace.Parent is InitializerExpressionSyntax ||
-				openbrace.Parent is BlockSyntax && !(openbrace.Parent.Parent is BlockSyntax))
-			{
-				return openbrace.Parent.Parent.GetFirstToken();
-			}
+			if (openBrace.Parent is InitializerExpressionSyntax or BlockSyntax { Parent: not BlockSyntax })
+				return openBrace.Parent!.Parent!.GetFirstToken();
 
-			return default(SyntaxToken);
+			return default;
 		}
 	}
 }

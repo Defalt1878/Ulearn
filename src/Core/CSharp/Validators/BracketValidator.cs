@@ -30,12 +30,14 @@ namespace Ulearn.Core.CSharp.Validators
 				yield return new SolutionStyleError(StyleErrorType.Brackets01, returnStatementSyntax);
 		}
 
-		private bool NeedToCheckExpression(SyntaxKind[] syntaxKinds) =>
-			syntaxKinds.Length > 2 &&
-			syntaxKinds[0] == SyntaxKind.OpenParenToken &&
-			syntaxKinds[syntaxKinds.Length - 1] == SyntaxKind.CloseParenToken;
+		private static bool NeedToCheckExpression(IReadOnlyList<SyntaxKind> syntaxKinds)
+		{
+			return syntaxKinds.Count > 2 &&
+					syntaxKinds[0] == SyntaxKind.OpenParenToken &&
+					syntaxKinds[^1] == SyntaxKind.CloseParenToken;
+		}
 
-		private bool ContainsRedundantBrackets(IEnumerable<SyntaxKind> syntaxKinds)
+		private static bool ContainsRedundantBrackets(IEnumerable<SyntaxKind> syntaxKinds)
 		{
 			var pairBracketsCount = 0;
 			var brackets = syntaxKinds

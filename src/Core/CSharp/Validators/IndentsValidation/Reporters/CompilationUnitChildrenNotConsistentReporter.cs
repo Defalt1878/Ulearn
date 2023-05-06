@@ -14,9 +14,7 @@ namespace Ulearn.Core.CSharp.Validators.IndentsValidation.Reporters
 				.Where(i => i.IndentedTokenIsFirstAtLine)
 				.ToList();
 			if (!childLineIndents.Any())
-			{
 				return Enumerable.Empty<SolutionStyleError>();
-			}
 
 			var firstIndent = childLineIndents.First();
 			return childLineIndents

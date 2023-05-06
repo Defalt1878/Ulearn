@@ -18,16 +18,16 @@ namespace Ulearn.Core.Model
 		public string GetRegion(Label label, bool withoutAttributes = false)
 		{
 			var region = regions.GetOrDefault(label.Name, null);
-			if (region == null)
-				return null;
-			return code.Substring(region.dataStart, region.dataLength).RemoveCommonNesting();
+			return region is null
+				? null
+				: code.Substring(region.dataStart, region.dataLength).RemoveCommonNesting();
 		}
 
 		public string ReplaceRegionContent(Label label, string regionContent)
 		{
 			var region = regions.GetOrDefault(label.Name, null);
-			var prefix = code.Substring(0, region.dataStart);
-			var suffix = code.Substring(region.dataStart + region.dataLength);
+			var prefix = code[..region.dataStart];
+			var suffix = code[(region.dataStart + region.dataLength)..];
 			return prefix + regionContent + suffix;
 		}
 	}

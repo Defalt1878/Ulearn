@@ -11,13 +11,13 @@ namespace Ulearn.Core.CSharp.Validators
 		}
 
 		protected override SolutionStyleError FindErrorInLocalFunctionDeclaration(LocalFunctionStatementSyntax method)
-		{ 
+		{
 			return FindErrorInMethodBody(method.Body);
 		}
-		
+
 		private static SolutionStyleError FindErrorInMethodBody(BlockSyntax body)
 		{
-			var hasError = body.Statements.Count != 1 || !(body.Statements.Single() is ReturnStatementSyntax);
+			var hasError = body.Statements.Count != 1 || body.Statements.Single() is not ReturnStatementSyntax;
 			if (hasError)
 				return new SolutionStyleError(StyleErrorType.Single01, body);
 			return null;

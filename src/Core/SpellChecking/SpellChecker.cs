@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -12,9 +13,15 @@ namespace Ulearn.Core.SpellChecking
 {
 	public class SpellingError
 	{
+		public string Misspelling { get; set; }
+
+		public string Context { get; set; }
+
+		public string[] Suggestions { get; set; }
+
 		private bool Equals(SpellingError other)
 		{
-			return string.Equals(Mispelling, other.Mispelling);
+			return string.Equals(Misspelling, other.Misspelling);
 		}
 
 		public override bool Equals(object obj)
@@ -28,45 +35,37 @@ namespace Ulearn.Core.SpellChecking
 			return Equals((SpellingError)obj);
 		}
 
+		[SuppressMessage("ReSharper", "NonReadonlyMemberInGetHashCode")]
 		public override int GetHashCode()
 		{
-			return (Mispelling != null ? Mispelling.GetHashCode() : 0);
+			return Misspelling?.GetHashCode() ?? 0;
 		}
-
-		public string Mispelling { get; set; }
-
-		public string Context { get; set; }
-
-		public string[] Suggestions { get; set; }
 
 		public override string ToString()
 		{
-			return $"{nameof(Mispelling)}: {Mispelling}, {nameof(Context)}: {Context}, {nameof(Suggestions)}: {string.Join(", ", Suggestions)}";
+			return $"{nameof(Misspelling)}: {Misspelling}, {nameof(Context)}: {Context}, {nameof(Suggestions)}: {string.Join(", ", Suggestions)}";
 		}
 	}
 
 	public class SpellChecker : IDisposable
 	{
-		private readonly Regex wordRegEx = new(@"\b(?<word>\w+)(?<dotEnding>\.\s*)?", RegexOptions.Compiled);
 		private readonly Regex camelCaseRegEx = new(@"[А-Яа-я][a-я]*(([А-Я][а-я]*)+)", RegexOptions.Compiled);
+
+		private readonly Hunspell hunspell;
 
 		private readonly string[] prefixes;
 
-		private readonly HashSet<char> vowels = new(new[] { 'а', 'о', 'у', 'ы', 'и', 'е', 'ю', 'я', 'ё', 'э' });
-
-		private readonly Hunspell hunspell;
+		private readonly Regex wordRegEx = new(@"\b(?<word>\w+)(?<dotEnding>\.\s*)?", RegexOptions.Compiled);
 
 		public SpellChecker(string customDictionaryPath)
 		{
 			prefixes = Resources.customPrefixes.SplitToLines();
 			hunspell = new Hunspell(Encoding.UTF8.GetBytes(Resources.ru_RU_aff), Encoding.UTF8.GetBytes(Resources.ru_RU_dic));
 
-			InitializeInternalCustomDicionary(hunspell);
+			InitializeInternalCustomDictionary(hunspell);
 
 			if (!string.IsNullOrEmpty(customDictionaryPath))
-			{
 				InitializeCustomDictionary(hunspell, customDictionaryPath);
-			}
 		}
 
 		public SpellChecker()
@@ -74,7 +73,13 @@ namespace Ulearn.Core.SpellChecking
 		{
 		}
 
-		private void InitializeCustomDictionary(Hunspell _hunspell, string[] dictionaryLines)
+		public void Dispose()
+		{
+			hunspell.Dispose();
+			GC.SuppressFinalize(this);
+		}
+
+		private static void InitializeCustomDictionary(Hunspell hunspell, string[] dictionaryLines)
 		{
 			foreach (var dictionaryLine in dictionaryLines)
 			{
@@ -83,26 +88,22 @@ namespace Ulearn.Core.SpellChecking
 
 				var tokens = dictionaryLine.Split(':');
 				if (tokens.Length == 1)
-				{
-					_hunspell.Add(tokens[0].Trim());
-				}
+					hunspell.Add(tokens[0].Trim());
 				else
-				{
-					_hunspell.AddWithAffix(tokens[0].Trim(), tokens[1].Trim());
-				}
+					hunspell.AddWithAffix(tokens[0].Trim(), tokens[1].Trim());
 			}
 		}
 
-		private void InitializeCustomDictionary(Hunspell _hunspell, string customDictionaryPath)
+		private static void InitializeCustomDictionary(Hunspell hunspell, string customDictionaryPath)
 		{
 			var dictionaryLines = File.ReadAllLines(customDictionaryPath);
-			InitializeCustomDictionary(_hunspell, dictionaryLines);
+			InitializeCustomDictionary(hunspell, dictionaryLines);
 		}
 
-		private void InitializeInternalCustomDicionary(Hunspell _hunspell)
+		private static void InitializeInternalCustomDictionary(Hunspell hunspell)
 		{
 			var dictionaryLines = Resources.customDictionary.SplitToLines();
-			InitializeCustomDictionary(_hunspell, dictionaryLines);
+			InitializeCustomDictionary(hunspell, dictionaryLines);
 		}
 
 		public void AddWord(string customWord)
@@ -140,9 +141,7 @@ namespace Ulearn.Core.SpellChecking
 					//dot was sentence sign
 					var nextCharIndex = dotEnding.Index + dotEnding.Length;
 					if (nextCharIndex >= str.Length || char.IsUpper(str[nextCharIndex]))
-					{
 						wordList.Add(word);
-					}
 				}
 			}
 
@@ -164,7 +163,7 @@ namespace Ulearn.Core.SpellChecking
 				return null;
 
 			//WORD_WITH_UNDERSCORE - probably xml tag
-			if (word.Contains("_"))
+			if (word.Contains('_'))
 				return null;
 
 			var normalizedWord = new string(word.Where(IsRussianLetter).ToArray());
@@ -185,20 +184,20 @@ namespace Ulearn.Core.SpellChecking
 			// it is abbreviation or its wordform - ignore it
 			if (abbreviationPartLength >= 3)
 			{
-				var suffixSize = (normalizedWord.Length - abbreviationPartLength);
-				var wordFormPartExist = (1 <= suffixSize && suffixSize <= 2);
+				var suffixSize = normalizedWord.Length - abbreviationPartLength;
+				var wordFormPartExist = suffixSize is >= 1 and <= 2;
 				var appropriateSize = suffixSize == 0 && abbreviationPartLength <= 5;
 				if (wordFormPartExist || appropriateSize)
 					return null;
 			}
 
-			string lowercasedNormalizedWord = normalizedWord.ToLower();
+			var lowercasedNormalizedWord = normalizedWord.ToLower();
 			if (hunspell.Spell(normalizedWord) || hunspell.Spell(lowercasedNormalizedWord))
 				return null;
 
 			var isPrefixedWord = prefixes.Any(
 				prefix => lowercasedNormalizedWord.StartsWith(prefix)
-						&& hunspell.Spell(lowercasedNormalizedWord.Substring(prefix.Length)));
+						&& hunspell.Spell(lowercasedNormalizedWord[prefix.Length..]));
 			if (isPrefixedWord)
 				return null;
 
@@ -210,15 +209,10 @@ namespace Ulearn.Core.SpellChecking
 
 			return new SpellingError
 			{
-				Mispelling = word,
+				Misspelling = word,
 				Suggestions = suggests.ToArray(),
 				Context = context
 			};
-		}
-
-		public void Dispose()
-		{
-			hunspell.Dispose();
 		}
 
 		private static bool IsRussianLetter(char c)

@@ -30,7 +30,7 @@ namespace Ulearn.Core.CSharp
 			var isGetter = name.StartsWith("Get", StringComparison.OrdinalIgnoreCase);
 			return method.IsVoid() && isGetter;
 		}
-		
+
 		public static bool IsNoArgsSetter(this LocalFunctionStatementSyntax method)
 		{
 			var name = method.Identifier.Text;

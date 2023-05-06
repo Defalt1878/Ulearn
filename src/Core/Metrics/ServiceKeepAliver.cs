@@ -5,7 +5,6 @@ namespace Ulearn.Core.Metrics
 	public class ServiceKeepAliver
 	{
 		private readonly MetricSender sender;
-		public DateTime LastPingTime { get; private set; }
 
 		public ServiceKeepAliver(MetricSender sender)
 		{
@@ -17,6 +16,8 @@ namespace Ulearn.Core.Metrics
 			: this(new MetricSender(serviceName))
 		{
 		}
+
+		public DateTime LastPingTime { get; private set; }
 
 		public void Ping()
 		{

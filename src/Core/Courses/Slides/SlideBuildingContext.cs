@@ -44,8 +44,7 @@ namespace Ulearn.Core.Courses.Slides
 			if (extractor != null)
 				return extractor;
 
-			if (code == null)
-				code = UnitDirectory.GetContent(filename);
+			code ??= UnitDirectory.GetContent(filename);
 			extractor = new RegionsExtractor(code, language, filename);
 			Extractors.Add(extractor);
 			return extractor;

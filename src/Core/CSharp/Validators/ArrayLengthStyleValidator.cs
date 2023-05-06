@@ -22,10 +22,9 @@ namespace Ulearn.Core.CSharp.Validators
 				.ToList();
 		}
 
-		private IEnumerable<SolutionStyleError> InspectMethod<TCycle>(TCycle cycleStatement, SemanticModel semanticModel) where TCycle : StatementSyntax
+		private static IEnumerable<SolutionStyleError> InspectMethod<TCycle>(TCycle cycleStatement, SemanticModel semanticModel) where TCycle : StatementSyntax
 		{
-			var forStatement = cycleStatement as ForStatementSyntax;
-			var methodInvocations = (forStatement != null
+			var methodInvocations = (cycleStatement is ForStatementSyntax forStatement
 					? (forStatement.Condition?.DescendantNodes()).EmptyIfNull().Concat(forStatement.Statement.DescendantNodes())
 					: cycleStatement.DescendantNodes())
 				.OfType<InvocationExpressionSyntax>()
@@ -48,7 +47,7 @@ namespace Ulearn.Core.CSharp.Validators
 				if (variable != null)
 				{
 					var variableSymbol = semanticModel.GetSymbolInfo(variable).Symbol;
-					var variableName = variableSymbol.ToString();
+					var variableName = variableSymbol?.ToString();
 					if (!cycleStatement.ContainsAssignmentOf(variableName, semanticModel)
 						&& !methodInvocations.Any(m => m.HasVariableAsArgument(variableName, semanticModel)))
 						yield return new SolutionStyleError(StyleErrorType.ArrayLength01, methodInvocation);

@@ -9,7 +9,7 @@ namespace Ulearn.Core.Courses
 {
 	public class Course : ICourse
 	{
-		public Course(string id, List<Unit> units, [NotNull]CourseSettings settings, [NotNull]CourseVersionToken courseVersionToken)
+		public Course(string id, List<Unit> units, [NotNull] CourseSettings settings, [NotNull] CourseVersionToken courseVersionToken)
 		{
 			Id = id;
 			this.units = units;
@@ -25,21 +25,17 @@ namespace Ulearn.Core.Courses
 		public bool IsTempCourse() => CourseVersionToken.IsTempCourse();
 
 		public string Title => Settings.Title;
+
 		[NotNull]
-		public CourseSettings Settings { get; private set; }
+		public CourseSettings Settings { get; }
 
-		private List<Unit> units;
+		private readonly List<Unit> units;
 
-		private List<Slide> slidesCache { get; set; }
+		private List<Slide> SlidesCache { get; set; }
 
 		private List<Slide> Slides
 		{
-			get { return slidesCache ??= units.SelectMany(u => u.GetSlides(true)).ToList(); }
-		}
-
-		private IEnumerable<Slide> GetNotHiddenSlides(IEnumerable<Guid> visibleUnits)
-		{
-			return GetUnits(visibleUnits).SelectMany(u => u.GetSlides(false));
+			get { return SlidesCache ??= units.SelectMany(u => u.GetSlides(true)).ToList(); }
 		}
 
 		public List<Slide> GetSlidesNotSafe()
@@ -48,7 +44,7 @@ namespace Ulearn.Core.Courses
 		}
 
 		// visibleUnits может быть null, если withHidden true
-		public List<Slide> GetSlides(bool withHidden, [CanBeNull]IEnumerable<Guid> visibleUnits)
+		public List<Slide> GetSlides(bool withHidden, IEnumerable<Guid> visibleUnits)
 		{
 			if (withHidden)
 				return Slides;
@@ -64,7 +60,7 @@ namespace Ulearn.Core.Courses
 
 		// visibleUnits может быть null, если withHidden true
 		[CanBeNull]
-		public Slide FindSlideById(Guid slideId, bool withHidden, [CanBeNull]IEnumerable<Guid> visibleUnits)
+		public Slide FindSlideById(Guid slideId, bool withHidden, IEnumerable<Guid> visibleUnits)
 		{
 			if (!withHidden && visibleUnits == null)
 				throw new Exception($"{nameof(FindSlideById)} !withHidden && visibleUnits == null");
@@ -96,9 +92,7 @@ namespace Ulearn.Core.Courses
 		[CanBeNull]
 		public Unit FindUnitById(Guid unitId, List<Guid> visibleUnits)
 		{
-			if (!visibleUnits.Contains(unitId))
-				return null;
-			return FindUnitByIdNotSafe(unitId);
+			return visibleUnits.Contains(unitId) ? FindUnitByIdNotSafe(unitId) : null;
 		}
 
 		[NotNull]
@@ -131,9 +125,7 @@ namespace Ulearn.Core.Courses
 			return units.Where(u => visibleUnitsSet.Contains(u.Id)).ToList();
 		}
 
-		/*
-		 * Возвращает все юниты курса без проверки, что у пользователя есть доступ к ним
-		 */
+		// Возвращает все юниты курса без проверки, что у пользователя есть доступ к ним
 		public List<Unit> GetUnitsNotSafe()
 		{
 			return units;
@@ -143,6 +135,11 @@ namespace Ulearn.Core.Courses
 		public Unit FindUnitBySlideIdNotSafe(Guid slideId, bool withHiddenSlides) // не проверяет, что unit опубликован
 		{
 			return units.FirstOrDefault(u => u.GetSlides(withHiddenSlides).Any(s => s.Id == slideId));
+		}
+
+		private IEnumerable<Slide> GetNotHiddenSlides(IEnumerable<Guid> visibleUnits)
+		{
+			return GetUnits(visibleUnits).SelectMany(u => u.GetSlides(false));
 		}
 
 		public override string ToString()

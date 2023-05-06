@@ -51,7 +51,7 @@ namespace Ulearn.Core.Courses.Slides.Blocks
 				.Select(p => (
 					ImageFile: new FileInfo(Path.Combine(context.CourseDirectory.FullName, context.Slide.Unit.UnitDirectoryRelativeToCourse, p)),
 					RelativeToUnitDirectoryImagePath: p.Replace('\\', '/')
-					))
+				))
 				.ToArray();
 			return new GalleryComponent(urlName, context.DisplayName, urlName, imageFiles);
 		}

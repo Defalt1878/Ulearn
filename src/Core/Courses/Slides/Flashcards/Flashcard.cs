@@ -26,30 +26,11 @@ namespace Ulearn.Core.Courses.Slides.Flashcards
 
 		public void BuildUp(SlideLoadingContext context, Slide flashcardSlide)
 		{
-			if (Answer is null)
-			{
-				Answer = new FlashcardContent();
-			}
-
-			if (Question is null)
-			{
-				Question = new FlashcardContent();
-			}
-
-			if (Answer.Blocks is null)
-			{
-				Answer.Blocks = new SlideBlock[0];
-			}
-
-			if (Question.Blocks is null)
-			{
-				Question.Blocks = new SlideBlock[0];
-			}
-
-			if (TheorySlidesIds is null)
-			{
-				TheorySlidesIds = new Guid[0];
-			}
+			Answer ??= new FlashcardContent();
+			Answer.Blocks ??= Array.Empty<SlideBlock>();
+			Question ??= new FlashcardContent();
+			Question.Blocks ??= Array.Empty<SlideBlock>();
+			TheorySlidesIds ??= Array.Empty<Guid>();
 
 			var slideLoadingContext = new SlideBuildingContext(context, flashcardSlide);
 			Answer.Blocks = Answer.Blocks
@@ -64,14 +45,10 @@ namespace Ulearn.Core.Courses.Slides.Flashcards
 		{
 			var slideBuildingContext = new SlideBuildingContext(context, flashcardSlide);
 			foreach (var block in Question.Blocks)
-			{
 				block.Validate(slideBuildingContext);
-			}
 
 			foreach (var block in Answer.Blocks)
-			{
 				block.Validate(slideBuildingContext);
-			}
 		}
 
 		public string RenderQuestion(MarkdownRenderContext markdownContext)

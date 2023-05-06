@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
 using System.Xml.Serialization;
@@ -25,21 +26,39 @@ namespace Ulearn.Core.Courses.Slides.Exercises.Blocks
 		[XmlAttribute("file")]
 		public string CodeFile { get; set; }
 
-		public override bool HasAutomaticChecking() => Language == Common.Language.CSharp;
+		// То, что будет выполняться для проверки задания
+		[XmlIgnore]
+		public string ExerciseCode { get; set; }
+
+		// Индекс внутри ExerciseCode, куда нужно вставить код пользователя.
+		[XmlIgnore]
+		public int IndexToInsertSolution { get; set; }
+
+		// Если это вставить в ExerciseCode по индексу IndexToInsertSolution и выполнить полученный код, он должен вывести ExpectedOutput
+		[XmlIgnore]
+		public string EthalonSolution { get; set; }
+
+		// Временно создано для конвертации .cs-слайдов в .xml-слайды. Когда .cs-слайдов не останется, можно удалить
+		[XmlIgnore]
+		public List<string> ExcludedFromSolution { get; set; } = new();
+
+		public override bool HasAutomaticChecking()
+		{
+			return Language == Common.Language.CSharp;
+		}
 
 		public override IEnumerable<SlideBlock> BuildUp(SlideBuildingContext context, IImmutableSet<string> filesInProgress)
 		{
-			CodeFile = CodeFile ?? context.Slide.DefaultIncludeCodeFile ?? context.Unit.Settings?.DefaultIncludeCodeFile;
+			CodeFile ??= context.Slide.DefaultIncludeCodeFile ?? context.Unit.Settings?.DefaultIncludeCodeFile;
 			if (CodeFile == null)
-				throw new CourseLoadingException($"У блока <exercise.file> не указан атрибут file.");
+				throw new CourseLoadingException("У блока <exercise.file> не указан атрибут file.");
 
 			if (ExerciseInitialCode == null)
-				throw new CourseLoadingException($"У блока <exercise.file> не указан код, который надо показывать пользователю перед началом работы. Укажите его в тэге <initialCode>");
+				throw new CourseLoadingException("У блока <exercise.file> не указан код, который надо показывать пользователю перед началом работы. Укажите его в тэге <initialCode>");
 
-			if (!Language.HasValue)
-				Language = LanguageHelpers.GuessByExtension(new FileInfo(CodeFile));
+			Language ??= LanguageHelpers.GuessByExtension(new FileInfo(CodeFile));
 
-			RemovedLabels = RemovedLabels ?? new Label[0];
+			RemovedLabels ??= Array.Empty<Label>();
 			if (PreludeFile == null)
 			{
 				PreludeFile = context.CourseSettings.GetPrelude(Language);
@@ -70,22 +89,6 @@ namespace Ulearn.Core.Courses.Slides.Exercises.Blocks
 
 			yield return this;
 		}
-
-		// То, что будет выполняться для проверки задания
-		[XmlIgnore]
-		public string ExerciseCode { get; set; }
-
-		// Индекс внутри ExerciseCode, куда нужно вставить код пользователя.
-		[XmlIgnore]
-		public int IndexToInsertSolution { get; set; }
-
-		// Если это вставить в ExerciseCode по индексу IndexToInsertSolution и выполнить полученный код, он должен вывести ExpectedOutput
-		[XmlIgnore]
-		public string EthalonSolution { get; set; }
-
-		// Временно создано для конвертации .cs-слайдов в .xml-слайды. Когда .cs-слайдов не останется, можно удалить
-		[XmlIgnore]
-		public List<string> ExcludedFromSolution { get; set; } = new();
 
 		public override string GetSourceCode(string code)
 		{

@@ -29,8 +29,8 @@ namespace Ulearn.Core.Courses.Units
 
 		[XmlArray("slides")]
 		[XmlArrayItem("add")]
-		public string[] SlidesPaths { get; set; } = new string[0];
-		
+		public string[] SlidesPaths { get; set; } = Array.Empty<string>();
+
 		[XmlAttribute("isExtraContent")]
 		[DefaultValue(false)]
 		public bool IsExtraContent { get; set; }
@@ -61,7 +61,7 @@ namespace Ulearn.Core.Courses.Units
 
 				if (scoringGroup.IsEnabledForEveryoneSpecified)
 					throw new CourseLoadingException(
-						$"В настройках модуля «{unitSettings.Title}» для группы баллов {scoringGroup.Id} указана опция enableForEveryone=\"{scoringGroup._enabledForEveryone}\" (файл {file.FullName}). " +
+						$"В настройках модуля «{unitSettings.Title}» для группы баллов {scoringGroup.Id} указана опция enableForEveryone=\"{scoringGroup.enabledForEveryone}\" (файл {file.FullName}). " +
 						"Эту опцию можно указывать только в настройках всего курса (файл course.xml)");
 			}
 
@@ -79,7 +79,7 @@ namespace Ulearn.Core.Courses.Units
 			var unitSettings = new UnitSettings
 			{
 				/* We use Win1251 only for back compatibility.
-				   In future all units will have Unit.xml with Id specified, so we will be able to switch to Encoding.UTF8 here or remove this function. */
+					In future all units will have Unit.xml with Id specified, so we will be able to switch to Encoding.UTF8 here or remove this function. */
 				Id = title.ToDeterministicGuid(Encoding.GetEncoding(1251)),
 				Url = title.ToLatin(),
 				Title = title,

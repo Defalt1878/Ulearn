@@ -1,7 +1,7 @@
 using System.Linq;
 using Ulearn.Common.Extensions;
 
-namespace uLearn.CSharp
+namespace Ulearn.Core.CSharp
 {
 	public static class SpellingValidatorPrimitives
 	{

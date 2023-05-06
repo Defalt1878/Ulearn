@@ -21,10 +21,7 @@ namespace Ulearn.Core.Model.Edx.EdxComponents
 		public string Filename;
 
 		[XmlIgnore]
-		public override string SubfolderName
-		{
-			get { return "html"; }
-		}
+		public override string SubfolderName => "html";
 
 		[XmlIgnore]
 		public Component[] Subcomponents;
@@ -53,7 +50,7 @@ namespace Ulearn.Core.Model.Edx.EdxComponents
 		public override void Save(string folderName)
 		{
 			base.Save(folderName);
-			File.WriteAllText(string.Format("{0}/{1}/{2}.html", folderName, SubfolderName, UrlName), HtmlContent);
+			File.WriteAllText($"{folderName}/{SubfolderName}/{UrlName}.html", HtmlContent);
 		}
 
 		public override void SaveAdditional(string folderName)
@@ -69,7 +66,7 @@ namespace Ulearn.Core.Model.Edx.EdxComponents
 			try
 			{
 				foreach (var (file, edxFileName) in staticFiles.EmptyIfNull())
-					File.Copy(file.FullName, $"{folderName}/static/{edxFileName}", overwrite: true);
+					File.Copy(file.FullName, $"{folderName}/static/{edxFileName}", true);
 			}
 			catch (Exception e)
 			{
@@ -90,7 +87,7 @@ namespace Ulearn.Core.Model.Edx.EdxComponents
 		public static HtmlComponent Load(string folderName, string urlName, EdxLoadOptions options)
 		{
 			return Load<HtmlComponent>(folderName, "html", urlName, options,
-				c => { c.HtmlContent = File.ReadAllText(string.Format("{0}/html/{1}.html", folderName, c.Filename)); });
+				c => { c.HtmlContent = File.ReadAllText($"{folderName}/html/{c.Filename}.html"); });
 		}
 	}
 }

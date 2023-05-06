@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
@@ -38,8 +39,7 @@ namespace Ulearn.Core.Courses.Slides.Blocks
 
 		public override IEnumerable<SlideBlock> BuildUp(SlideBuildingContext context, IImmutableSet<string> filesInProgress)
 		{
-			if (Blocks == null)
-				Blocks = new SlideBlock[0];
+			Blocks ??= Array.Empty<SlideBlock>();
 
 			Blocks = Blocks.SelectMany(b => b.BuildUp(context, filesInProgress)).ToArray();
 
@@ -56,7 +56,7 @@ namespace Ulearn.Core.Courses.Slides.Blocks
 
 		public override void Validate(SlideBuildingContext slideBuildingContext)
 		{
-			if (HideQuizButton && !(slideBuildingContext.Slide is QuizSlide))
+			if (HideQuizButton && slideBuildingContext.Slide is not QuizSlide)
 				throw new CourseLoadingException("У блока <spoiler> указан атрибут hideQuizButton=\"true\", хотя слайд не является тестом. Этот атрибут можно использовать только внутри <slide.quiz>");
 		}
 	}

@@ -10,6 +10,7 @@ using Ulearn.Core.Model.Edx.EdxComponents;
 namespace Ulearn.Core.Model.Edx
 {
 	public delegate void NonExistentItemHandler(string type, string urlName);
+
 	public record FileInEdxCourse(string Directory, string FileName, string Extension); // Строки в record сравниваются по значению
 
 	public class EdxLoadOptions
@@ -50,7 +51,7 @@ namespace Ulearn.Core.Model.Edx
 			StaticFiles = Directory.GetFiles($"{Utils.GetRootDirectory()}/static");
 		}
 
-		private void CreateDirectories(string rootDir, params string[] subDirs)
+		private static void CreateDirectories(string rootDir, params string[] subDirs)
 		{
 			if (!Directory.Exists(rootDir))
 				Directory.CreateDirectory(rootDir);
@@ -79,7 +80,7 @@ namespace Ulearn.Core.Model.Edx
 
 		public static EdxCourse Load(string folderName, EdxLoadOptions options = null)
 		{
-			options = options ?? new EdxLoadOptions();
+			options ??= new EdxLoadOptions();
 			var course = new FileInfo($"{folderName}/course.xml").DeserializeXml<EdxCourse>();
 			course.StaticFiles = $"{folderName}/static".GetFiles();
 			course.CourseWithChapters = CourseWithChapters.Load(folderName, course.UrlName, options);
@@ -101,7 +102,7 @@ namespace Ulearn.Core.Model.Edx
 			else
 			{
 				var unsortedChapter = CourseWithChapters.Chapters.Single(x => x.UrlName == "Unsorted");
-				var filename = string.Format("{0}/chapter/{1}.xml", folderName, unsortedChapter.UrlName);
+				var filename = $"{folderName}/chapter/{unsortedChapter.UrlName}.xml";
 				var chapterXml = XDocument.Load(filename).Root ?? new XElement("chapter");
 				var newSequential = new Sequential(Utils.NewNormalizedGuid(), "Unsorted " + DateTime.Now, verticals);
 				chapterXml.Add(new XElement("sequential", new XAttribute("url_name", newSequential.UrlName)));
@@ -117,13 +118,10 @@ namespace Ulearn.Core.Model.Edx
 				x => x.Sequentials.Where(y => y.Verticals.Any(z => z.UrlName == verticalId))).ToList();
 			if (sequentials.Count > 1)
 				throw new Exception(
-					string.Format("Vertical {0} are in several sequentials {1}",
-						verticalId,
-						string.Join(", ", sequentials.Select(s => s.UrlName))));
+					$"Vertical {verticalId} are in several sequentials {string.Join(", ", sequentials.Select(s => s.UrlName))}");
 			if (sequentials.Count == 0)
 				throw new Exception(
-					string.Format("Vertical {0} are not in any sequential!",
-						verticalId));
+					$"Vertical {verticalId} are not in any sequential!");
 
 			return sequentials.Single();
 		}
