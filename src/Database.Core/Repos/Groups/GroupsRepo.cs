@@ -285,7 +285,11 @@ namespace Database.Repos.Groups
 		public Task<List<string>> GetMyGroupsUsersIdsFilterAccessibleToUserAsync(string courseId, string userId, bool includeArchived = false)
 		{
 			var groups = db.GroupAccesses
-				.Where(ga => ga.Group.CourseId == courseId && (ga.UserId == userId && ga.IsEnabled || ga.Group.OwnerId == userId))
+				.Where(ga =>
+					ga.Group.CourseId == courseId &&
+					!ga.Group.IsDeleted &&
+					(ga.UserId == userId && ga.IsEnabled || ga.Group.OwnerId == userId)
+				)
 				.Select(ga => ga.Group);
 			if (!includeArchived)
 				groups = groups.Where(g => !g.IsArchived);
