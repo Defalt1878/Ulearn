@@ -68,7 +68,7 @@ public class CodeReviewController : BaseController
 			parameters.GroupIds ??= new List<int>();
 			foreach (var groupId in parameters.GroupIds)
 				if (
-					await groupsRepo.IsGroupExist<SingleGroup>(groupId) ||
+					!await groupsRepo.IsGroupExist<SingleGroup>(groupId) ||
 					(!isCourseAdmin && !await groupAccessesRepo.HasUserGrantedAccessToGroupOrIsOwnerAsync(groupId, UserId))
 				)
 					return StatusCode((int)HttpStatusCode.NotFound, $"Group with id {groupId} not found.");
@@ -82,7 +82,7 @@ public class CodeReviewController : BaseController
 				: await groupsRepo.GetMyGroupsUsersIdsFilterAccessibleToUserAsync(courseId, UserId);
 			foreach (var studentId in parameters.StudentIds)
 				if (
-					await usersRepo.IsUserExist(studentId) ||
+					!await usersRepo.IsUserExist(studentId) ||
 					(!isCourseAdmin && !accessibleStudents!.Contains(studentId))
 				)
 					return StatusCode((int)HttpStatusCode.NotFound, $"Student with id {studentId} not found.");
