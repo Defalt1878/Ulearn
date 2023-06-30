@@ -20,13 +20,11 @@ namespace Ulearn.Web.Api.Models.Responses.Exercise
 		[DataMember]
 		public SolutionRunStatus SolutionRunStatus;
 
-		[CanBeNull]
 		[DataMember]
-		public string Message { get; set; } // Сообщение от проверяющей системы в случае ошибок на сервере и в случае некоторых ошибок компиляции.
+		public string? Message { get; set; } // Сообщение от проверяющей системы в случае ошибок на сервере и в случае некоторых ошибок компиляции.
 
-		[CanBeNull]
 		[DataMember]
-		public SubmissionInfo Submission; // Если submission создан, он лежит в Submission, иначе null. Не создан в случае некоторых ошибок на сервере и иногда в случае ошибок компиляции.
+		public SubmissionInfo? Submission; // Если submission создан, он лежит в Submission, иначе null. Не создан в случае некоторых ошибок на сервере и иногда в случае ошибок компиляции.
 
 		[DataMember]
 		public int? Score { get; set; } // В случае rightAnswer не null. В остальных как попало; если null, то не изменился.

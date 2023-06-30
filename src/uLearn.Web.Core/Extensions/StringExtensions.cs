@@ -90,24 +90,6 @@ public static class StringExtensions
 		return s[index];
 	}
 
-	public static int FindLineStartIndex(this string s, int lineNumber)
-	{
-		var currentIndex = 0;
-		for (var i = 0; i < lineNumber; i++)
-		{
-			currentIndex = s.IndexOf('\n', currentIndex) + 1;
-			if (currentIndex == 0)
-				return 0;
-		}
-
-		return currentIndex;
-	}
-
-	public static int FindPositionByLineAndCharacter(this string s, int lineNumber, int charNumber)
-	{
-		return s.FindLineStartIndex(lineNumber) + charNumber;
-	}
-
 	// /* TODO (andgein): Move to ControllerBase? */
 	public static bool IsLocalUrl(this string url, HttpRequest request)
 	{

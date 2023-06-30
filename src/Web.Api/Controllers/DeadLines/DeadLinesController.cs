@@ -72,7 +72,7 @@ namespace Ulearn.Web.Api.Controllers.DeadLines
 			[FromQuery] Guid unitId,
 			[FromQuery] DeadLineSlideType slideType,
 			[FromQuery] string slideValue,
-			[FromQuery] [CanBeNull] List<Guid> userIds,
+			[FromQuery] List<Guid>? userIds,
 			[FromQuery] DateTime date,
 			[FromQuery] int scorePercent)
 		{
@@ -93,7 +93,7 @@ namespace Ulearn.Web.Api.Controllers.DeadLines
 			[FromQuery] Guid unitId,
 			[FromQuery] DeadLineSlideType slideType,
 			[FromQuery] string slideValue,
-			[FromQuery] [CanBeNull] List<Guid> userIds,
+			[FromQuery] List<Guid>? userIds,
 			[FromQuery] DateTime date,
 			[FromQuery] int scorePercent)
 		{

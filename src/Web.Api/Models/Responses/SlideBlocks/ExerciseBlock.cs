@@ -23,34 +23,28 @@ namespace Ulearn.Web.Api.Models.Responses.SlideBlocks
 		[DataMember]
 		public Language[] Languages { get; set; }
 
-		[CanBeNull]
 		[DataMember]
-		public Dictionary<Language, LanguageLaunchInfo> LanguageInfo { get; set; } // Для языка содержит его текстовое название, если оно не такое же, как поле enum
+		public Dictionary<Language, LanguageLaunchInfo>? LanguageInfo { get; set; } // Для языка содержит его текстовое название, если оно не такое же, как поле enum
 		
 		[DataMember]
 		public Language? DefaultLanguage { get; set; }
 		
 
-		[NotNull]
 		[DataMember]
 		public string[] RenderedHints { get; set; }
 
-		[NotNull]
 		[DataMember]
 		public string ExerciseInitialCode { get; set; }
 
 		[DataMember]
 		public bool HideSolutions { get; set; }
 
-		[CanBeNull]
 		[DataMember]
-		public string ExpectedOutput { get; set; } // В том числе может быть не пуст, но скрыт от студента, тогда и здесь null
+		public string? ExpectedOutput { get; set; } // В том числе может быть не пуст, но скрыт от студента, тогда и здесь null
 		
-		[CanBeNull]
 		[DataMember]
-		public List<SelfCheckupResponse> Checkups { get; set; }
+		public List<SelfCheckupResponse>? Checkups { get; set; }
 
-		[NotNull]
 		[DataMember]
 		public ExerciseAttemptsStatistics AttemptsStatistics { get; set; }
 		

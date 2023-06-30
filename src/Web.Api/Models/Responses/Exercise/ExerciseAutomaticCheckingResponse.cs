@@ -33,20 +33,17 @@ namespace Ulearn.Web.Api.Models.Responses.Exercise
 		[DataMember]
 		public AutomaticExerciseCheckingResult Result;
 
-		[CanBeNull]
 		[DataMember]
-		public string Output;
+		public string? Output;
 
-		[CanBeNull]
 		[DataMember]
-		public string CheckerLogs;
+		public string? CheckerLogs;
 
-		[CanBeNull]
 		[DataMember]
-		public List<ReviewInfo> Reviews;
+		public List<ReviewInfo>? Reviews;
 
-		public static ExerciseAutomaticCheckingResponse Build([NotNull] AutomaticExerciseChecking checking,
-			[CanBeNull] List<ReviewInfo> botReviews, bool showCheckerLogs)
+		public static ExerciseAutomaticCheckingResponse Build(AutomaticExerciseChecking checking,
+			List<ReviewInfo>? botReviews, bool showCheckerLogs)
 		{
 			var result = new ExerciseAutomaticCheckingResponse
 			{

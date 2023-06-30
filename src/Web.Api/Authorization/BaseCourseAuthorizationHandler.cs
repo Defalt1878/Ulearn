@@ -21,7 +21,7 @@ namespace Ulearn.Web.Api.Authorization
 		 * query string (/groups/?course_id=<course_id>)
 		 * NOTE: not supported JSON request body})
 		 */
-		protected string GetCourseIdFromRequestAsync(AuthorizationFilterContext mvcContext)
+		protected string? GetCourseIdFromRequestAsync(AuthorizationFilterContext mvcContext)
 		{
 			/* 1. Route data */
 			var routeData = mvcContext.RouteData;

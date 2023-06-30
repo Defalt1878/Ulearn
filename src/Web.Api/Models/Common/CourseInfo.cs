@@ -23,7 +23,7 @@ namespace Ulearn.Web.Api.Models.Common
 		[DataMember]
 		public DateTime? NextUnitPublishTime { get; set; }
 
-		[DataMember][NotNull]
+		[DataMember]
 		public ScoringSettingsModel Scoring { get; set; }
 
 		[DataMember]
@@ -38,23 +38,22 @@ namespace Ulearn.Web.Api.Models.Common
 
 	public class ScoringSettingsModel
 	{
-		[NotNull]
 		public List<ScoringGroupModel> Groups { get; set; }
 	}
 
 	public class ScoringGroupModel
 	{
-		[DataMember][NotNull]
+		[DataMember]
 		public string Id { get; set; }
 		
-		[DataMember][NotNull]
+		[DataMember]
 		public string Name { get; set; }
 
-		[DataMember][CanBeNull]
-		public string Abbr { get; set; }
+		[DataMember]
+		public string? Abbr { get; set; }
 
-		[DataMember][CanBeNull]
-		public string Description { get; set; }
+		[DataMember]
+		public string? Description { get; set; }
 
 		[DataMember]
 		public decimal Weight { get; set; } = 1;

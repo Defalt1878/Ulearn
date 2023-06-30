@@ -11,12 +11,10 @@ namespace Ulearn.Web.Api.Models.Responses.Exercise
 		[DataMember]
 		public int? Percent; // null только когда ревью не оценено
 
-		[NotNull]
 		[DataMember]
 		public List<ReviewInfo> Reviews;
 
-		[CanBeNull]
-		public static ExerciseManualCheckingResponse Build([CanBeNull]ManualExerciseChecking manualExerciseChecking, [NotNull]List<ReviewInfo> reviewInfos)
+		public static ExerciseManualCheckingResponse? Build(ManualExerciseChecking? manualExerciseChecking, List<ReviewInfo> reviewInfos)
 		{
 			if (manualExerciseChecking == null)
 				return null;

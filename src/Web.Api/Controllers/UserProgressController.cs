@@ -135,8 +135,7 @@ namespace Ulearn.Web.Api.Controllers
 			};
 		}
 
-		[ItemCanBeNull]
-		private async Task<List<string>> GetUserIdsWithProgressNotVisibleForUser(string courseId, List<string> userIds)
+		private async Task<List<string>?> GetUserIdsWithProgressNotVisibleForUser(string courseId, List<string> userIds)
 		{
 			var isSystemAdministrator = await IsSystemAdministratorAsync().ConfigureAwait(false);
 			if (isSystemAdministrator)

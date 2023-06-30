@@ -29,8 +29,7 @@ namespace Ulearn.Web.Api.Models.Common
 		public int MaxScore { get; set; }
 
 		[DataMember]
-		[CanBeNull]
-		public string ScoringGroup { get; set; }
+		public string? ScoringGroup { get; set; }
 
 		[DataMember]
 		public SlideType Type { get; set; }

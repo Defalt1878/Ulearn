@@ -64,7 +64,7 @@ namespace Ulearn.Web.Api.Controllers
 
 			var exerciseSlides = course.GetSlidesNotSafe().OfType<ExerciseSlide>().ToList();
 
-			var allSlideCheckings = await slideCheckingsRepo.GetManualCheckingQueueFilterQuery<ManualExerciseChecking>(new ManualCheckingQueueFilterOptions
+			var allSlideCheckings = await slideCheckingsRepo.GetManualCheckingQueueFilterQuery<ManualExerciseChecking>(new ManualCheckingQueueFilterOptionsObsolete
 			{
 				CourseId = course.Id,
 				Count = count,

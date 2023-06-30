@@ -16,8 +16,7 @@ namespace Ulearn.Web.Api.Clients
 
 	public class UlearnVideoAnnotationsClient : IUlearnVideoAnnotationsClient
 	{
-		[CanBeNull]
-		private readonly VideoAnnotationsClient instance;
+		private readonly VideoAnnotationsClient? instance;
 
 		public UlearnVideoAnnotationsClient(IOptions<WebApiConfiguration> options)
 		{
@@ -29,8 +28,7 @@ namespace Ulearn.Web.Api.Clients
 				);
 		}
 
-		[ItemCanBeNull]
-		public async Task<Annotation> GetVideoAnnotations(string videoAnnotationsGoogleDoc, string videoId)
+		public async Task<Annotation?> GetVideoAnnotations(string videoAnnotationsGoogleDoc, string videoId)
 		{
 			if (string.IsNullOrEmpty(videoAnnotationsGoogleDoc))
 				return null;

@@ -8,7 +8,6 @@ namespace Ulearn.Web.Api.Models.Parameters
 	public class UserProgressParameters
 	{
 		[DataMember]
-		[CanBeNull]
-		public List<string> UserIds { get; set; }
+		public List<string>? UserIds { get; set; }
 	}
 }

@@ -340,20 +340,21 @@ namespace Database
 			AddIndex<Notification>(modelBuilder, c => c.CreateTime);
 			AddIndex<Notification>(modelBuilder, c => c.AreDeliveriesCreated);
 
-			AddIndex<ManualExerciseChecking>(modelBuilder, c => new { c.CourseId, c.SlideId });
+			AddIndex<ManualExerciseChecking>(modelBuilder, c => new { c.CourseId, c.SlideId, c.UserId, c.Timestamp });
 			AddIndex<ManualExerciseChecking>(modelBuilder, c => new { c.CourseId, c.SlideId, c.UserId, c.ProhibitFurtherManualCheckings });
 			AddIndex<ManualExerciseChecking>(modelBuilder, c => new { c.CourseId, c.SlideId, c.Timestamp });
-			AddIndex<ManualExerciseChecking>(modelBuilder, c => new { c.CourseId, c.UserId });
+			AddIndex<ManualExerciseChecking>(modelBuilder, c => new { c.CourseId, c.IsChecked, c.UserId, c.SlideId, c.Timestamp });
+			AddIndex<ManualExerciseChecking>(modelBuilder, c => new { c.CourseId, c.IsChecked, c.SlideId });
 			AddIndex<AutomaticExerciseChecking>(modelBuilder, c => new { c.CourseId, c.SlideId });
 			AddIndex<AutomaticExerciseChecking>(modelBuilder, c => new { c.CourseId, c.SlideId, c.UserId });
 			AddIndex<AutomaticExerciseChecking>(modelBuilder, c => new { c.CourseId, c.SlideId, c.Timestamp });
 			AddIndex<AutomaticExerciseChecking>(modelBuilder, c => new { c.CourseId, c.UserId });
 			AddIndex<AutomaticExerciseChecking>(modelBuilder, c => c.IsRightAnswer);
 			AddIndex<AutomaticExerciseChecking>(modelBuilder, c => new { c.CourseId, c.SlideId, c.IsRightAnswer });
-			AddIndex<ManualQuizChecking>(modelBuilder, c => new { c.CourseId, c.SlideId });
-			AddIndex<ManualQuizChecking>(modelBuilder, c => new { c.CourseId, c.SlideId, c.UserId });
+			AddIndex<ManualQuizChecking>(modelBuilder, c => new { c.CourseId, c.SlideId, c.UserId, c.Timestamp });
 			AddIndex<ManualQuizChecking>(modelBuilder, c => new { c.CourseId, c.SlideId, c.Timestamp });
-			AddIndex<ManualQuizChecking>(modelBuilder, c => new { c.CourseId, c.UserId });
+			AddIndex<ManualQuizChecking>(modelBuilder, c => new { c.CourseId, c.IsChecked, c.UserId, c.SlideId, c.Timestamp });
+			AddIndex<ManualQuizChecking>(modelBuilder, c => new { c.CourseId, c.IsChecked, c.SlideId });
 			AddIndex<AutomaticQuizChecking>(modelBuilder, c => new { c.CourseId, c.SlideId });
 			AddIndex<AutomaticQuizChecking>(modelBuilder, c => new { c.CourseId, c.SlideId, c.UserId });
 			AddIndex<AutomaticQuizChecking>(modelBuilder, c => new { c.CourseId, c.SlideId, c.Timestamp });

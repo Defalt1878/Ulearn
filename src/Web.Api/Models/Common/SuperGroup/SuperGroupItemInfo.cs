@@ -16,11 +16,9 @@ public class SuperGroupItemInfo
 
 	/// <summary>Students which should be in group. Null if group should be deleted</summary>
 	[DataMember]
-	[CanBeNull]
-	public List<string> StudentNames { get; set; }
+	public List<string>? StudentNames { get; set; }
 
 	/// <summary>Students which have joined group. Not null if group status is created</summary>
 	[DataMember]
-	[CanBeNull]
-	public List<GroupMemberInfo> JoinedStudents { get; set; }
+	public List<GroupMemberInfo>? JoinedStudents { get; set; }
 }

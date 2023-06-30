@@ -25,8 +25,10 @@ namespace Database.Repos
 		Task<int?> GetLastReviewPercentForExerciseSlide(string courseId, Guid slideId, string userId, DateTime? submissionBefore = null);
 		Task<int> GetUserScoreForQuizSlide(string courseId, Guid slideId, string userId, int maxAutomaticScorePercent = 100);
 		List<(Guid SlideId, int Percent)> GetPassedManualExerciseCheckingsAndPercents(Course course, string userId, IEnumerable<Guid> visibleUnits);
-		Task<List<T>> GetManualCheckingQueue<T>(ManualCheckingQueueFilterOptions options) where T : AbstractManualSlideChecking;
-		IQueryable<T> GetManualCheckingQueueFilterQuery<T>(ManualCheckingQueueFilterOptions options) where T : AbstractManualSlideChecking;
+		[Obsolete($"Use new version {nameof(GetManualCheckingQueue)}")]
+		Task<List<T>> GetManualCheckingQueue<T>(ManualCheckingQueueFilterOptionsObsolete options) where T : AbstractManualSlideChecking;
+		Task<IEnumerable<T>> GetManualCheckingQueue<T>(ManualCheckingQueueFilterOptions options) where T : AbstractManualSlideChecking;
+		IQueryable<T> GetManualCheckingQueueFilterQuery<T>(ManualCheckingQueueFilterOptionsObsolete options) where T : AbstractManualSlideChecking;
 		Task<int> GetQuizManualCheckingCount(string courseId, Guid slideId, string userId, DateTime? beforeTimestamp);
 		Task<T> FindManualCheckingById<T>(int id) where T : AbstractManualSlideChecking;
 		Task<bool> IsProhibitedToSendExerciseToManualChecking(string courseId, Guid slideId, string userId);
@@ -60,6 +62,6 @@ namespace Database.Repos
 		Task RefreshExerciseStatisticsMaterializedViews();
 		Task EditExerciseCodeReviewComment(ExerciseCodeReviewComment codeReviewComment, string text);
 		Task<List<string>> GetTopUserReviewComments(string courseId, Guid slideId, string userId, int count);
-		Task<HashSet<Guid>> GetManualCheckingQueueSlideIds<T>(ManualCheckingQueueFilterOptions options) where T : AbstractManualSlideChecking;
+		Task<HashSet<Guid>> GetManualCheckingQueueSlideIds<T>(ManualCheckingQueueFilterOptionsObsolete options) where T : AbstractManualSlideChecking;
 	}
 }

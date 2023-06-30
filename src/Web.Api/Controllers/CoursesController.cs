@@ -140,7 +140,7 @@ namespace Ulearn.Web.Api.Controllers
 		/// </summary>
 		/// <param name="groupId">If null, returns data for the current user, otherwise for a group</param>
 		[HttpGet("{courseId}")]
-		public async Task<ActionResult<CourseInfo>> CourseInfo([FromRoute] string courseId, [FromQuery] [CanBeNull] int? groupId = null)
+		public async Task<ActionResult<CourseInfo>> CourseInfo([FromRoute] string courseId, [FromQuery] int? groupId = null)
 		{
 			if (!courseStorage.HasCourse(courseId))
 				return NotFound(new ErrorResponse("Course not found"));

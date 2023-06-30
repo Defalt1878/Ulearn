@@ -18,7 +18,7 @@ namespace Ulearn.Web.Api.Models.Responses.Submissions
 
 		public static SubmissionsResponse Build(
 			IEnumerable<UserExerciseSubmission> submissions,
-			[CanBeNull] Dictionary<int, IEnumerable<ExerciseCodeReviewComment>> reviewId2Comments,
+			Dictionary<int, IEnumerable<ExerciseCodeReviewComment>>? reviewId2Comments,
 			bool showCheckerLogs = false,
 			bool prohibitFurtherManualChecking = true
 		)

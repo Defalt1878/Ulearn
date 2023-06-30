@@ -17,9 +17,8 @@ namespace Ulearn.Web.Api.Models.Responses.Exercise
 		[DataMember]
 		public int Id { get; set; }
 
-		[CanBeNull]
 		[DataMember]
-		public ShortUserInfo Author; // null для ulearn bot
+		public ShortUserInfo? Author; // null для ulearn bot
 
 		[DataMember]
 		public int StartLine;
@@ -45,7 +44,7 @@ namespace Ulearn.Web.Api.Models.Responses.Exercise
 		[DataMember]
 		public List<ReviewCommentResponse> Comments;
 
-		public static ReviewInfo Build(ExerciseCodeReview r, [CanBeNull] IEnumerable<ExerciseCodeReviewComment> comments, bool isUlearnBot)
+		public static ReviewInfo Build(ExerciseCodeReview r, IEnumerable<ExerciseCodeReviewComment>? comments, bool isUlearnBot)
 		{
 			return new ReviewInfo
 			{

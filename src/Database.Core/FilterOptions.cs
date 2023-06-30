@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using JetBrains.Annotations;
 
 namespace Database
 {
@@ -13,9 +14,9 @@ namespace Database
 		public List<string> UserIds { get; set; }
 	}
 
-	public class ManualCheckingQueueFilterOptions : AbstractFilterOptionByCourseAndUsers
+	public class ManualCheckingQueueFilterOptionsObsolete : AbstractFilterOptionByCourseAndUsers
 	{
-		public ManualCheckingQueueFilterOptions()
+		public ManualCheckingQueueFilterOptionsObsolete()
 		{
 			OnlyChecked = false;
 
@@ -29,6 +30,30 @@ namespace Database
 
 		public DateTime From { get; set; }
 		public DateTime To { get; set; }
+	}
+
+	public class ManualCheckingQueueFilterOptions : AbstractFilterOptionByCourseAndUsers
+	{
+		public ManualCheckingQueueFilterOptions()
+		{
+			IsReviewed = false;
+			DateSort = DateSort.Ascending;
+		}
+
+		[CanBeNull]
+		public Guid[] SlideIds { get; set; }
+
+		public bool IsReviewed { get; set; }
+
+		public DateSort DateSort { get; set; }
+
+		public int Count { get; set; }
+	}
+
+	public enum DateSort
+	{
+		Ascending,
+		Descending
 	}
 
 	public class VisitsFilterOptions : AbstractFilterOptionByCourseAndUsers

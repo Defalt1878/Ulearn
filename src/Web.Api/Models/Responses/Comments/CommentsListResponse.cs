@@ -50,7 +50,6 @@ namespace Ulearn.Web.Api.Models.Responses.Comments
 		[DataMember]
 		public int LikesCount { get; set; }
 
-		[NotNull]
 		[DataMember]
 		public List<CommentResponse> Replies { get; set; }
 

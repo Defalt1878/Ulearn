@@ -33,6 +33,11 @@ namespace Database.Repos.Users
 			return user == null || user.IsDeleted ? null : user;
 		}
 
+		public Task<bool> IsUserExist(string userId)
+		{
+			return db.Users.AnyAsync(user => user.Id == userId && !user.IsDeleted);
+		}
+
 		public Task<List<string>> FindUsersBySocialProviderKey(string providerKey)
 		{
 			return db.UserLogins.Where(login => login.ProviderKey == providerKey).Select(login => login.UserId).Distinct().ToListAsync();

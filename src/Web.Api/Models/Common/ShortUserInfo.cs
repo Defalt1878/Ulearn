@@ -10,10 +10,10 @@ namespace Ulearn.Web.Api.Models.Common
 		public string Id { get; set; }
 
 		[DataMember(EmitDefaultValue = false)]
-		public string Login { get; set; }
+		public string? Login { get; set; }
 
 		[DataMember(EmitDefaultValue = false)]
-		public string Email { get; set; }
+		public string? Email { get; set; }
 
 		[DataMember]
 		public string FirstName { get; set; }

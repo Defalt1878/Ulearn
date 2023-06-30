@@ -50,7 +50,7 @@ namespace Ulearn.Web.Api.Authorization
 				return;
 			}
 
-			if (!context.User.Identity.IsAuthenticated)
+			if (!context.User.Identity!.IsAuthenticated)
 			{
 				context.Fail();
 				return;

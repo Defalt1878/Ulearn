@@ -1,14 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Claims;
 using System.Threading.Tasks;
 using Database.Models;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
-using NUnit.Framework;
 using Ulearn.Core.Courses;
-using Z.EntityFramework.Plus;
 
 namespace Database.Repos.Groups
 {
@@ -197,7 +194,17 @@ namespace Database.Repos.Groups
 		{
 			return db.Set<T>().FirstOrDefaultAsync(g => g.Id == groupId && !g.IsDeleted);
 		}
-		
+
+		public Task<bool> IsGroupExist<T>(int groupId) where T : GroupBase
+		{
+			return db.Set<T>().AnyAsync(g => g.Id == groupId && !g.IsDeleted);
+		}
+
+		public Task<bool> IsGroupExist(int groupId)
+		{
+			return IsGroupExist<GroupBase>(groupId);
+		}
+
 		[ItemCanBeNull]
 		public Task<List<T>> FindGroupsByIdsAsync<T>(List<int> groupIds) where T : GroupBase
 		{
@@ -264,12 +271,30 @@ namespace Database.Repos.Groups
 
 		public Task<List<GroupBase>> GetMyGroupsFilterAccessibleToUserAsync(string courseId, string userId, bool includeArchived = false)
 		{
-			var accessibleGroupsIds = db.GroupAccesses.Where(a => a.Group.CourseId == courseId && a.UserId == userId && a.IsEnabled).Select(a => a.GroupId);
+			var accessibleGroupsIds = db.GroupAccesses
+				.Where(a => a.Group.CourseId == courseId && a.UserId == userId && a.IsEnabled)
+				.Select(a => a.GroupId);
 
 			var groups = db.Groups.Where(g => g.CourseId == courseId && !g.IsDeleted && (g.OwnerId == userId || accessibleGroupsIds.Contains(g.Id)));
 			if (!includeArchived)
 				groups = groups.Where(g => !g.IsArchived);
 			return groups.ToListAsync();
+		}
+
+		// Получение пользователей из групп в которых пользователь является владельцем либо преподавателем
+		public Task<List<string>> GetMyGroupsUsersIdsFilterAccessibleToUserAsync(string courseId, string userId, bool includeArchived = false)
+		{
+			var groups = db.GroupAccesses
+				.Where(ga => ga.Group.CourseId == courseId && (ga.UserId == userId && ga.IsEnabled || ga.Group.OwnerId == userId))
+				.Select(ga => ga.Group);
+			if (!includeArchived)
+				groups = groups.Where(g => !g.IsArchived);
+			var userIds = groups
+				.SelectMany(g => g.Members)
+				.Where(member => !member.User.IsDeleted)
+				.Select(member => member.UserId)
+				.Distinct();
+			return userIds.ToListAsync();
 		}
 
 		public async Task<bool> GetDefaultProhibitFutherReviewForUser(string courseId, string userId, string instructorId)

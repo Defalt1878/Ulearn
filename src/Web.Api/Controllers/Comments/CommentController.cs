@@ -206,7 +206,7 @@ namespace Ulearn.Web.Api.Controllers.Comments
 			return await Comment(commentId, new CommentParameters { WithReplies = false }).ConfigureAwait(false);
 		}
 
-		private async Task UpdateCommentTextAsync([NotNull] Comment comment, string text, string parentCommentCourseId)
+		private async Task UpdateCommentTextAsync(Comment comment, string text, string parentCommentCourseId)
 		{
 			var canEditOrDeleteComment = await CanEditOrDeleteCommentAsync(comment, UserId, parentCommentCourseId).ConfigureAwait(false);
 			if (!canEditOrDeleteComment)
@@ -218,7 +218,7 @@ namespace Ulearn.Web.Api.Controllers.Comments
 			await commentsRepo.EditCommentTextAsync(comment.Id, text).ConfigureAwait(false);
 		}
 
-		private async Task UpdateCommentIsApprovedAsync([NotNull] Comment comment, bool isApproved, string parentCommentCourseId)
+		private async Task UpdateCommentIsApprovedAsync(Comment comment, bool isApproved, string parentCommentCourseId)
 		{
 			var canModerateComments =
 				await CanModerateCommentsInCourseAsync(comment.CourseId, UserId).ConfigureAwait(false)
@@ -231,7 +231,7 @@ namespace Ulearn.Web.Api.Controllers.Comments
 				await NotifyAboutNewCommentAsync(comment).ConfigureAwait(false);
 		}
 
-		private async Task UpdateCommentIsPinnedAsync([NotNull] Comment comment, bool isPinned, string parentCommentCourseId)
+		private async Task UpdateCommentIsPinnedAsync(Comment comment, bool isPinned, string parentCommentCourseId)
 		{
 			var canModerateComments =
 				await CanModerateCommentsInCourseAsync(comment.CourseId, UserId).ConfigureAwait(false)
@@ -242,7 +242,7 @@ namespace Ulearn.Web.Api.Controllers.Comments
 			await commentsRepo.PinCommentAsync(comment.Id, isPinned).ConfigureAwait(false);
 		}
 
-		private async Task UpdateCommentIsCorrectAnswerAsync([NotNull] Comment comment, bool isCorrectAnswer, string parentCommentCourseId)
+		private async Task UpdateCommentIsCorrectAnswerAsync(Comment comment, bool isCorrectAnswer, string parentCommentCourseId)
 		{
 			var canModerateComments =
 				await CanModerateCommentsInCourseAsync(comment.CourseId, UserId).ConfigureAwait(false)

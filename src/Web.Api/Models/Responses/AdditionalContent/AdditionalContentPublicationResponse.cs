@@ -22,9 +22,7 @@ namespace Ulearn.Web.Api.Models.Responses.AdditionalContent
 		[DataMember]
 		public Guid UnitId;
 
-		[DataMember]
-		[CanBeNull]
-		public Guid? SlideId;
+		[DataMember] public Guid? SlideId;
 
 		[DataMember]
 		public DateTime Date;

@@ -28,7 +28,7 @@ namespace Ulearn.Web.Api.Controllers
 		private readonly IMasterCourseManager courseManager;
 		private static ILog log => LogProvider.Get().ForContext(typeof(TempCourseController));
 
-		public TempCourseController(ICourseStorage courseStorage, IMasterCourseManager courseManager, UlearnDb db, [CanBeNull] IUsersRepo usersRepo, ITempCoursesRepo tempCoursesRepo, ICourseRolesRepo courseRolesRepo)
+		public TempCourseController(ICourseStorage courseStorage, IMasterCourseManager courseManager, UlearnDb db, IUsersRepo? usersRepo, ITempCoursesRepo tempCoursesRepo, ICourseRolesRepo courseRolesRepo)
 			: base(courseStorage, db, usersRepo)
 		{
 			this.tempCoursesRepo = tempCoursesRepo;

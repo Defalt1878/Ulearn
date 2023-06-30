@@ -14,9 +14,8 @@ namespace Ulearn.Web.Api.Models.Responses.Exercise
 		[DataMember]
 		public int Id;
 
-		[NotNull]
 		[DataMember]
-		public string Code;
+		public string Code = null!;
 
 		[DataMember]
 		public Language Language;
@@ -24,17 +23,15 @@ namespace Ulearn.Web.Api.Models.Responses.Exercise
 		[DataMember]
 		public DateTime Timestamp;
 
-		[CanBeNull]
 		[DataMember]
-		public ExerciseAutomaticCheckingResponse AutomaticChecking; // null если задача не имеет автоматических тестов, это не отменяет возможности ручной проверки.
+		public ExerciseAutomaticCheckingResponse? AutomaticChecking; // null если задача не имеет автоматических тестов, это не отменяет возможности ручной проверки.
 
-		[CanBeNull]
 		[DataMember]
-		public ExerciseManualCheckingResponse ManualChecking; // null, если у submission нет ManualExerciseChecking
+		public ExerciseManualCheckingResponse? ManualChecking; // null, если у submission нет ManualExerciseChecking
 
 		public static SubmissionInfo Build(
 			UserExerciseSubmission submission,
-			[CanBeNull] Dictionary<int, IEnumerable<ExerciseCodeReviewComment>> reviewId2Comments,
+			Dictionary<int, IEnumerable<ExerciseCodeReviewComment>>? reviewId2Comments,
 			bool showCheckerLogs)
 		{
 			var botReviews = submission.NotDeletedReviews
@@ -58,7 +55,7 @@ namespace Ulearn.Web.Api.Models.Responses.Exercise
 		}
 
 		private static ReviewInfo ToReviewInfo(ExerciseCodeReview r, bool isUlearnBot,
-			[CanBeNull] Dictionary<int, IEnumerable<ExerciseCodeReviewComment>> reviewId2Comments)
+			Dictionary<int, IEnumerable<ExerciseCodeReviewComment>>? reviewId2Comments)
 		{
 			var comments = reviewId2Comments?.GetValueOrDefault(r.Id);
 			return ReviewInfo.Build(r, comments, isUlearnBot);

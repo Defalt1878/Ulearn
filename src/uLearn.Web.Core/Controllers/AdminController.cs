@@ -587,13 +587,13 @@ public class AdminController : Controller
 		});
 	}
 
-	private async Task<ManualCheckingQueueFilterOptions> GetManualCheckingFilterOptionsByGroup(string courseId, List<string> groupsIds)
+	private async Task<ManualCheckingQueueFilterOptionsObsolete> GetManualCheckingFilterOptionsByGroup(string courseId, List<string> groupsIds)
 	{
-		return await ControllerUtils.GetFilterOptionsByGroup<ManualCheckingQueueFilterOptions>(groupsRepo, groupAccessesRepo, User, courseId, groupsIds);
+		return await ControllerUtils.GetFilterOptionsByGroup<ManualCheckingQueueFilterOptionsObsolete>(groupsRepo, groupAccessesRepo, User, courseId, groupsIds);
 	}
 
 	/* Returns merged checking queue for exercises (code reviews) as well as for quizzes */
-	private async Task<List<AbstractManualSlideChecking>> GetMergedCheckingQueue(ManualCheckingQueueFilterOptions filterOptions)
+	private async Task<List<AbstractManualSlideChecking>> GetMergedCheckingQueue(ManualCheckingQueueFilterOptionsObsolete filterOptions)
 	{
 		var result = (await slideCheckingsRepo.GetManualCheckingQueue<ManualExerciseChecking>(filterOptions)).Cast<AbstractManualSlideChecking>().ToList();
 		result.AddRange(await slideCheckingsRepo.GetManualCheckingQueue<ManualQuizChecking>(filterOptions));
@@ -605,7 +605,7 @@ public class AdminController : Controller
 		return result;
 	}
 
-	private async Task<HashSet<Guid>> GetMergedCheckingQueueSlideIds(ManualCheckingQueueFilterOptions filterOptions)
+	private async Task<HashSet<Guid>> GetMergedCheckingQueueSlideIds(ManualCheckingQueueFilterOptionsObsolete filterOptions)
 	{
 		var result = await slideCheckingsRepo.GetManualCheckingQueueSlideIds<ManualExerciseChecking>(filterOptions);
 		result.UnionWith(await slideCheckingsRepo.GetManualCheckingQueueSlideIds<ManualQuizChecking>(filterOptions));
@@ -681,7 +681,7 @@ public class AdminController : Controller
 	}
 
 	// Возвращает слайды, по которым есть работы (проверенные или непроверенные, зависит от галочки), разделитель и оставшиеся слайды (не важно проверенные или нет).
-	private async Task<List<KeyValuePair<Guid, Slide>>> GetAllCheckingsSlides(Course course, List<string> groupsIds, ManualCheckingQueueFilterOptions filterOptions)
+	private async Task<List<KeyValuePair<Guid, Slide>>> GetAllCheckingsSlides(Course course, List<string> groupsIds, ManualCheckingQueueFilterOptionsObsolete filterOptions)
 	{
 		filterOptions.SlidesIds = null;
 		var usedSlidesIds = await GetMergedCheckingQueueSlideIds(filterOptions);

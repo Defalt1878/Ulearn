@@ -28,12 +28,10 @@ namespace Ulearn.Web.Api.Models.Responses.DeadLines
 		public DeadLineSlideType SlideType { get; set; }
 		
 		[DataMember]
-		[CanBeNull]
-		public string SlideValue { get; set; }
+		public string? SlideValue { get; set; }
 
 		[DataMember]
-		[CanBeNull]
-		public List<Guid> UserIds { get; set; }
+		public List<Guid>? UserIds { get; set; }
 
 		[DataMember]
 		public int ScorePercent { get; set; }

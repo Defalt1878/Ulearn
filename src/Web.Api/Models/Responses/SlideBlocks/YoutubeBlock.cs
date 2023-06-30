@@ -20,14 +20,12 @@ namespace Ulearn.Web.Api.Models.Responses.SlideBlocks
 		public string VideoId { get; set; }
 
 		[DataMember(Name = "annotation")]
-		[CanBeNull]
-		public Annotation Annotation { get; set; }
+		public Annotation? Annotation { get; set; }
 
 		[DataMember(Name = "googleDocLink")]
-		[CanBeNull]
-		public string GoogleDocLink { get; set; }
+		public string? GoogleDocLink { get; set; }
 
-		public YoutubeBlockResponse(YoutubeBlock youtubeBlock, [CanBeNull]Annotation annotation, [CanBeNull]string googleDocLink)
+		public YoutubeBlockResponse(YoutubeBlock youtubeBlock, Annotation? annotation, string? googleDocLink)
 		{
 			Hide = youtubeBlock.Hide;
 			VideoId = youtubeBlock.VideoId;

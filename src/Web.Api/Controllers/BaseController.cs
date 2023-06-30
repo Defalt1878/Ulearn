@@ -88,7 +88,7 @@ namespace Ulearn.Web.Api.Controllers
 			};
 		}
 
-		protected NotificationCommentInfo BuildNotificationCommentInfo(Comment comment)
+		protected NotificationCommentInfo? BuildNotificationCommentInfo(Comment? comment)
 		{
 			if (comment == null)
 				return null;
@@ -127,7 +127,6 @@ namespace Ulearn.Web.Api.Controllers
 			return s => GetMaxScoreForUsersSlide(s, solvedSlidesIds.Contains(s.Id), slidesWithUsersManualChecking.Contains(s.Id), enabledManualCheckingForUser);
 		}
 
-		[NotNull]
 		public static async Task<Func<Slide, string>> BuildGetGitEditLinkFunc(string userId, Course course,
 			ICourseRolesRepo courseRolesRepo, ICoursesRepo coursesRepo)
 		{
@@ -165,7 +164,7 @@ namespace Ulearn.Web.Api.Controllers
 
 		public static int GetMaxScoreForUsersSlide(Slide slide, bool isSolved, bool hasManualChecking, bool enabledManualCheckingForUser)
 		{
-			var isExerciseOrQuiz = slide is ExerciseSlide || slide is QuizSlide;
+			var isExerciseOrQuiz = slide is ExerciseSlide or QuizSlide;
 
 			if (!isExerciseOrQuiz)
 				return slide.MaxScore;
@@ -177,7 +176,7 @@ namespace Ulearn.Web.Api.Controllers
 		
 		private static int GetMaxScoreForGuest(Slide slide)
 		{
-			var isExerciseOrQuiz = slide is ExerciseSlide || slide is QuizSlide;
+			var isExerciseOrQuiz = slide is ExerciseSlide or QuizSlide;
 
 			if (!isExerciseOrQuiz)
 				return slide.MaxScore;

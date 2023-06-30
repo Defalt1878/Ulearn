@@ -50,7 +50,7 @@ namespace Ulearn.Web.Api.Controllers.Comments
 
 		protected List<CommentResponse> BuildCommentsListResponse(IEnumerable<Comment> comments,
 			bool canUserSeeNotApprovedComments, DefaultDictionary<int, List<Comment>> replies, DefaultDictionary<int, int> commentLikesCount, HashSet<int> likedByUserCommentsIds,
-			[CanBeNull] Dictionary<string, List<SingleGroup>> authorId2Groups, [CanBeNull]HashSet<string> authorsWithPassed,  [CanBeNull] HashSet<int> userAvailableGroups, bool canViewAllGroupMembers, bool addCourseIdAndSlideId, bool addParentCommentId, bool addReplies)
+			Dictionary<string, List<SingleGroup>>? authorId2Groups, HashSet<string>? authorsWithPassed,  HashSet<int>? userAvailableGroups, bool canViewAllGroupMembers, bool addCourseIdAndSlideId, bool addParentCommentId, bool addReplies)
 		{
 			return comments.Select(c => BuildCommentResponse(c, canUserSeeNotApprovedComments, replies, commentLikesCount, likedByUserCommentsIds,
 				authorId2Groups, authorsWithPassed, userAvailableGroups, canViewAllGroupMembers, addCourseIdAndSlideId, addParentCommentId, addReplies)).ToList();
@@ -59,7 +59,7 @@ namespace Ulearn.Web.Api.Controllers.Comments
 		protected CommentResponse BuildCommentResponse(
 			Comment comment,
 			bool canUserSeeNotApprovedComments, DefaultDictionary<int, List<Comment>> replies, DefaultDictionary<int, int> commentLikesCount, HashSet<int> likedByUserCommentsIds,
-			[CanBeNull] Dictionary<string, List<SingleGroup>> authorId2Groups, [CanBeNull]HashSet<string> authorsWithPassed, [CanBeNull] HashSet<int> userAvailableGroups,
+			Dictionary<string, List<SingleGroup>>? authorId2Groups, HashSet<string>? authorsWithPassed, HashSet<int>? userAvailableGroups,
 			bool canViewAllGroupMembers, bool addCourseIdAndSlideId, bool addParentCommentId, bool addReplies
 		)
 		{

@@ -39,6 +39,8 @@ namespace Database.Repos.Groups
 		Task DeleteGroupAsync(int groupId);
 		Task<T> FindGroupByIdAsync<T>(int groupId) where T : GroupBase;
 		Task<GroupBase> FindGroupByIdAsync(int groupId);
+		Task<bool> IsGroupExist<T>(int groupId) where T : GroupBase;
+		Task<bool> IsGroupExist(int groupId);
 		Task<List<T>> FindGroupsByIdsAsync<T>(List<int> groupIds) where T : GroupBase;
 		Task<List<SingleGroup>> FindGroupsBySuperGroupIdAsync(int superGroupId, bool includeArchived = false);
 		Task<List<SingleGroup>> FindGroupsBySuperGroupIdsAsync(List<int> superGroupIds, bool includeArchived = false);
@@ -46,6 +48,7 @@ namespace Database.Repos.Groups
 		Task<GroupBase> FindGroupByInviteHashAsync_WithDisabledLink(Guid hash);
 		Task<List<GroupBase>> GetCourseGroupsAsync(string courseId, GroupQueryType groupType, bool includeArchived = false);
 		Task<List<GroupBase>> GetMyGroupsFilterAccessibleToUserAsync(string courseId, string userId, bool includeArchived = false);
+		Task<List<string>> GetMyGroupsUsersIdsFilterAccessibleToUserAsync(string courseId, string userId, bool includeArchived = false);
 		Task EnableInviteLinkAsync(int groupId, bool isEnabled);
 		Task<bool> IsManualCheckingEnabledForUserAsync(Course course, string userId);
 		Task<bool> GetDefaultProhibitFurtherReviewForUserAsync(string courseId, string userId, string instructorId);

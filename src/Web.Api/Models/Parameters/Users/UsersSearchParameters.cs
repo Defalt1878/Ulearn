@@ -9,14 +9,14 @@ namespace Ulearn.Web.Api.Models.Parameters.Users
 	public class UsersSearchParameters : IPaginationParameters
 	{
 		[FromQuery(Name = "userId")]
-		public string UserId { get; set; }
+		public string? UserId { get; set; }
 		
 		[FromQuery(Name = "query")]
 		[MaxLength(100, ErrorMessage = "Query should be at most 100 chars")]
-		public string Query { get; set; }
+		public string? Query { get; set; }
 
 		[FromQuery(Name = "courseId")]
-		public string CourseId { get; set; }
+		public string? CourseId { get; set; }
 
 		[FromQuery(Name = "courseRole")]
 		public CourseRoleType? CourseRoleType { get; set; }

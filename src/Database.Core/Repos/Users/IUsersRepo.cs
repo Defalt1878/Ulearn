@@ -9,6 +9,7 @@ namespace Database.Repos.Users
 	{
 		[ItemCanBeNull]
 		Task<ApplicationUser> FindUserById(string userId);
+		Task<bool> IsUserExist(string userId);
 		Task<List<string>> GetSysAdminsIds();
 		Task ChangeTelegram(string userId, long? chatId, string chatTitle);
 		Task ConfirmEmail(string userId, bool isConfirmed = true);

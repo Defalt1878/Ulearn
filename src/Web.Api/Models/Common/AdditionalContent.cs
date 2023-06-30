@@ -10,7 +10,6 @@ namespace Ulearn.Web.Api.Models.Common
 		public bool IsAdditionalContent { get; set; }
 
 		[DataMember]
-		[CanBeNull]
-		public string PublicationDate { get; set; }
+		public string? PublicationDate { get; set; }
 	}
 }

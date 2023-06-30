@@ -40,18 +40,15 @@ namespace Ulearn.Web.Api.Models.Responses.AcceptedSolutions
 		public Language Language { get; set; }
 
 		[DataMember]
-		[CanBeNull]
 		public int? LikesCount { get; set; }
 
 		[DataMember]
-		[CanBeNull]
 		public bool? LikedByMe { get; set; }
 
 		[DataMember(EmitDefaultValue = false)]
-		[CanBeNull]
-		public ShortUserInfo PromotedBy { get; set; }
+		public ShortUserInfo? PromotedBy { get; set; }
 
-		public AcceptedSolution(int submissionId, string code, Language language, int? likesCount, bool? likedByMe, [CanBeNull] ShortUserInfo promotedBy)
+		public AcceptedSolution(int submissionId, string code, Language language, int? likesCount, bool? likedByMe, ShortUserInfo? promotedBy)
 		{
 			SubmissionId = submissionId;
 			Code = code;

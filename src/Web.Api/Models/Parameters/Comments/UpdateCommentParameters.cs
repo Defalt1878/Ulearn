@@ -9,11 +9,10 @@ namespace Ulearn.Web.Api.Models.Parameters.Comments
 	[DataContract]
 	public class UpdateCommentParameters
 	{
-		[CanBeNull]
 		[DataMember]
 		[NotEmpty(CanBeNull = true, ErrorMessage = "Text can not be empty")]
 		[MaxLength(CommentsPolicy.MaxCommentLength, ErrorMessage = "Comment is too large. Max allowed length is 10000 chars")]
-		public string Text { get; set; }
+		public string? Text { get; set; }
 
 		[DataMember]
 		public bool? IsApproved { get; set; }

@@ -12,6 +12,6 @@ namespace Ulearn.Web.Api.Authorization
 	{
 		[FromQuery(Name = "courseId")]
 		[BindRequired]
-		public string CourseId { get; set; }
+		public string CourseId { get; set; } = null!;
 	}
 }

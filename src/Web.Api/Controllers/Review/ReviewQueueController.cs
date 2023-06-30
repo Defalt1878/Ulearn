@@ -91,13 +91,13 @@ namespace Ulearn.Web.Api.Controllers.Review
 			return Ok($"Submission {submissionId} locked by you for 30 minutes");
 		}
 
-		private async Task<ManualCheckingQueueFilterOptions> GetManualCheckingFilterOptionsByGroup(string courseId, List<string> groupsIds)
+		private async Task<ManualCheckingQueueFilterOptionsObsolete> GetManualCheckingFilterOptionsByGroup(string courseId, List<string> groupsIds)
 		{
 			return await controllerUtils
-				.GetFilterOptionsByGroup<ManualCheckingQueueFilterOptions>(UserId, courseId, groupsIds);
+				.GetFilterOptionsByGroup<ManualCheckingQueueFilterOptionsObsolete>(UserId, courseId, groupsIds);
 		}
 
-		private async Task<List<AbstractManualSlideChecking>> GetMergedCheckingQueue(ManualCheckingQueueFilterOptions filterOptions)
+		private async Task<List<AbstractManualSlideChecking>> GetMergedCheckingQueue(ManualCheckingQueueFilterOptionsObsolete filterOptions)
 		{
 			var result = (await slideCheckingsRepo
 					.GetManualCheckingQueue<ManualExerciseChecking>(filterOptions))

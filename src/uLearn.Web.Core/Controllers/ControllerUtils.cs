@@ -187,7 +187,7 @@ public static class ControllerUtils
 	public static async Task<int> GetManualCheckingsCountInQueue(ISlideCheckingsRepo slideCheckingsRepo, IGroupsRepo groupsRepo, IGroupAccessesRepo groupAccessesRepo, ClaimsPrincipal user,
 		string courseId, Slide slide, List<string> groupsIds)
 	{
-		var filterOptions = await GetFilterOptionsByGroup<ManualCheckingQueueFilterOptions>(groupsRepo, groupAccessesRepo, user, courseId, groupsIds);
+		var filterOptions = await GetFilterOptionsByGroup<ManualCheckingQueueFilterOptionsObsolete>(groupsRepo, groupAccessesRepo, user, courseId, groupsIds);
 		filterOptions.SlidesIds = new List<Guid> { slide.Id };
 
 		if (slide is ExerciseSlide)

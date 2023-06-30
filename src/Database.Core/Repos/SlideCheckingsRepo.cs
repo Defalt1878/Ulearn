@@ -161,7 +161,7 @@ namespace Database.Repos
 		public async Task<int?> GetLastReviewPercentForExerciseSlide(string courseId, Guid slideId, string userId, DateTime? submissionBefore = null)
 		{
 			var query = db.ManualExerciseCheckings
-				.Where(c => c.CourseId == courseId && c.SlideId == slideId && c.UserId == userId && c.IsChecked);
+				.Where(c => c.CourseId == courseId && c.IsChecked && c.UserId == userId && c.SlideId == slideId);
 			if (submissionBefore != null)
 				query = query.Where(c => c.Submission.Timestamp < submissionBefore);
 			var lastChecking = await query
@@ -186,7 +186,7 @@ namespace Database.Repos
 		public List<(Guid SlideId, int Percent)> GetPassedManualExerciseCheckingsAndPercents(Course course, string userId, IEnumerable<Guid> visibleUnits)
 		{
 			var checkings = db.ManualExerciseCheckings
-				.Where(c => c.CourseId == course.Id && c.UserId == userId && c.IsChecked)
+				.Where(c => c.CourseId == course.Id && c.IsChecked && c.UserId == userId)
 				.Select(c => new { c.SlideId, c.Timestamp, c.Percent })
 				.ToList();
 			var slides = course.GetSlides(false, visibleUnits).OfType<ExerciseSlide>().Select(s => s.Id).ToHashSet();
@@ -201,7 +201,7 @@ namespace Database.Repos
 
 		#endregion
 
-		public async Task<List<T>> GetManualCheckingQueue<T>(ManualCheckingQueueFilterOptions options) where T : AbstractManualSlideChecking
+		public async Task<List<T>> GetManualCheckingQueue<T>(ManualCheckingQueueFilterOptionsObsolete options) where T : AbstractManualSlideChecking
 		{
 			var query = GetManualCheckingQueueFilterQuery<T>(options);
 			query = query.OrderByDescending(c => c.Timestamp);
@@ -223,7 +223,43 @@ namespace Database.Repos
 			return enumerable.ToList();
 		}
 
-		public IQueryable<T> GetManualCheckingQueueFilterQuery<T>(ManualCheckingQueueFilterOptions options) where T : AbstractManualSlideChecking
+		public async Task<IEnumerable<T>> GetManualCheckingQueue<T>(ManualCheckingQueueFilterOptions options) where T : AbstractManualSlideChecking
+		{
+			var query = db.Set<T>()
+				.Where(c => c.CourseId == options.CourseId);
+
+			query = options.IsReviewed
+				? query.Where(c => c.IsChecked)
+				: query.Where(c => !c.IsChecked);
+
+			if (options.UserIds is not null)
+				query = options.IsUserIdsSupplement
+					? query.Where(c => !options.UserIds.Contains(c.UserId))
+					: query.Where(c => options.UserIds.Contains(c.UserId));
+			
+			if (options.SlideIds is not null)
+				query = query.Where(c => !options.SlideIds.Contains(c.SlideId));
+
+			var groupQuery = query
+				.GroupBy(c => new { c.UserId, c.SlideId })
+				.Select(g => new
+				{
+					LastTimeStamp = g.OrderByDescending(c => c.Timestamp).First().Timestamp,
+					LastEntry = g.OrderByDescending(c => c.Timestamp).First()
+				});
+			
+			groupQuery = options.DateSort is DateSort.Ascending
+				? groupQuery.OrderBy(c => c.LastTimeStamp)
+				: groupQuery.OrderByDescending(c => c.LastTimeStamp);
+
+			if (options.Count > 0)
+				groupQuery = groupQuery.Take(options.Count);
+
+			return (await groupQuery.ToListAsync())
+				.Select(r => r.LastEntry);
+		}
+
+		public IQueryable<T> GetManualCheckingQueueFilterQuery<T>(ManualCheckingQueueFilterOptionsObsolete options) where T : AbstractManualSlideChecking
 		{
 			var query = db.Set<T>()
 				.Include(c => c.User)
@@ -295,7 +331,7 @@ namespace Database.Repos
 		{
 			var itemsForMark = (await db.Set<ManualExerciseChecking>()
 					.Include(c => c.Submission)
-					.Where(c => c.CourseId == queueItem.CourseId && c.UserId == queueItem.UserId && c.SlideId == queueItem.SlideId && c.Timestamp < queueItem.Timestamp)
+					.Where(c => c.CourseId == queueItem.CourseId && c.SlideId == queueItem.SlideId && c.UserId == queueItem.UserId && c.Timestamp < queueItem.Timestamp)
 					.ToListAsync())
 				.OrderBy(c => c.Submission.Timestamp)
 				.ThenBy(c => c.Timestamp);
@@ -625,7 +661,7 @@ namespace Database.Repos
 			db.Database.SetCommandTimeout(TimeSpan.FromSeconds(30));
 		}
 
-		public async Task<HashSet<Guid>> GetManualCheckingQueueSlideIds<T>(ManualCheckingQueueFilterOptions options) where T : AbstractManualSlideChecking
+		public async Task<HashSet<Guid>> GetManualCheckingQueueSlideIds<T>(ManualCheckingQueueFilterOptionsObsolete options) where T : AbstractManualSlideChecking
 		{
 			return (await GetManualCheckingQueue<T>(options))
 				.Select(c => c.SlideId)

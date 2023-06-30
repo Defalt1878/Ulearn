@@ -27,7 +27,7 @@ namespace Ulearn.Web.Api.Controllers.Groups
 			bool addGroupApiUrl = false,
 			bool? isLinkEnabled = null,
 			bool? isUserMemberOfGroup = null,
-			[CanBeNull] string superGroupName = null)
+			string? superGroupName = null)
 		{
 			if (group == null)
 				throw new ArgumentNullException(nameof(group));
