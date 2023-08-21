@@ -196,6 +196,33 @@ const config: Configuration = {
 			chunks: 'all',
 			name: (_module: Module, chunks: Chunk[]) =>
 				chunks.map((chunk) => chunk.name).join('-'),
+			cacheGroups: {
+				reactVendor: {
+					test: /[\\/]node_modules[\\/](react|react-dom|react-router-dom)[\\/]/,
+					name: 'vendor-react',
+					chunks: 'all'
+				},
+				corejsVendor: {
+					test: /[\\/]node_modules[\\/](core-js)[\\/]/,
+					name: 'vendor-corejs',
+					chunks: 'all'
+				},
+				katexVendor: {
+					test: /[\\/]node_modules[\\/](katex)[\\/]/,
+					name: 'vendor-katex',
+					chunks: 'all'
+				},
+				highchartsVendor: {
+					test: /[\\/]node_modules[\\/](highcharts)[\\/]/,
+					name: 'vendor-highcharts',
+					chunks: 'all'
+				},
+				konturVendor: {
+					test: /[\\/]node_modules[\\/](@skbkontur)[\\/]/,
+					name: 'vendor-kontur',
+					chunks: 'all',
+				}
+			},
 		}
 	}
 };
