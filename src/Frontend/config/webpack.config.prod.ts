@@ -1,16 +1,15 @@
-import autoprefixer from "autoprefixer";
-import webpack, { Configuration } from "webpack";
 import HtmlWebpackPlugin from "html-webpack-plugin";
-import { WebpackManifestPlugin } from "webpack-manifest-plugin";
 import MiniCssExtractPlugin from "mini-css-extract-plugin";
+import webpack, { Chunk, Configuration, Module } from "webpack";
+import { WebpackManifestPlugin } from "webpack-manifest-plugin";
+import { merge } from "webpack-merge";
 import paths from "./paths";
 import pwaPlugins from "./pwa.webpack.plugins";
 import base from './webpack.config.base';
-import { merge } from "webpack-merge";
 
 const shouldUseSourceMap = true;
 const cssFilename = paths.static.css + '/[name].[contenthash:8].css';
-const chunkCssFilename = paths.static.css + '/[id].[contenthash:8].css';
+const chunkCssFilename = paths.static.css + '/[name].[contenthash:8].css';
 
 // This is the production configuration.
 // It compiles slowly and is focused on producing a fast and minimal bundle.
@@ -20,14 +19,14 @@ const config: Configuration = {
 	mode: 'production',
 	bail: true,
 	entry: {
-		main: [paths.legacy, paths.appIndexTsx],
+		main: [paths.legacy, paths.appIndexTsx]
 	},
 	output: {
 		path: paths.appBuild,
 		filename: paths.static.js + '/[name].[chunkhash:8].js',
 		chunkFilename: paths.static.js + '/[name].[chunkhash:8].chunk.js',
 		publicPath: '/',
-		clean: true,
+		clean: true
 	},
 	resolve: {
 		extensions: ['.ts', '.tsx', '.js', '.json']
@@ -42,8 +41,8 @@ const config: Configuration = {
 						loader: 'url-loader',
 						options: {
 							limit: 10000,
-							name: paths.static.media + '/[name].[contenthash:8].[ext]',
-						},
+							name: paths.static.media + '/[name].[contenthash:8].[ext]'
+						}
 					},
 					{
 						test: /\.(js|jsx|mjs|ts|tsx)$/,
@@ -52,15 +51,15 @@ const config: Configuration = {
 						options: {
 							configFile: "./babel.config.cjs",
 							cacheDirectory: true,
-							compact: true,
-						},
+							compact: true
+						}
 					},
 					{
 						test: /\.less$/,
 						use: [
 							{
 								loader: MiniCssExtractPlugin.loader,
-								options: {},
+								options: {}
 							},
 							{
 								loader: "css-loader",
@@ -69,9 +68,9 @@ const config: Configuration = {
 									sourceMap: shouldUseSourceMap,
 									modules: {
 										mode: 'local',
-										localIdentName: '[contenthash:base64:5]',
+										localIdentName: '[contenthash:base64:5]'
 									},
-									importLoaders: 2,
+									importLoaders: 2
 								}
 							},
 							{
@@ -83,18 +82,18 @@ const config: Configuration = {
 											"postcss-preset-env",
 											{
 												autoprefixer: { flexbox: 'no-2009' }
-											},
+											}
 										]
 									}
-								},
+								}
 							},
 							{
 								loader: 'less-loader',
 								options: {
-									sourceMap: shouldUseSourceMap,
+									sourceMap: shouldUseSourceMap
 								}
-							},
-						],
+							}
+						]
 					},
 					{
 						test: /\.css$/,
@@ -106,10 +105,10 @@ const config: Configuration = {
 									esModule: false,
 									modules: {
 										auto: (resourcePath: string) => !resourcePath.endsWith('.global.css'),
-										mode: 'global',
+										mode: 'global'
 									},
-									importLoaders: 1,
-								},
+									importLoaders: 1
+								}
 							},
 							{
 								loader: 'postcss-loader',
@@ -120,25 +119,25 @@ const config: Configuration = {
 											"postcss-preset-env",
 											{
 												autoprefixer: { flexbox: 'no-2009' }
-											},
+											}
 										]
 									}
-								},
-							},
-						],
+								}
+							}
+						]
 					},
 					{
 						loader: 'file-loader',
-						exclude: [/\.(js|jsx|mjs|ts|tsx)$/, /\.html$/, /\.json$/, /^$/,],
+						exclude: [/\.(js|jsx|mjs|ts|tsx)$/, /\.html$/, /\.json$/, /^$/],
 						options: {
-							name: paths.static.media + '/[name].[contenthash:8].[ext]',
-						},
-					},
+							name: paths.static.media + '/[name].[contenthash:8].[ext]'
+						}
+					}
 					// ** STOP ** Are you adding a new loader?
 					// Make sure to add the new loader(s) before the "file" loader.
-				],
-			},
-		],
+				]
+			}
+		]
 	},
 	plugins: [
 		// Generates an `index.html` file with the <script> injected.
@@ -156,15 +155,15 @@ const config: Configuration = {
 				keepClosingSlash: true,
 				minifyJS: true,
 				minifyCSS: true,
-				minifyURLs: true,
-			},
+				minifyURLs: true
+			}
 		}),
 		new webpack.ProvidePlugin({
 			process: 'process/browser.js',
 			$: 'jquery',
 			jQuery: 'jquery',
 			"window.$": 'jquery',
-			"window.jQuery": 'jquery',
+			"window.jQuery": 'jquery'
 		}),
 		// See https://github.com/webpack-contrib/mini-css-extract-plugin for details
 		new MiniCssExtractPlugin({
@@ -177,7 +176,7 @@ const config: Configuration = {
 		// to their corresponding output file so that tools can pick it up without
 		// having to parse `index.html`.
 		new WebpackManifestPlugin({
-			fileName: 'asset-manifest.json',
+			fileName: 'asset-manifest.json'
 		}),
 		// Moment.js is an extremely popular library that bundles large locale files
 		// by default due to how Webpack interprets its code. This is a practical
@@ -186,14 +185,19 @@ const config: Configuration = {
 		// You can remove this if you don't use Moment.js:
 		new webpack.IgnorePlugin({
 			resourceRegExp: /^\.\/locale$/,
-			contextRegExp: /moment$/,
+			contextRegExp: /moment$/
 		}),
-		...pwaPlugins,
+		...pwaPlugins
 	],
 	optimization: {
 		minimize: true,
 		runtimeChunk: 'single',
-	},
+		splitChunks: {
+			chunks: 'all',
+			name: (_module: Module, chunks: Chunk[]) =>
+				chunks.map((chunk) => chunk.name).join('-'),
+		}
+	}
 };
 
 export default merge([base, config]);
