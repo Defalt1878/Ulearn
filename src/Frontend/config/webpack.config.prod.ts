@@ -194,6 +194,8 @@ const config: Configuration = {
 		runtimeChunk: 'single',
 		splitChunks: {
 			chunks: 'all',
+			minSize: 200 * 1000,
+			maxSize: 800 * 1000,
 			name: (_module: Module, chunks: Chunk[]) =>
 				chunks.map((chunk) => chunk.name).join('-'),
 			cacheGroups: {
@@ -217,12 +219,32 @@ const config: Configuration = {
 					name: 'vendor-highcharts',
 					chunks: 'all'
 				},
+				jqueryVendor: {
+					test: /[\\/]node_modules[\\/](jquery|jquery-ui|webpack-jquery-ui)[\\/]/,
+					name: 'vendor-jquery',
+					chunks: 'all'
+				},
+				bootstrapVendor: {
+					test: /[\\/]node_modules[\\/](bootstrap|bootstrap-fileinput|bootstrap-select)[\\/]/,
+					name: 'vendor-bootstrap',
+					chunks: 'all'
+				},
+				codeMirrorVendor: {
+					test: /[\\/]node_modules[\\/](codemirror|react-codemirror2)[\\/]/,
+					name: 'vendor-codemirror',
+					chunks: 'all'
+				},
+				momentVendor: {
+					test: /[\\/]node_modules[\\/](moment|moment-timezone)[\\/]/,
+					name: 'vendor-moment',
+					chunks: 'all'
+				},
 				konturVendor: {
 					test: /[\\/]node_modules[\\/](@skbkontur)[\\/]/,
 					name: 'vendor-kontur',
-					chunks: 'all',
+					chunks: 'all'
 				}
-			},
+			}
 		}
 	}
 };
