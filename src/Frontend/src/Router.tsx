@@ -1,18 +1,45 @@
-import React from 'react';
+import React, { FC, LazyExoticComponent, Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
-import Course from 'src/components/course/Course/Course.redux';
-import UnloadingSettings from "src/components/googleSheet/UnloadingSettings";
-import UnloadingList from "src/components/googleSheet/UnloadingsList";
-import ReviewQueuePage from "src/components/reviewQueue/ReviewQueuePageConnected";
-
-import AnyPage from "src/pages/AnyPage";
 import { AccountState } from "src/redux/account";
 
 import { getQueryStringParameter } from "src/utils";
-import JoinGroup from "./components/groups/JoinGroup/JoinGroup.page";
-import TokenPage from "./components/token/TokenPage";
-import GroupListPage from "./pages/course/groups/GroupsListPage/GroupListPage";
-import GroupSettingsPage from "./pages/course/groups/GroupsSettingsPage/GroupSettingsPage";
+import CourseLoader from './components/course/Course/CourseLoader';
+
+const Course = React.lazy(
+	() => import(/* webpackChunkName: "course" */ "src/components/course/Course/Course.redux")
+);
+
+const TokenPage = React.lazy(
+	() => import(/* webpackChunkName: "token" */ "src/components/token/TokenPage")
+);
+
+const JoinGroup = React.lazy(
+	() => import(/* webpackChunkName: "joinGroup" */ "src/components/groups/JoinGroup/JoinGroup.page")
+);
+
+const GroupListPage = React.lazy(
+	() => import(/* webpackChunkName: "groupsList" */ "src/pages/course/groups/GroupsListPage/GroupListPage")
+);
+
+const GroupSettingsPage = React.lazy(
+	() => import(/* webpackChunkName: "groupSettings" */ "src/pages/course/groups/GroupsSettingsPage/GroupSettingsPage")
+);
+
+const UnloadingList = React.lazy(
+	() => import(/* webpackChunkName: "unloadingsList" */ "src/components/googleSheet/UnloadingsList")
+);
+
+const UnloadingSettings = React.lazy(
+	() => import(/* webpackChunkName: "unloadingSettings" */ "src/components/googleSheet/UnloadingSettings")
+);
+
+const ReviewQueuePage = React.lazy(
+	() => import(/* webpackChunkName: "reviewQueue" */ "src/components/reviewQueue/ReviewQueuePageConnected")
+);
+
+const AnyPage = React.lazy(
+	() => import(/* webpackChunkName: "anyPage" */ "src/pages/AnyPage")
+);
 
 interface Props {
 	account: AccountState;
@@ -21,7 +48,7 @@ interface Props {
 interface RouteProps {
 	key: React.Key,
 	path: string;
-	element: JSX.Element;
+	element: React.ReactElement;
 }
 
 function Router({ account }: Props): React.ReactElement {
@@ -34,59 +61,59 @@ function Router({ account }: Props): React.ReactElement {
 		{
 			key: 'course',
 			path: '/course/:courseId/:slideSlugOrAction/*',
-			element: <Course/>
+			element: wrapLazyPage(Course)
 		},
 		{
 			key: 'token',
 			path: '/token',
-			element: <TokenPage/>
+			element: wrapLazyPage(TokenPage)
 		}
 	];
 
-	if(account.accountLoaded) {
-		if(account.isAuthenticated) {
+	if (account.accountLoaded) {
+		if (account.isAuthenticated) {
 			routes.push(
 				{
 					key: 'groupsList',
 					path: '/groups/:hash',
-					element: <JoinGroup/>
+					element: wrapLazyPage(JoinGroup)
 				},
 				{
 					key: 'groupsList',
 					path: '/:courseId/groups/',
-					element: <GroupListPage/>
+					element: wrapLazyPage(GroupListPage)
 				},
 				{
 					key: 'groupPage',
 					path: '/:courseId/groups/:groupId/',
-					element: <GroupSettingsPage/>
+					element: wrapLazyPage(GroupSettingsPage)
 				},
 				{
 					key: 'groupPageSettings',
 					path: '/:courseId/groups/:groupId/:groupPage',
-					element: <GroupSettingsPage/>
+					element: wrapLazyPage(GroupSettingsPage)
 				},
 				{
 					key: 'googleSheetList',
 					path: '/:courseId/google-sheet-tasks/',
-					element: <UnloadingList/>
+					element: wrapLazyPage(UnloadingList)
 				},
 				{
 					key: 'googleSheetPage',
 					path: '/:courseId/google-sheet-tasks/:taskId',
-					element: <UnloadingSettings/>
+					element: wrapLazyPage(UnloadingSettings)
 				},
 				{
 					key: 'reviewQueuePage',
 					path: '/:courseId/review-queue',
-					element: <ReviewQueuePage/>
-				},
+					element: wrapLazyPage(ReviewQueuePage)
+				}
 			);
 		}
 		routes.push({
 			key: 'anyPage',
 			path: '*',
-			element: <AnyPage/>
+			element: wrapLazyPage(AnyPage)
 		});
 	}
 
@@ -105,11 +132,17 @@ function Router({ account }: Props): React.ReactElement {
 
 const RedirectLegacyPage = ({ to }: { to: string }) => {
 	const courseId = getQueryStringParameter("courseId");
-	if(courseId) {
+	if (courseId) {
 		to = to.replace(":courseId", courseId);
 	}
 
 	return <Navigate to={ to }/>;
 };
+
+function wrapLazyPage(LazyPage: LazyExoticComponent<FC>): React.ReactElement {
+	return <Suspense fallback={ <CourseLoader/> }>
+		<LazyPage/>
+	</Suspense>;
+}
 
 export default Router;
