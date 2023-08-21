@@ -23,8 +23,8 @@ const config: Configuration = {
 	},
 	output: {
 		path: paths.appBuild,
-		filename: paths.static.js + '/[name].[chunkhash:8].js',
-		chunkFilename: paths.static.js + '/[name].[chunkhash:8].chunk.js',
+		filename: paths.static.js + '/[name].[contenthash:8].js',
+		chunkFilename: paths.static.js + '/[name].[contenthash:8].chunk.js',
 		publicPath: '/',
 		clean: true
 	},
