@@ -191,6 +191,7 @@ const config: Configuration = {
 	],
 	optimization: {
 		minimize: true,
+		usedExports: true,
 		runtimeChunk: 'single',
 		splitChunks: {
 			chunks: 'all',
